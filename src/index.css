@@ -1,0 +1,97 @@
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+@theme {
+  /* Font Family */
+  --font-poppins: 'Poppins', sans-serif;
+  
+  /* Typography Colors */
+  --color-typo: #0F172A;
+  --color-typo-white: #FFFFFF;
+  --color-typo-white2: #F3F4F6;
+  --color-typo-surface: #9CA3AF;
+  --color-typo-light: #F3F4F6;
+  --color-typo-outline: ##CBD5E1;
+  --color-typo-inline: #DFDFDF;
+  --color-typo-icon: #64646D;
+  --color-typo-secondary: #64646D;
+
+  /* Primary Colors */
+  --color-primary: #175FA4;
+  --color-primary-0: #EDFAFF;
+  --color-primary-10: #CFEEFA;
+  --color-primary-20: #A1D9F5;
+  --color-primary-30: #6EB6E3;
+  --color-primary-40: #478FC8;
+  --color-primary-60: #10498D;
+  --color-primary-70: #0B3776;
+  --color-primary-80: #07265F;
+  --color-primary-90: #041B4E;
+
+  /* Error Colors */
+  --color-error: #EF4444;
+  --color-error-0: #FEF2F2;
+  --color-error-10: #FEE2E2;
+  --color-error-20: #FECACA;
+  --color-error-30: #FCA5A5;
+  --color-error-40: #F87171;
+  --color-error-60: #DC2626;
+  --color-error-70: #B91C1C;
+  --color-error-80: #991B1B;
+  --color-error-90: #7F1D1D;
+
+
+  /* Success Colors */
+  --color-success: #10B981;
+  --color-success-0: #ECFDF5;
+  --color-success-10: #D1FAE5;
+  --color-success-20: #A7F3D0;
+  --color-success-30: #6EE7B7;
+  --color-success-40: #34D399;
+  --color-success-60: #059669;
+  --color-success-70: #047857;
+  --color-success-80: #065F46;
+  --color-success-90: #064E3B;
+
+  /* Warning Colors */
+  --color-warning: #EAB308;
+  --color-warning-0: #FEFCE8;
+  --color-warning-10: #FEF9C3;
+  --color-warning-20: #FEF08A;
+  --color-warning-30: #FDE047;
+  --color-warning-40: #FACC15;
+  --color-warning-60: #CA8A04;
+  --color-warning-70: #A16207;
+  --color-warning-80: #854D0E;
+  --color-warning-90: #713F12;
+}
+
+/* Responsive overrides using media queries */
+@media (min-width: 640px) { /* sm */
+  .sm\:flex { display: flex; }
+  .sm\:hidden { display: none; }
+  .sm\:block { display: block; }
+}
+
+@media (min-width: 768px) { /* md */
+  .md\:flex { display: flex; }
+  .md\:hidden { display: none; }
+  .md\:block { display: block; }
+}
+
+@media (min-width: 1024px) { /* lg */
+  .lg\:flex { display: flex; }
+  .lg\:hidden { display: none; }
+  .lg\:block { display: block; }
+}
+
+@media (min-width: 1280px) { /* xl */
+  .xl\:flex { display: flex; }
+  .xl\:hidden { display: none; }
+  .xl\:block { display: block; }
+}
