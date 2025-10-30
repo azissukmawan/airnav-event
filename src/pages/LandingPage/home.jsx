@@ -1,5 +1,5 @@
 import { Typography } from "../../components/typography";
-import EventCard from "../../components/card";
+import CardLanding from "../../components/cardLanding";
 import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
 import heroImage from "../../assets/hero.png";
 import airnav from "../../assets/airnav.png";
@@ -12,19 +12,61 @@ export default function Content() {
   const events = [
     {
       id: 1,
-      title: "Event 1",
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
       date: "25 November 2025, 09:00 WIB",
       location: "Gedung Dormitory",
-      status: "Lainnya",
+      status: "Segera Hadir",
+      type: "Online",
       image:
         "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
     },
     {
       id: 2,
-      title: "Event 2",
-      date: "26 November 2025, 10:00 WIB",
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
+      date: "25 November 2025, 09:00 WIB",
       location: "Gedung Dormitory",
-      status: "Lainnya",
+      status: "Bisa Daftar",
+      type: "Hybrid",
+      image:
+        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
+    },
+    {
+      id: 3,
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
+      date: "25 November 2025, 09:00 WIB",
+      location: "Gedung Dormitory",
+      status: "Terdaftar",
+      type: "Offline",
+      image:
+        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
+    },
+    {
+      id: 4,
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
+      date: "25 November 2025, 09:00 WIB",
+      location: "Gedung Dormitory",
+      status: "Ditutup",
+      type: "Online",
+      image:
+        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
+    },
+    {
+      id: 5,
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
+      date: "25 November 2025, 09:00 WIB",
+      location: "Gedung Dormitory",
+      status: "Ditutup",
+      type: "Hybrid",
+      image:
+        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
+    },
+    {
+      id: 6,
+      title: "Rapat Koordinator Bersama Jajaran Direktur",
+      date: "25 November 2025, 09:00 WIB",
+      location: "Gedung Dormitory",
+      status: "Terdaftar",
+      type: "Offline",
       image:
         "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
     },
@@ -60,7 +102,7 @@ export default function Content() {
     <div>
       {/* === HERO SECTION === */}
       <section
-        className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-16 overflow-hidden"
+        className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-16 overflow-hidden mt-16"
         style={{
           backgroundImage: `url(${heroImage})`,
           backgroundSize: "cover",
@@ -155,13 +197,14 @@ export default function Content() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
           {events.map((event, index) => (
             <FadeInSection key={event.id} delay={index * 0.2}>
-              <EventCard
+              <CardLanding
+                id={event.id}
                 title={event.title}
                 date={event.date}
                 location={event.location}
-                status={event.status}
                 image={event.image}
-                href={`/event/${event.id}`}
+                status={event.status}
+                type={event.type}
               />
             </FadeInSection>
           ))}

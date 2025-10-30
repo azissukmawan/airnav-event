@@ -163,6 +163,7 @@ export default function Sidebar({ role = "admin" }) {
           <div className="flex flex-col">
             {menuItems.map((item) => {
               const isActive = location.pathname === item.path;
+
               return (
                 <Link key={item.path} to={item.path}>
                   <Typography

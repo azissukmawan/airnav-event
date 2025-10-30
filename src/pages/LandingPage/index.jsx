@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Header from  "./header";
+import Header from "./header";
 import Content from "./home";
 import Footer from "./footer";
 import { ArrowUp } from "lucide-react";
@@ -25,8 +25,14 @@ export default function LandingPage() {
 
   return (
     <div className="font-sans text-gray-800" id="home">
-      <Header menuItems={menuItems} />
-      <Content  />
+      <Header
+        menuItems={[
+          { name: "Home", href: "/" },
+          { name: "About", href: "/#about" },
+          { name: "Events", href: "/#events" },
+        ]}
+      />
+      <Content />
       <Footer />
 
       {showScrollTop && (

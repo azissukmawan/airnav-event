@@ -49,7 +49,6 @@ function App() {
         <Route path="/admin/detail" element={<AdminDetail />} />
         <Route path="/admin/events" element={<AdminEvent />} />
         <Route path="/admin/doorprize" element={<Doorprize />} />
-        <Route path="/AdminDetail" element={<AdminDetail />} />
         <Route path="/InfoAcara" element={<InfoAcara />} />
         <Route path="/doorprize" element={<Doorprize />} />
 

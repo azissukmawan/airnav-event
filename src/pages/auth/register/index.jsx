@@ -1,81 +1,170 @@
 import React, { useState } from "react";
-import { Button } from "../../../components/button"; // Pastikan path ini benar
-import Spinner from "../../../components/spinner"; // Pastikan path ini benar
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Button } from "../../../components/button";
+import Spinner from "../../../components/spinner";
 import { Eye, EyeOff, User, Phone, Mail, Lock } from "lucide-react";
-import AirNav from "../../../assets/airnav-logo.png"; // Pastikan path ini benar
-import loginImage from "../../../assets/loginimage.png"; // Pastikan path ini benar
+import AirNav from "../../../assets/airnav-logo.png";
+import loginImage from "../../../assets/loginimage.png";
 
 export default function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
     username: "",
     email: "",
     password: "",
+    password_confirmation: "",
     status: "karyawan",
   });
 
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) =>
-    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
+  // --- Fungsi validasi password ---
+  const validatePassword = (password) => {
+    const rules = [
+      { test: /.{8,}/, message: "Minimal 8 karakter." },
+      { test: /[A-Z]/, message: "Harus mengandung minimal 1 huruf besar." },
+      { test: /[0-9]/, message: "Harus mengandung minimal 1 angka." },
+      {
+        test: /[!@#$%^&*(),.?":{}|<>_\-]/,
+        message: "Harus mengandung minimal 1 simbol.",
+      },
+    ];
+    for (let rule of rules) {
+      if (!rule.test.test(password)) return rule.message;
+    }
+    return "";
+  };
+
+  // --- Validasi semua field ---
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) newErrors.name = "Nama lengkap wajib diisi.";
+    else if (formData.name.trim().length < 3)
+      newErrors.name = "Nama minimal 3 karakter.";
+
+    if (!formData.phone.trim()) newErrors.telp = "Nomor WhatsApp wajib diisi.";
+    else if (!/^[0-9]+$/.test(formData.phone))
+      newErrors.telp = "Nomor WhatsApp hanya boleh berisi angka.";
+    else if (formData.phone.length < 10)
+      newErrors.telp = "Nomor WhatsApp minimal 10 digit.";
+
+    if (!formData.username.trim()) newErrors.username = "Username wajib diisi.";
+    else if (formData.username.trim().length < 4)
+      newErrors.username = "Username minimal 4 karakter.";
+
+    if (!formData.email.trim()) newErrors.email = "Email wajib diisi.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
+      newErrors.email = "Format email tidak valid.";
+
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((s) => ({ ...s, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: null }));
+  };
 
   const handleStatusChange = (e) => {
     setFormData((s) => ({ ...s, status: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setErrors({});
+
+    if (!validateForm()) return;
+
     setLoading(true);
-    // TODO: Arahkan ke /verify-code setelah sukses
-    setTimeout(() => {
+    try {
+      const response = await axios.post(
+        "https://mediumpurple-swallow-757782.hostingersite.com/api/register",
+        {
+          name: formData.name,
+          username: formData.username,
+          email: formData.email,
+          telp: formData.phone,
+          password: formData.password,
+          password_confirmation: formData.password,
+          status_karyawan: formData.status === "karyawan" ? "1" : "0",
+        }
+      );
+
+      setMessage("Registrasi berhasil! Silakan verifikasi akun Anda.");
+
+      setTimeout(() => {
+        navigate("/verify-code", { state: { email: formData.email } });
+      }, 1000);
+    } catch (error) {
+      console.error("Error:", error.response?.data || error.message);
+      const serverErrors = error.response?.data?.errors || {};
+      const newErrors = {};
+
+      if (serverErrors.email) newErrors.email = "Email sudah digunakan.";
+      if (serverErrors.username)
+        newErrors.username = "Username sudah terdaftar.";
+      if (serverErrors.telp)
+        newErrors.telp = "Nomor WhatsApp tidak valid atau sudah digunakan.";
+
+      setErrors(newErrors);
+      setMessage(
+        error.response?.data?.message ||
+          "Terjadi kesalahan saat registrasi. Coba lagi nanti."
+      );
+    } finally {
       setLoading(false);
-      // window.location.href = '/verify-code'; // Contoh redirect
-    }, 1500);
+    }
   };
 
+  const renderError = (field) =>
+    errors[field] && (
+      <p className="text-xs text-red-600 mt-1">{errors[field]}</p>
+    );
+
   return (
-    // Wrapper Halaman Penuh
     <div className="min-h-screen flex items-center justify-center bg-[#eff2f9] p-6">
-      {/* Layout Kartu Tunggal (Responsif) */}
       <div className="w-full max-w-md md:max-w-5xl bg-white rounded-2xl shadow-lg overflow-hidden">
-        {/* Grid Internal (Mobile: 1 kolom, Desktop: 2 kolom) */}
         <div className="grid md:grid-cols-[4fr_5fr]">
-          {/* === SISI KIRI/ATAS: GAMBAR === */}
+          {/* SISI GAMBAR */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
             style={{ backgroundImage: `url(${loginImage})` }}
           >
-            {/* Logo "kaca buram" */}
             <div className="absolute top-6 left-6 bg-white/30 backdrop-blur-md p-3 rounded-2xl shadow-md">
               <img src={AirNav} alt="AirNav Logo" className="w-20" />
             </div>
-            {/* Overlay Gradasi Hitam */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            {/* Teks Judul */}
             <div className="relative text-white z-10">
               <h1 className="text-3xl font-bold mb-2">
                 Event Management System
               </h1>
               <p className="text-sm text-gray-200 max-w-sm">
-                Satu sistem, semua event terkendali. Dari perencanaan hingga
-                laporan, semuanya jadi lebih cepat dan teratur.
+                Satu sistem, semua event terkendali.
               </p>
             </div>
           </div>
 
-          {/* === SISI KANAN/BAWAH: FORMULIR === */}
+          {/* FORM */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
             <h2 className="text-2xl font-bold text-center mb-6">Daftar</h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Input: Nama Lengkap */}
+              {/* Nama */}
               <div>
-                <label
-                  htmlFor="name"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Nama Lengkap
                 </label>
                 <div className="relative">
@@ -85,22 +174,23 @@ export default function Register() {
                   />
                   <input
                     type="text"
-                    id="name"
                     name="name"
                     placeholder="Nama Lengkap Anda"
                     value={formData.name}
                     onChange={handleChange}
-                    className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${
+                      errors.name
+                        ? "focus:ring-red-500 ring-1 ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                   />
                 </div>
+                {renderError("name")}
               </div>
 
-              {/* Input: No WhatsApp */}
+              {/* Phone */}
               <div>
-                <label
-                  htmlFor="phone"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   No WhatsApp
                 </label>
                 <div className="relative">
@@ -110,22 +200,23 @@ export default function Register() {
                   />
                   <input
                     type="text"
-                    id="phone"
                     name="phone"
                     placeholder="+62 812 3456 7890"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${
+                      errors.telp
+                        ? "focus:ring-red-500 ring-1 ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                   />
                 </div>
+                {renderError("telp")}
               </div>
 
-              {/* Input: Username */}
+              {/* Username */}
               <div>
-                <label
-                  htmlFor="username"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Username
                 </label>
                 <div className="relative">
@@ -135,22 +226,23 @@ export default function Register() {
                   />
                   <input
                     type="text"
-                    id="username"
                     name="username"
                     placeholder="Username"
                     value={formData.username}
                     onChange={handleChange}
-                    className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${
+                      errors.username
+                        ? "focus:ring-red-500 ring-1 ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                   />
                 </div>
+                {renderError("username")}
               </div>
 
-              {/* Input: Email */}
+              {/* Email */}
               <div>
-                <label
-                  htmlFor="email"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Email
                 </label>
                 <div className="relative">
@@ -160,22 +252,23 @@ export default function Register() {
                   />
                   <input
                     type="email"
-                    id="email"
                     name="email"
                     placeholder="example@mail.com"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${
+                      errors.email
+                        ? "focus:ring-red-500 ring-1 ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                   />
                 </div>
+                {renderError("email")}
               </div>
 
-              {/* Input: Password */}
+              {/* Password */}
               <div>
-                <label
-                  htmlFor="password"
-                  className="text-sm font-medium text-gray-700 mb-1 block"
-                >
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
                   Password
                 </label>
                 <div className="relative">
@@ -184,13 +277,16 @@ export default function Register() {
                     className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                   />
                   <input
-                    id="password"
-                    name="password"
                     type={showPass ? "text" : "password"}
+                    name="password"
                     placeholder="Masukkan password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${
+                      errors.password
+                        ? "focus:ring-red-500 ring-1 ring-red-500"
+                        : "focus:ring-blue-500"
+                    }`}
                   />
                   <button
                     type="button"
@@ -200,15 +296,15 @@ export default function Register() {
                     {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {renderError("password")}
+                <p className="text-xs text-gray-500 mt-2">
+                  Password harus minimal 8 karakter, mengandung huruf besar,
+                  angka, dan simbol.
+                </p>
               </div>
 
-              {/* Helper Teks Password */}
-              <p className="text-xs text-gray-500 !mt-2">
-                Minimal 8 karakter, 1 angka, 1 kapital, 1 simbol
-              </p>
-
-              {/* Input: Status (Checkbox) */}
-              <div className="!mt-4">
+              {/* Status */}
+              <div className="mt-4">
                 <label className="text-sm font-medium text-gray-700 mb-2 block">
                   Status
                 </label>
@@ -238,24 +334,22 @@ export default function Register() {
                 </div>
               </div>
 
-              {/* Tombol Submit (DENGAN PERBAIKAN) */}
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full rounded-lg !mt-6 h-11 flex items-center justify-center" // <-- TINGGI TETAP h-11
+                className="w-full rounded-lg mt-6 h-11 flex items-center justify-center"
                 disabled={loading}
               >
                 {loading ? <Spinner /> : "Daftar"}
               </Button>
 
-              {/* Link ke Halaman Login */}
-              <p className="text-center text-sm !mt-4">
+              <p className="text-center text-sm mt-4">
                 Sudah punya akun?{" "}
                 <a
                   href="/login"
                   className="text-blue-600 hover:underline font-medium"
                 >
-                  login
+                  Login
                 </a>
               </p>
             </form>

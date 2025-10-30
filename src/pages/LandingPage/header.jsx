@@ -44,7 +44,7 @@ export default function Header({ menuItems }) {
     <header
       className={`fixed top-0 left-0 w-full flex justify-between items-center px-8 py-4 bg-white shadow-sm z-50 transition-transform duration-300 ${
         show ? "translate-y-0" : "-translate-y-full"
-      }`}
+      } font-poppins`}
     >
       {/* Logo */}
       <div className="flex items-center gap-3">
@@ -84,8 +84,12 @@ export default function Header({ menuItems }) {
 
       {/* Tombol desktop */}
       <div className="hidden md:flex items-center gap-3">
-        <Button variant="primary" to="/login">Login</Button>
-        <Button variant="secondary" to="/register">Daftar Akun</Button>
+        <Button variant="primary" to="/login">
+          Login
+        </Button>
+        <Button variant="secondary" to="/register">
+          Daftar Akun
+        </Button>
       </div>
 
       {/* Tombol mobile menu */}
@@ -127,10 +131,10 @@ export default function Header({ menuItems }) {
               );
             })}
             <div className="flex flex-col gap-3 mt-4 w-full px-8">
-              <Button variant="outline" onClick={() => setMenuOpen(false)}>
+              <Button variant="primary" onClick={() => setMenuOpen(false)}>
                 Login
               </Button>
-              <Button variant="primary" onClick={() => setMenuOpen(false)}>
+              <Button variant="secondary" onClick={() => setMenuOpen(false)}>
                 Daftar Akun
               </Button>
             </div>
