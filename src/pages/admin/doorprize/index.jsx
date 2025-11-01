@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { useWindowSize } from "react-use";
 import { Wheel } from "react-custom-roulette";
@@ -8,13 +8,15 @@ import Modal from "../../../components/modal";
 import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 
 export default function EventWheel() {
   const navigate = useNavigate();
+  const { id } = useParams(); // Ambil ID dari URL
   const { width, height } = useWindowSize();
   const token = localStorage.getItem("token");
+  
   const [data, setData] = useState([]);
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
@@ -23,7 +25,10 @@ export default function EventWheel() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [winners, setWinners] = useState([]);
-  const [eventTitle, setEventTitle] = useState("Judul tidak tersedia");
+  const [eventTitle, setEventTitle] = useState("Loading...");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   // Hanya peserta yang hadir tapi belum menang
   const wheelData = data.filter(
     (p) =>
@@ -35,86 +40,149 @@ export default function EventWheel() {
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
     { label: "Acara", link: "/admin/events" },
-    { label: "Informasi Acara", link: "/admin/detail" },
+    { label: "Informasi Acara", link: `/admin/event/${id}` },
     { label: "Doorprize" },
   ];
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      setError("Token tidak ditemukan. Silakan login ulang.");
+      setLoading(false);
+      return;
+    }
+
+    if (!id) {
+      setError("ID Event tidak ditemukan.");
+      setLoading(false);
+      return;
+    }
 
     const fetchEventDetail = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}/admin/events/3`, {
+        console.log("🔍 Fetching event detail untuk ID:", id);
+        const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setEventTitle(res.data.data?.mdl_nama || "Judul tidak tersedia");
+        
+        console.log("📦 Event detail:", res.data);
+        
+        // Sesuaikan struktur response
+        const eventData = res.data?.data?.data || res.data?.data;
+        setEventTitle(eventData?.mdl_nama || "Judul tidak tersedia");
       } catch (err) {
-        console.error(err);
+        console.error("❌ Error fetching event detail:", err);
         setEventTitle("Judul tidak tersedia");
       }
     };
 
     const fetchParticipantsAndWinners = async () => {
       try {
+        setLoading(true);
+        console.log("🔍 Fetching participants & winners untuk event ID:", id);
+
         const [participantsRes, winnersRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/admin/events/3/participants`, {
+          axios.get(`${API_BASE_URL}/admin/events/${id}/participants`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`${API_BASE_URL}/admin/events/3/winners`, {
+          axios.get(`${API_BASE_URL}/admin/events/${id}/winners`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
 
-        // Semua peserta yang hadir
-        const hadirOnly = (participantsRes.data.data || []).filter(
-          (p) => p.status === "Hadir"
-        );
+        console.log("📦 Participants response:", participantsRes.data);
+        console.log("📦 Winners response:", winnersRes.data);
+
+        // Parse participants - cek berbagai struktur
+        let participantsData = [];
+        if (participantsRes.data?.data?.data) {
+          participantsData = participantsRes.data.data.data;
+        } else if (participantsRes.data?.data) {
+          participantsData = participantsRes.data.data;
+        } else if (Array.isArray(participantsRes.data)) {
+          participantsData = participantsRes.data;
+        }
+
+        // Filter peserta yang hadir (cek berbagai field name)
+        const hadirOnly = participantsData.filter((p) => {
+          const status = p.status || p.status_kehadiran || p.hadir;
+          return (
+            status === "Hadir" ||
+            status === "hadir" ||
+            status === true ||
+            p.hadir === true
+          );
+        });
+
+        console.log("✅ Participants yang hadir:", hadirOnly.length);
         setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
 
-        // Pemenang
-        const winnerData = winnersRes.data.data?.winners || [];
-        setWinners(winnerData.map((w) => w.name));
+        // Parse winners
+        let winnersData = [];
+        if (winnersRes.data?.data?.winners) {
+          winnersData = winnersRes.data.data.winners;
+        } else if (winnersRes.data?.data) {
+          winnersData = Array.isArray(winnersRes.data.data)
+            ? winnersRes.data.data
+            : [];
+        }
+
+        console.log("✅ Winners:", winnersData.length);
+        setWinners(winnersData.map((w) => w.name || w.nama));
       } catch (err) {
-        console.error(err);
+        console.error("❌ Error fetching data:", err);
+        console.error("❌ Error response:", err.response?.data);
+        
+        if (err.response?.status === 403) {
+          setError("Akses ditolak. Anda tidak memiliki izin untuk event ini.");
+        } else if (err.response?.status === 404) {
+          setError("Data tidak ditemukan.");
+        } else {
+          setError(err.response?.data?.message || "Gagal mengambil data.");
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchEventDetail();
     fetchParticipantsAndWinners();
-  }, [token]);
+  }, [token, id]);
 
   const handleSpinClick = async () => {
     if (mustSpin || wheelData.length === 0) return;
 
     try {
+      console.log("🎲 Drawing winner untuk event ID:", id);
       const response = await axios.post(
-        `${API_BASE_URL}/admin/events/3/draw-winner`,
+        `${API_BASE_URL}/admin/events/${id}/draw-winner`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const winnerFromAPI = response.data.data.winner;
+      console.log("📦 Winner response:", response.data);
+      const winnerFromAPI = response.data.data.winner || response.data.data;
 
       // Cari index di wheelData (bukan data asli)
       const selectedIndex = wheelData.findIndex(
         (p) =>
           p.option.toLowerCase().trim() ===
-          winnerFromAPI.name.toLowerCase().trim()
+          (winnerFromAPI.name || winnerFromAPI.nama).toLowerCase().trim()
       );
 
       if (selectedIndex === -1) {
         alert(
-          `${winnerFromAPI.name} sudah menang sebelumnya atau tidak ada di wheel.`
+          `${winnerFromAPI.name || winnerFromAPI.nama} sudah menang sebelumnya atau tidak ada di wheel.`
         );
         return;
       }
 
       setPrizeNumber(selectedIndex);
-      setNewWinner(winnerFromAPI.name);
+      setNewWinner(winnerFromAPI.name || winnerFromAPI.nama);
       setMustSpin(true);
       setShowConfetti(false);
     } catch (err) {
-      console.error(err.response || err);
+      console.error("❌ Error drawing winner:", err);
+      console.error("❌ Error response:", err.response?.data);
       alert(err.response?.data?.message || "Gagal melakukan undian.");
     }
   };
@@ -132,6 +200,42 @@ export default function EventWheel() {
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 6000);
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex relative bg-gray-50">
+        <Sidebar role="admin" />
+        <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+          <div className="flex items-center justify-center h-64">
+            <p className="text-gray-500 text-lg">Memuat data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex relative bg-gray-50">
+        <Sidebar role="admin" />
+        <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+          <Breadcrumb items={breadcrumbItems} />
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <p className="text-red-600 text-lg font-semibold mb-2">Error</p>
+            <p className="text-red-500">{error}</p>
+            <button
+              onClick={() => navigate(`/admin/event/${id}`)}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            >
+              Kembali ke Detail Event
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex relative bg-gray-50">
@@ -168,7 +272,11 @@ export default function EventWheel() {
               <div className="text-center mb-8">
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full">
                   <Typography type="body" className="text-blue-700 font-medium">
-                    {data.length} Peserta Hadir
+                    {wheelData.length} Peserta Tersedia
+                  </Typography>
+                  <span className="text-gray-400">•</span>
+                  <Typography type="body" className="text-gray-600">
+                    {data.length} Total Hadir
                   </Typography>
                 </div>
               </div>
@@ -199,9 +307,13 @@ export default function EventWheel() {
                         onStopSpinning={handleStopSpinning}
                       />
                     ) : (
-                      <Typography type="body" className="text-gray-500">
-                        Semua peserta sudah menang
-                      </Typography>
+                      <div className="text-center py-12">
+                        <Typography type="body" className="text-gray-500">
+                          {data.length === 0
+                            ? "Tidak ada peserta yang hadir"
+                            : "Semua peserta sudah menang"}
+                        </Typography>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -210,9 +322,9 @@ export default function EventWheel() {
               <div className="flex justify-center">
                 <button
                   onClick={handleSpinClick}
-                  disabled={mustSpin || data.length === 0}
+                  disabled={mustSpin || wheelData.length === 0}
                   className={`px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform ${
-                    mustSpin || data.length === 0
+                    mustSpin || wheelData.length === 0
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl hover:scale-105"
                   }`}

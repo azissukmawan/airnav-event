@@ -84,6 +84,7 @@ export default function Login() {
         setError(response.data.message || "Login gagal. Silakan coba lagi.");
       }
     } catch (error) {
+      console.error("Error login:", error);
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.status === 401) {
@@ -116,7 +117,8 @@ export default function Login() {
                 Event Management System
               </h1>
               <p className="text-sm text-gray-200 max-w-sm">
-                Satu sistem, semua event terkendali.
+                Satu sistem, semua event terkendali. Dari perencanaan hingga
+                laporan, semuanya jadi lebih cepat dan teratur.
               </p>
             </div>
           </div>
@@ -188,7 +190,6 @@ export default function Login() {
                     type="button"
                     onClick={() => setShowPass(!showPass)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    aria-label="Toggle password"
                   >
                     {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>

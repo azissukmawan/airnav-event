@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 import { Typography } from "../../../components/typography";
-import { Bell, Calendar, ChevronsRight, XCircle } from "lucide-react";
+import { Calendar, ChevronsRight, XCircle } from "lucide-react";
 import AddEvent from "../../../components/AddEvent";
 
 function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
@@ -27,7 +27,7 @@ function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
-    comingSoon: 0,
+    coming_soon: 0,
     ongoing: 0,
     closed: 0,
   });
@@ -37,19 +37,26 @@ export default function AdminDashboard() {
   const handleOpenAddEvent = () => setIsAddEventOpen(true);
   const handleCloseAddEvent = () => setIsAddEventOpen(false);
 
-  // 🔹 Fetch data dari API saat komponen dimuat
+    // 🔹 Fetch data dari API saat komponen dimuat
   useEffect(() => {
     axios
       .get("https://mediumpurple-swallow-757782.hostingersite.com/api/dashboard-admin/stats")
       .then((response) => {
-        // Pastikan response.data sesuai struktur API kamu
-        setStats(response.data);
+        if (response.data && response.data.success) {
+          const eventStats = response.data.event_stats;
+          setStats({
+            coming_soon: eventStats.coming_soon || 0,
+            ongoing: eventStats.ongoing || 0,
+            closed: eventStats.closed || 0,
+          });
+        } else {
+          console.error("Struktur data tidak sesuai:", response.data);
+        }
       })
       .catch((error) => {
         console.error("Gagal ambil data stats:", error);
       });
   }, []);
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar role="admin" />
@@ -58,28 +65,20 @@ export default function AdminDashboard() {
         {/* Header */}
         <header className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
-            <img
-              src="#"
-              alt="Avatar"
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            
             <div>
               <Typography
                 type="heading5"
                 weight="bold"
                 className="text-gray-900"
               >
-                Welcome Lifa !
+                Welcome Admin !
               </Typography>
               <Typography type="body-small" className="text-gray-500">
                 System Administrator
               </Typography>
             </div>
           </div>
-
-          <button className="mt-1 mr-2 py-3 px-4 rounded-4xl bg-blue-100">
-            <Bell />
-          </button>
         </header>
 
         {/* Tombol Tambah */}
@@ -97,7 +96,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<Calendar />}
-              value={stats.comingSoon}
+              value={stats.coming_soon}
               title="Event Coming Soon"
               iconBgColor="bg-blue-100"
               iconColor="text-blue-600"

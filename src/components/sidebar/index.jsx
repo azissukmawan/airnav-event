@@ -4,7 +4,6 @@ import { Typography } from "../typography";
 import {
   CalendarBlankIcon,
   HouseSimpleIcon,
-  HeadsetIcon,
 } from "@phosphor-icons/react";
 import {
   LayoutGrid,
@@ -30,12 +29,7 @@ export default function Sidebar({ role = "admin" }) {
       label: "Acara",
       path: "/admin/events",
       icon: <CalendarBlankIcon size={20} />,
-    },
-    {
-      label: "Services",
-      path: "/admin/services",
-      icon: <HeadsetIcon size={20} />,
-    },
+    }
   ];
 
   const userMenu = [
@@ -49,18 +43,27 @@ export default function Sidebar({ role = "admin" }) {
 
   const userExtraMenu = [
     { label: "Profil", path: "/user/profile", icon: <User size={20} /> },
-    { label: "Logout", path: "/login", icon: <LogOut size={20} />, isLogout: true },
+    {
+      label: "Logout",
+      path: "/login",
+      icon: <LogOut size={20} />,
+      isLogout: true,
+    },
   ];
 
   const menuItems = role === "admin" ? adminMenu : userMenu;
 
   const handleLogout = async () => {
     try {
-      await axios.post(`${API_BASE_URL}/logout`, {}, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      await axios.post(
+        `${API_BASE_URL}/logout`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       localStorage.removeItem("token");
 
@@ -163,7 +166,7 @@ export default function Sidebar({ role = "admin" }) {
       </div>
 
       {/* Desktop */}
-      <nav className="hidden lg:flex bg-white text-secondary p-4 w-52 h-screen flex-col justify-between">
+      <nav className="hidden lg:flex sticky top-0 left-0 bg-white text-secondary overflow-y-auto p-4 w-52 h-screen flex-col justify-between">
         <div>
           <div className="w-28 mx-auto mb-4">
             <Link to="/" className="flex items-center space-x-2">

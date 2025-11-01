@@ -1,78 +1,119 @@
 import React, { useState } from "react";
-import { Button } from "../../../components/button"; // Pastikan path ini benar
-import Spinner from "../../../components/spinner"; // Pastikan path ini benar
+import axios from "axios";
+import { Button } from "../../../components/button";
+import Spinner from "../../../components/spinner";
+import { Lock, User, AlertTriangle } from "lucide-react";
+import AirNav from "../../../assets/airnav-logo.png";
+import loginImage from "../../../assets/loginimage.png";
 
-// Impor Ikon
-import { Lock, User, AlertTriangle } from "lucide-react"; // Kita perlu Lock, User, dan AlertTriangle
-import AirNav from "../../../assets/airnav-logo.png"; // Pastikan path ini benar
-import loginImage from "../../../assets/loginimage.png"; // Pastikan path ini benar
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  // Handler untuk submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    console.log("Password reset requested for:", email);
-    setTimeout(() => {
+    setError("");
+    setSuccess("");
+
+    // Validasi email kosong
+    if (!email.trim()) {
+      setError("Email wajib diisi!");
       setLoading(false);
-      alert(`Instruksi reset password telah dikirim ke ${email} (simulasi)`);
-      // Di sini Anda mungkin akan mengarahkan pengguna ke halaman "Cek Email Anda"
-    }, 1500);
+      return;
+    }
+
+    // Validasi format email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Format email tidak valid!");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/forgot-password`, {
+        email: email,
+      });
+
+      console.log("Response:", response.data);
+
+      if (response.data.success || response.status === 200) {
+        setSuccess(`Instruksi reset password telah dikirim ke ${email}`);
+        setEmail(""); // Kosongkan input
+      } else {
+        setError("Gagal mengirim email. Silakan coba lagi.");
+      }
+    } catch (error) {
+      console.error("Error forgot password:", error);
+      if (error.response?.status === 404) {
+        setError("Email tidak terdaftar dalam sistem.");
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError("Terjadi kesalahan. Silakan coba lagi nanti.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    // Wrapper Halaman Penuh
     <div className="min-h-screen flex items-center justify-center bg-[#eff2f9] p-6">
-      {/* Layout Kartu Tunggal (Sama seperti Login/Register/Verify) */}
       <div className="w-full max-w-md md:max-w-5xl bg-white rounded-2xl shadow-lg overflow-hidden">
-        {/* Grid Internal (Rasio 4:5 seperti yang Anda minta) */}
         <div className="grid md:grid-cols-[4fr_5fr]">
-          {/* === SISI KIRI/ATAS: GAMBAR === */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
             style={{ backgroundImage: `url(${loginImage})` }}
           >
-            {/* Logo "kaca buram" */}
             <div className="absolute top-6 left-6 bg-white/30 backdrop-blur-md p-3 rounded-2xl shadow-md">
               <img src={AirNav} alt="AirNav Logo" className="w-20" />
             </div>
-
-            {/* Overlay Gradasi Hitam */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-
-            {/* Teks Judul (z-10) */}
             <div className="relative text-white z-10">
               <h1 className="text-3xl font-bold mb-2">
                 Event Management System
               </h1>
               <p className="text-sm text-gray-200 max-w-sm">
-                Satu sistem, semua event terkendali.
+                Satu sistem, semua event terkendali. Dari perencanaan hingga
+                laporan, semuanya jadi lebih cepat dan teratur.
               </p>
             </div>
           </div>
 
-          {/* === SISI KANAN/BAWAH: FORMULIR LUPA PASSWORD === */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
-            {/* Konten diletakkan di tengah (sesuai desain) */}
             <div className="flex flex-col items-center text-center">
               <Lock size={96} className="text-blue-700 mb-4" />
 
-              <h2 className="text-2xl font-bold mb-2">Forgot Password</h2>
+              <h2 className="text-2xl font-bold mb-2">Lupa Kata Sandi</h2>
               <p className="text-sm text-gray-500 mb-6">
-                Enter your email and get instruction for
+                Masukan email Anda untuk menerima instruksi
                 <br />
-                resetting your password
+                reset kata sandi.
               </p>
 
-              {/* Form Email */}
+              {/* Pesan Error */}
+              {error && (
+                <div className="w-full max-w-sm mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              )}
+
+              {/* Pesan Success */}
+              {success && (
+                <div className="w-full max-w-sm mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-600">{success}</p>
+                </div>
+              )}
+
               <form
                 onSubmit={handleSubmit}
                 className="w-full max-w-sm space-y-4"
               >
-                {/* Input: Email */}
                 <div className="text-left">
                   <label
                     htmlFor="email"
@@ -81,7 +122,7 @@ export default function ForgotPassword() {
                     Email
                   </label>
                   <div className="relative">
-                    <User // Sesuai desain, ikonnya User
+                    <User
                       size={18}
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                     />
@@ -91,23 +132,19 @@ export default function ForgotPassword() {
                       name="email"
                       placeholder="Masukkan email Anda"
                       value={email}
-                      onChange={(e) => setEmail(e.Ttarget.value)}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 focus:ring-blue-500 text-sm"
                       autoComplete="email"
                     />
                   </div>
                 </div>
-
-                {/* Tombol Submit (DENGAN PERBAIKAN) */}
                 <Button
                   type="submit"
                   variant="primary"
-                  // ▼▼▼ PERBAIKAN DI SINI ▼▼▼
                   className="w-full rounded-lg !mt-6 h-11 flex items-center justify-center"
                   disabled={loading}
                 >
-                  {/* ▼▼▼ DIV PEMBUNGKUS SPINNER DIHAPUS ▼▼▼ */}
-                  {loading ? <Spinner /> : "Get Instruction"}
+                  {loading ? <Spinner /> : "Dapatkan Instruksi"}
                 </Button>
               </form>
 
@@ -120,17 +157,15 @@ export default function ForgotPassword() {
                   />
                   <div>
                     <h4 className="text-sm font-semibold text-red-600">
-                      Password Tips
+                      Tips Kata Sandi
                     </h4>
                     <p className="text-xs text-red-500 mt-1">
-                      Create a memorable and secure password to reduce the need
-                      for resets.
+                      Buat kata sandi yang mudah diingat dan aman untuk
+                      mengurangi kebutuhan melakukan reset.
                     </p>
                   </div>
                 </div>
               </div>
-
-              {/* Link kembali ke Login */}
               <p className="text-center text-sm !mt-6">
                 <a
                   href="/login"

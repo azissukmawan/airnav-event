@@ -22,8 +22,6 @@ export default function VerifyCode() {
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef([]);
-
-  // Ambil email dari halaman register
   const email = location.state?.email || "";
 
   useEffect(() => {
@@ -83,19 +81,17 @@ export default function VerifyCode() {
     setError("");
 
     try {
-      // Kirim request untuk resend OTP
       const response = await axios.post(`${API_BASE_URL}/resend-otp`, {
         email: email,
       });
 
+      console.log("Response resend OTP:", response.data);
+
       if (response.data?.success || response.status === 200) {
-        // Reset timer dan OTP
         setTimer(179);
         setOtp(new Array(6).fill(""));
         setCanResend(false);
         inputRefs.current[0]?.current.focus();
-
-        // Tampilkan pesan sukses
         alert("Kode OTP baru telah dikirim ke email Anda.");
       } else {
         setError("Gagal mengirim ulang OTP. Silakan coba lagi.");
@@ -133,11 +129,12 @@ export default function VerifyCode() {
     setError("");
 
     try {
-      // Kirim ke backend
       const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
         email,
         otp: finalOtp,
       });
+
+      console.log("Response verify OTP:", response.data);
 
       // Jika sukses
       if (response.data?.success || response.status === 200) {
@@ -147,7 +144,6 @@ export default function VerifyCode() {
       }
     } catch (err) {
       console.error("Error verify OTP:", err);
-      // Custom error (bukan dari backend mentah)
       if (err.response?.status === 400) {
         setError("Kode OTP salah atau sudah kadaluarsa.");
       } else if (err.response?.status === 404) {
@@ -182,7 +178,8 @@ export default function VerifyCode() {
                 Event Management System
               </h1>
               <p className="text-sm text-gray-200 max-w-sm">
-                Satu sistem, semua event terkendali.
+                Satu sistem, semua event terkendali. Dari perencanaan hingga
+                laporan, semuanya jadi lebih cepat dan teratur.
               </p>
             </div>
           </div>
@@ -194,11 +191,11 @@ export default function VerifyCode() {
               ) : (
                 <>
                   <Lock size={96} className="text-blue-700 mb-4" />
-                  <h2 className="text-2xl font-bold mb-2">Confirm Your OTP</h2>
+                  <h2 className="text-2xl font-bold mb-2">Konfirmasi OTP</h2>
                   <p className="text-sm text-gray-500 mb-6">
-                    We've sent a code to <b>{email}</b>.
+                    Kami telah mengirimkan kode ke email anda <b>{email}</b>.
                     <br />
-                    Please type the 6-digit code below.
+                    Silahkan masukan disini.
                   </p>
 
                   <div className="flex gap-2 md:gap-3 my-4">
@@ -223,10 +220,10 @@ export default function VerifyCode() {
                     </div>
                   )}
 
-                  {/* Tampilkan timer atau tombol resend */}
+                  {/* Timer atau Tombol Resend */}
                   {canResend ? (
                     <div className="text-sm text-gray-500 mt-2">
-                      <p className="mb-2">Didn't receive the code?</p>
+                      <p className="mb-2">Tidak menerima code?</p>
                       <button
                         onClick={handleResend}
                         disabled={resendLoading}
@@ -235,17 +232,17 @@ export default function VerifyCode() {
                         {resendLoading ? (
                           <>
                             <Spinner className="w-4 h-4" />
-                            <span>Sending...</span>
+                            <span>Mengirim...</span>
                           </>
                         ) : (
-                          "Resend OTP"
+                          "Kirim Ulang"
                         )}
                       </button>
                     </div>
                   ) : (
                     <div className="text-sm text-gray-500 mt-2">
                       <p>
-                        You can resend the code in{" "}
+                        Kirim ulang kode dalam{" "}
                         <span className="font-medium text-blue-600">
                           {formatTime(timer)}
                         </span>
@@ -259,7 +256,7 @@ export default function VerifyCode() {
                     className="mt-6 w-full rounded-lg h-11"
                     disabled={loading}
                   >
-                    {loading ? "Verifying..." : "Verify Code"}
+                    {loading ? "Memverifikasi..." : "Konfirmasi Code"}
                   </Button>
                 </>
               )}
@@ -268,6 +265,7 @@ export default function VerifyCode() {
         </div>
       </div>
 
+      {/* Modal Success */}
       <Modal
         isOpen={showSuccessModal}
         onClose={handleCloseModal}
@@ -278,14 +276,14 @@ export default function VerifyCode() {
           <CheckCircle2 size={96} className="text-green-500 mb-6" />
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Yay!</h2>
           <p className="text-lg text-gray-500 mb-8">
-            Your account has been successfully verified.
+            Akun Anda berhasil diverifikasi.
           </p>
           <Button
             variant="primary"
             className="w-full rounded-lg h-11"
             onClick={handleCloseModal}
           >
-            Go to Login
+            Ke Halaman Login
           </Button>
         </div>
       </Modal>

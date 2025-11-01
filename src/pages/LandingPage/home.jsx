@@ -1,22 +1,35 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 import { Typography } from "../../components/typography";
 import CardLanding from "../../components/cardLanding";
 import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
 import heroImage from "../../assets/hero.png";
 import airnav from "../../assets/airnav.png";
 import bumn from "../../assets/bumn.png";
-import kemenhub from "../../assets/kemenhub.png";
-import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
+import maganghub from "../../assets/maganghub.png";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [prevVisibleCount, setPrevVisibleCount] = useState(0);
 
+  // sentinel hook dari react-intersection-observer
+  const [loaderRef, loaderInView] = useInView({
+    root: null,
+    rootMargin: "0px",
+    threshold: 0,
+  });
+
+  // fetch semua event sekali (atau ganti dengan pagination endpoint)
   useEffect(() => {
+    setLoading(true);
     fetch(`${API_BASE_URL}/events/all`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
+        if (data?.success && Array.isArray(data.data?.events)) {
           const mappedEvents = data.data.events.map((event) => ({
             id: event.id,
             slug: event.slug,
@@ -28,12 +41,40 @@ export default function Home() {
             type: event.tipe,
           }));
           setEvents(mappedEvents);
+          setHasMore(mappedEvents.length > 6);
+        } else {
+          setEvents([]);
+          setHasMore(false);
         }
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error("Fetch events error:", err);
+        setEvents([]);
+        setHasMore(false);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  // Animasi dasar
+  // ketika sentinel terlihat, tambah visibleCount
+  useEffect(() => {
+    if (loaderInView && !loading && hasMore) {
+      setLoading(true);
+      setTimeout(() => {
+        setPrevVisibleCount(visibleCount); // simpan batas lama
+        setVisibleCount((prev) => {
+          const next = prev + 6;
+          if (next >= events.length) {
+            setHasMore(false);
+            return events.length;
+          }
+          return next;
+        });
+        setLoading(false);
+      }, 600);
+    }
+  }, [loaderInView, loading, hasMore, events.length, visibleCount]);
+
+  // Animasi dasar & FadeInSection (tetap pakai yang sebelumnya)
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
     visible: {
@@ -43,7 +84,6 @@ export default function Home() {
     },
   };
 
-  // Helper untuk animasi scroll
   const FadeInSection = ({ children, delay = 0, variant = fadeUp }) => {
     const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
     return (
@@ -63,7 +103,7 @@ export default function Home() {
     <div>
       {/* === HERO SECTION === */}
       <section
-        className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-16 overflow-hidden mt-16"
+        className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-28 overflow-hidden mt-16"
         style={{
           backgroundImage: `url(${heroImage})`,
           backgroundSize: "cover",
@@ -84,15 +124,13 @@ export default function Home() {
             weight="bold"
             className="text-white mb-4 drop-shadow-lg"
           >
-            Smart & Precision
+            Tepat & Efisien
             <br />
-            Event Management
-            <br />
-            System
+            Sistem Manajemen Acara AirNav
           </Typography>
           <Typography type="body1" className="text-gray-100 drop-shadow">
-            From planning to execution — everything is managed intelligently,
-            accurately, and efficiently.
+            Mulai dari perencanaan hingga pelaksanaan — setiap detail dikelola
+            dengan presisi, akurasi, dan efisiensi tinggi.
           </Typography>
         </motion.div>
 
@@ -113,15 +151,15 @@ export default function Home() {
 
       {/* === ABOUT SECTION === */}
       <section
-        className="bg-blue-50 py-16 px-8 md:px-16 grid md:grid-cols-2 md:gap-6 gap-8 items-center"
+        className="bg-blue-50 py-16 px-8 md:px-28 grid md:grid-cols-2 gap-12 items-center"
         id="tentang"
       >
         <FadeInSection delay={0.1}>
-          <div className="flex justify-center">
+          <div className="">
             <img
               src={airnav}
               alt="AirNav Event Management"
-              className="w-full h-auto max-w-100 rounded-xl mx-auto"
+              className="w-full h-auto max-w-120 rounded-xl"
             />
           </div>
         </FadeInSection>
@@ -133,67 +171,78 @@ export default function Home() {
               weight="semibold"
               className="text-gray-900 mb-2"
             >
-              About <span className="text-blue-700">AirNav</span> Event
-              Management
+              Tentang <span className="text-blue-700">NavEvent</span> Sistem
+              Manajemen Acara AirNav
             </Typography>
             <Typography type="body1" className="text-gray-600 leading-relaxed">
-              AirNav Event Management is a smart and integrated system designed
-              to ensure efficiency, precision, and professionalism in every
-              event. With advanced technology and an intuitive interface, it
-              simplifies scheduling, participant management, and progress
-              monitoring.
+              NavEvent adalah sistem pintar dan terintegrasi yang dirancang
+              untuk memastikan efisiensi, ketepatan, dan profesionalisme di
+              setiap acara. Dengan teknologi canggih dan antarmuka yang
+              intuitif, sistem ini memudahkan penjadwalan, pengelolaan peserta,
+              serta pemantauan progres acara.
             </Typography>
           </div>
         </FadeInSection>
       </section>
 
       {/* === EVENTS SECTION === */}
+
       <section
-        className="py-20 px-4 sm:px-8 md:px-16 bg-white text-center overflow-hidden"
+        className="py-20 px-8 md:px-28 bg-white text-center overflow-hidden"
         id="acara"
       >
         <FadeInSection delay={0.1}>
           <Typography type="heading4" weight="bold" className="mb-10">
-            AirNav Events
+            Acara AirNav
           </Typography>
         </FadeInSection>
 
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event, index) => (
-              <FadeInSection key={event.id} delay={index * 0.2}>
-                <CardLanding
-                  id={event.id}
-                  slug={event.slug}
-                  title={event.title}
-                  date={event.date}
-                  location={event.location}
-                  image={event.image}
-                  status={event.status}
-                  type={event.type}
-                />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.slice(0, visibleCount).map((event, index) => {
+            const isNew = index >= prevVisibleCount;
+            return isNew ? (
+              <FadeInSection
+                key={event.id}
+                delay={(index - prevVisibleCount) * 0.08}
+              >
+                <CardLanding {...event} />
               </FadeInSection>
-            ))}
-          </div>
+            ) : (
+              <CardLanding key={event.id} {...event} />
+            );
+          })}
+        </div>
+
+        {/* SENTINEL UNTUK TRIGGER LOAD BERIKUTNYA */}
+        <div
+          ref={loaderRef}
+          className="h-10 flex justify-center items-center mt-8"
+        >
+          {loading && <p className="text-gray-500">Memuat...</p>}
         </div>
       </section>
-
-      {/* === SUPPORTED SECTION === */}
-      <section className="bg-blue-50 py-16 text-center px-8">
+      <section className="bg-blue-50 py-16 text-center px-4 sm:px-8">
         <FadeInSection delay={0.1}>
-          <Typography type="heading5" weight="semibold" className="mb-8">
+          <Typography
+            type="heading5"
+            weight="semibold"
+            className="mb-8 text-gray-800"
+          >
             Supported by
           </Typography>
         </FadeInSection>
-
         <FadeInSection delay={0.3}>
-          <div className="flex flex-row justify-center items-center lg:gap-12 gap-4">
-            <img src={bumn} alt="BUMN" className="lg:h-20 h-14" />
-            <img src={kemenhub} alt="Kemenhub" className="lg:h-20 h-14" />
+          <div className="flex flex-wrap justify-center items-center gap-6 lg:gap-12 px-4">
+            <img src={bumn} alt="BUMN" className="h-12 sm:h-14 lg:h-20" />
             <img
               src="/src/assets/airnav-logo.png"
               alt="AirNav Indonesia"
-              className="lg:h-20 h-14"
+              className="h-12 sm:h-14 lg:h-20"
+            />
+            <img
+              src={maganghub}
+              alt="Maganghub"
+              className="h-12 sm:h-14 lg:h-20"
             />
           </div>
         </FadeInSection>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import Card from "../../../components/card";
-// import { Bell } from "lucide-react";
 import { useEvents } from "../../../contexts/EventContext";
 import axios from "axios";
 
@@ -98,12 +97,6 @@ const Event = () => {
           </h1>
         </div>
         <div className="flex items-center gap-3">
-          {/* <button
-            className="p-3 rounded-full bg-primary-10 text-primary"
-            onClick={() => {}}
-          >
-            <Bell />
-          </button> */}
           {profileImage && (
             <img 
               src={profileImage}

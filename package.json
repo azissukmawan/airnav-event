@@ -18,21 +18,18 @@
     "framer-motion": "^12.23.24",
     "gensync": "^1.0.0-beta.2",
     "lucide-react": "^0.548.0",
-    "postcss-import": "^16.1.1",
     "prop-types": "^15.8.1",
-    "react": "^18.3.1",
-    "react-confetti": "^6.4.0",
-    "react-custom-roulette": "^1.4.1",
+    "react": "^18.3.1", 
     "react-datepicker": "^8.8.0",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^10.0.0",
     "react-router-dom": "^7.9.4",
-    "react-use": "^17.6.0",
     "tailwind-scrollbar-hide": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@rollup/rollup-win32-x64-msvc": "^4.52.5",
     "@tailwindcss/postcss": "^4.1.16",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
@@ -44,6 +41,6 @@
     "globals": "^16.4.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.16",
-    "vite": "^7.1.12"
+    "vite": "^7.1.7"
   }
 }

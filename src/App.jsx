@@ -8,6 +8,7 @@ import Login from "./pages/auth/login";
 import Register from "./pages/auth/register";
 import VerifyCode from "./pages/auth/verify-code";
 import ForgotPassword from "./pages/auth/forgot-password";
+import ResetPassword from "./pages/auth/reset-password";
 
 // Guest pages
 import LandingPage from "./pages/LandingPage";
@@ -29,7 +30,6 @@ import Profile from "./pages/user/profile";
 import CertificatePreview from "./pages/user/certificate";
 
 function App() {
-
   return (
     <Router>
       <Routes>
@@ -48,13 +48,17 @@ function App() {
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
+        {/* ▼▼▼ TAMBAHKAN RUTE INI ▼▼▼ */}
+        <Route path="/reset-password" element={<ResetPassword />} />
+        {/* ▲▲▲ SELESAI ▲▲▲ */}
+
         {/* Admin routes */}
         <Route path="/admin" element={<Dashboard />} />
-        <Route path="/admin/detail" element={<AdminDetail />} />
+        <Route path="/admin/event/:id" element={<AdminDetail />} />
         <Route path="/admin/events" element={<AdminEvent />} />
-        <Route path="/admin/doorprize" element={<Doorprize />} />
+        <Route path="/admin/event/doorprize/:id" element={<Doorprize />} />
         <Route path="/InfoAcara" element={<InfoAcara />} />
-        <Route path="/doorprize" element={<Doorprize />} />
+        {/* <Route path="/doorprize" element={<Doorprize />} /> */}
 
         {/* User routes */}
         <Route

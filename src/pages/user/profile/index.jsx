@@ -260,25 +260,25 @@ const Profile = () => {
             <div className="space-y-2">
               <div className="space-y-2">
                 <Typography type="caption1" className="text-typo-secondary">Username</Typography>
-                <div className="p-4 bg-typo-white2 rounded-lg">
+                <div className="px-4 py-3 bg-typo-white2 rounded-lg">
                   <Typography type="body" weight="semibold" className="text-typo">{profile?.username || "-"}</Typography>
                 </div>
               </div>
               <div className="space-y-2">
                 <Typography type="caption1" className="text-typo-secondary">Nama Lengkap</Typography>
-                <div className="p-4 bg-typo-white2 rounded-lg">
+                <div className="px-4 py-3 bg-typo-white2 rounded-lg">
                   <Typography type="body" weight="semibold" className="text-typo">{profile?.name || "-"}</Typography>
                 </div>
               </div>
               <div className="space-y-2">
                 <Typography type="caption1" className="text-typo-secondary">No. Whatsapp</Typography>
-                <div className="p-4 bg-typo-white2 rounded-lg">
+                <div className="px-4 py-3 bg-typo-white2 rounded-lg">
                   <Typography type="body" weight="semibold" className="text-typo">{profile?.telp || "-"}</Typography>
                 </div>
               </div>
               <div className="space-y-2">
                 <Typography type="caption1" className="text-typo-secondary">Email</Typography>
-                <div className="p-4 bg-typo-white2 rounded-lg">
+                <div className="px-4 py-3 bg-typo-white2 rounded-lg">
                   <Typography type="body" weight="semibold" className="text-typo">{profile?.email || "-"}</Typography>
                 </div>
               </div>

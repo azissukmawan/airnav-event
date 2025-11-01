@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Page,
   Text,
@@ -8,7 +9,7 @@ import {
   View,
   Image,
 } from "@react-pdf/renderer";
-import bgImage from "../../../assets/cert.png";
+import bgImage from "../../../assets/cert.jpg";
 
 // Styles
 const styles = StyleSheet.create({
@@ -58,6 +59,27 @@ const Certificate = ({ name, number, background }) => (
 export default function CertificatePreview() {
   const [name, setName] = useState("John Doe");
   const [number, setNumber] = useState("00082/KODEEEEEEEEEEEE/FHCI01/5/24");
+
+  useEffect(() => {
+    const getSertif = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_BASE_URL}/getSertif`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("Response getSertif:", response.data);
+
+        // contoh: ubah sesuai struktur datanya nanti
+        // setName(response.data.name);
+        // setNumber(response.data.number);
+      } catch (error) {
+        console.error("Error fetching certificate data:", error);
+      }
+    };
+
+    getSertif();
+  }, []);
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>

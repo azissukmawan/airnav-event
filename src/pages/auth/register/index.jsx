@@ -63,6 +63,13 @@ export default function Register() {
     if (!formData.email.trim()) newErrors.email = "Email wajib diisi.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email))
       newErrors.email = "Format email tidak valid.";
+    else if (
+      formData.status === "karyawan" &&
+      !formData.email.endsWith("@airnavindonesia.co.id")
+    ) {
+      newErrors.email =
+        "Email karyawan harus menggunakan domain @airnavindonesia.co.id.";
+    }
 
     const passwordError = validatePassword(formData.password);
     if (passwordError) newErrors.password = passwordError;
@@ -90,18 +97,17 @@ export default function Register() {
 
     setLoading(true);
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/register`,
-        {
-          name: formData.name,
-          username: formData.username,
-          email: formData.email,
-          telp: formData.phone,
-          password: formData.password,
-          password_confirmation: formData.password,
-          status_karyawan: formData.status === "karyawan" ? "1" : "0",
-        }
-      );
+      const response = await axios.post(`${API_BASE_URL}/register`, {
+        name: formData.name,
+        username: formData.username,
+        email: formData.email,
+        telp: formData.phone,
+        password: formData.password,
+        password_confirmation: formData.password,
+        status_karyawan: formData.status === "karyawan" ? "1" : "0",
+      });
+
+      console.log("Response register:", response.data);
 
       setMessage("Registrasi berhasil! Silakan verifikasi akun Anda.");
 
@@ -109,7 +115,7 @@ export default function Register() {
         navigate("/verify-code", { state: { email: formData.email } });
       }, 1000);
     } catch (error) {
-      console.error("Error:", error.response?.data || error.message);
+      console.error("Error register:", error.response?.data || error.message);
       const serverErrors = error.response?.data?.errors || {};
       const newErrors = {};
 
@@ -152,7 +158,8 @@ export default function Register() {
                 Event Management System
               </h1>
               <p className="text-sm text-gray-200 max-w-sm">
-                Satu sistem, semua event terkendali.
+                Satu sistem, semua event terkendali. Dari perencanaan hingga
+                laporan, semuanya jadi lebih cepat dan teratur.
               </p>
             </div>
           </div>
@@ -160,6 +167,27 @@ export default function Register() {
           {/* FORM */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
             <h2 className="text-2xl font-bold text-center mb-6">Daftar</h2>
+
+            {/* Pesan Success/Error Global */}
+            {message && (
+              <div
+                className={`mb-4 p-3 rounded-lg ${
+                  message.includes("berhasil")
+                    ? "bg-green-50 border border-green-200"
+                    : "bg-red-50 border border-red-200"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    message.includes("berhasil")
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {message}
+                </p>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Nama */}

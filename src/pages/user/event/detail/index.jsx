@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Clock, Download, Copy, Facebook, MessageCircle, X } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Download,
+  Copy,
+  Facebook,
+  MessageCircle,
+  X,
+} from "lucide-react";
 import { Typography } from "../../../../components/typography";
 import { Button } from "../../../../components/button";
-import Breadcrumb from "../../../../components/breadcrumb";
+import Breadcrumb from "../../../../components/Breadcrumb";
 import { useEvents } from "../../../../contexts/EventContext";
+import Alert from "../../../../components/alert";
+import axios from "axios";
 
 const breadcrumbItems = [
   { label: "Beranda", link: "/user" },
@@ -19,6 +30,8 @@ const DetailEvent = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [loadingRegistered, setLoadingRegistered] = useState(true);
+  const [alert, setAlert] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const event = events.find((e) => e.id === parseInt(id));
 
@@ -35,7 +48,7 @@ const DetailEvent = () => {
           }
         );
         const result = await response.json();
-        
+
         if (result.success) {
           setRegisteredEvents(result.data.data || []);
         }
@@ -60,7 +73,7 @@ const DetailEvent = () => {
           <Typography type="heading3" className="text-gray-900 mb-4">
             Event tidak ditemukan
           </Typography>
-          <Button variant="primary" onClick={() => navigate('/user')}>
+          <Button variant="primary" onClick={() => navigate("/user")}>
             Kembali ke Beranda
           </Button>
         </div>
@@ -74,8 +87,10 @@ const DetailEvent = () => {
   const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
   const eventStart = new Date(event.mdl_acara_mulai);
   const eventEnd = new Date(event.mdl_acara_selesai);
-  
-  const isRegistered = registeredEvents.some(e => e.modul_acara_id === event.id);
+
+  const isRegistered = registeredEvents.some(
+    (e) => e.modul_acara_id === event.id
+  );
 
   let buttonText = "";
   let buttonVariant = "primary";
@@ -85,8 +100,14 @@ const DetailEvent = () => {
     buttonText = "Acara Telah Selesai";
     buttonVariant = "third";
   } else if (isRegistered) {
-    buttonText = "Terdaftar";
-    buttonVariant = "green";
+    if (now < eventStart) {
+      buttonText = "Batal Daftar";
+      buttonVariant = "red";
+      canRegister = true; // pakai flag yang sama untuk aksi
+    } else {
+      buttonText = "Terdaftar";
+      buttonVariant = "green";
+    }
   } else if (now >= registrationStart && now <= registrationEnd) {
     buttonText = "Daftar Sekarang";
     buttonVariant = "primary";
@@ -106,19 +127,81 @@ const DetailEvent = () => {
   };
 
   const handleRegister = () => {
-    if (canRegister) {
+    console.log("handleRegister clicked");
+    if (isRegistered && now < eventStart) {
+      setShowCancelModal(true);
+    } else if (canRegister && !isRegistered) {
       setShowConfirmModal(true);
+    }
+  };
+
+  const cancelEventRegis = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.delete(
+        `${API_BASE_URL}/events/${id}/batal-daftar`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (response.data?.success) {
+        setAlert({
+          type: "info",
+          message: "Pendaftaran Anda telah dibatalkan.",
+        });
+        setShowCancelModal(false);
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setAlert({
+          type: "error",
+          message: response.data?.message || "Gagal membatalkan pendaftaran.",
+        });
+      }
+    } catch (error) {
+      console.error("Error cancelling registration:", error);
+      setAlert({
+        type: "error",
+        message: "Terjadi kesalahan saat membatalkan pendaftaran.",
+      });
     }
   };
 
   const confirmRegis = async () => {
     try {
-      alert("Anda berhasil mendaftar event!");
-      setShowConfirmModal(false);
-      window.location.reload();
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        `${API_BASE_URL}/events/${id}/daftar`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data?.success) {
+        setAlert({
+          type: "success",
+          message: "Anda berhasil mendaftar event!",
+        });
+        setShowConfirmModal(false);
+
+        // reload setelah 1,5 detik supaya alert sempat tampil
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        setAlert({
+          type: "error",
+          message:
+            response.data?.message || "Gagal mendaftar. Silakan coba lagi.",
+        });
+      }
     } catch (error) {
       console.error("Error registering:", error);
-      alert("Gagal mendaftar. Silakan coba lagi.");
+      setAlert({
+        type: "error",
+        message: "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
+      });
     }
   };
 
@@ -127,10 +210,10 @@ const DetailEvent = () => {
   };
 
   const downloadAllModules = () => {
-    const modules = event.files.filter(file => file.type === "module");
+    const modules = event.files.filter((file) => file.type === "module");
     if (modules && modules.length > 0) {
       modules.forEach((module) => {
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = module.url;
         link.download = module.name;
         document.body.appendChild(link);
@@ -143,37 +226,43 @@ const DetailEvent = () => {
 
   const shareToFacebook = () => {
     const url = encodeURIComponent(window.location.href);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${url}`,
+      "_blank"
+    );
   };
 
   const shareToWhatsApp = () => {
     const url = encodeURIComponent(window.location.href);
     const text = encodeURIComponent(`Lihat event ini: ${event.mdl_nama}`);
-    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+    window.open(`https://wa.me/?text=${text}%20${url}`, "_blank");
   };
 
   const shareToX = () => {
     const url = encodeURIComponent(window.location.href);
     const text = encodeURIComponent(`Lihat event ini: ${event.mdl_nama}`);
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+    window.open(
+      `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
+      "_blank"
+    );
   };
 
   // Format tanggal
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('id-ID', {
-      hour: '2-digit',
-      minute: '2-digit'
+    return date.toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -181,10 +270,23 @@ const DetailEvent = () => {
     <div className="pb-10">
       <Breadcrumb items={breadcrumbItems} />
 
+      {alert && (
+        <div className="fixed top-6 right-6 z-50">
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
+
       <div className="relative w-full h-64 sm:h-72 md:h-80 rounded-2xl overflow-hidden mt-6">
         <div className="absolute inset-0 w-full h-full">
           <img
-            src={event.media_urls?.banner || 'https://via.placeholder.com/1200x600?text=Event+Banner'}
+            src={
+              event.media_urls?.banner ||
+              "https://via.placeholder.com/1200x600?text=Event+Banner"
+            }
             alt={event.mdl_nama}
             className="w-full h-full object-cover blur-sm scale-110"
           />
@@ -202,18 +304,24 @@ const DetailEvent = () => {
               >
                 {event.mdl_nama}
               </Typography>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-white/90">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <Typography type="body" className="text-white text-sm sm:text-base">
-                    {event.mdl_lokasi || 'Lokasi belum ditentukan'}
+                  <Typography
+                    type="body"
+                    className="text-white text-sm sm:text-base"
+                  >
+                    {event.mdl_lokasi || "Lokasi belum ditentukan"}
                   </Typography>
                 </div>
-                
+
                 <div className="flex items-center gap-2 text-white/90">
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <Typography type="body" className="text-white text-sm sm:text-base">
+                  <Typography
+                    type="body"
+                    className="text-white text-sm sm:text-base"
+                  >
                     {formatDate(event.mdl_acara_mulai)}
                   </Typography>
                 </div>
@@ -223,7 +331,10 @@ const DetailEvent = () => {
             <div className="hidden lg:block">
               <div className="h-48 lg:h-64 rounded-xl overflow-hidden shadow-2xl">
                 <img
-                  src={event.media_urls?.banner || 'https://via.placeholder.com/400x300?text=Event'}
+                  src={
+                    event.media_urls?.banner ||
+                    "https://via.placeholder.com/400x300?text=Event"
+                  }
                   alt="Event thumbnail"
                   className="w-full h-full object-cover"
                 />
@@ -240,16 +351,13 @@ const DetailEvent = () => {
             <Typography type="heading5" weight="semibold" className="mb-2">
               Tentang Acara
             </Typography>
-            <Typography
-              type="body"
-              className="text-typo-secondary"
-            >
-              {event.mdl_deskripsi || 'Tidak ada deskripsi'}
+            <Typography type="body" className="text-typo-secondary">
+              {event.mdl_deskripsi || "Tidak ada deskripsi"}
             </Typography>
           </div>
 
           <div className="flex flex-col justify-center space-y-6">
-            <Button 
+            <Button
               variant={buttonVariant}
               className="w-full md:w-auto"
               onClick={handleRegister}
@@ -257,6 +365,39 @@ const DetailEvent = () => {
             >
               {buttonText}
             </Button>
+
+            {showConfirmModal && (
+              <div
+                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+                onClick={() => setShowConfirmModal(false)}
+              >
+                <div
+                  className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Typography
+                    type="heading5"
+                    weight="bold"
+                    className="text-gray-900 mb-4"
+                  >
+                    Konfirmasi Pendaftaran
+                  </Typography>
+                  <Typography type="body" className="text-gray-600 mb-6">
+                    Apakah Anda yakin ingin mendaftar pada event "
+                    {event.mdl_nama}"?
+                  </Typography>
+
+                  <div className="flex justify-center gap-3">
+                    <Button variant="third" onClick={cancelRegis}>
+                      Batal
+                    </Button>
+                    <Button variant="primary" onClick={confirmRegis}>
+                      Ya, Daftar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col gap-3">
               <Typography type="body" weight="medium" className="text-gray-700">
@@ -316,7 +457,11 @@ const DetailEvent = () => {
                     <Download className="w-8 h-8" />
                   </div>
                   <div>
-                    <Typography type="body" weight="bold" className="text-primary mb-1">
+                    <Typography
+                      type="body"
+                      weight="bold"
+                      className="text-primary mb-1"
+                    >
                       Rundown
                     </Typography>
                     <Typography type="caption2" className="text-typo-secondary">
@@ -340,7 +485,11 @@ const DetailEvent = () => {
                     <Download className="w-8 h-8" />
                   </div>
                   <div className="text-left">
-                    <Typography type="body" weight="bold" className="text-success mb-1">
+                    <Typography
+                      type="body"
+                      weight="bold"
+                      className="text-success mb-1"
+                    >
                       Modul
                     </Typography>
                     <Typography type="caption2" className="text-typo-secondary">
@@ -376,7 +525,7 @@ const DetailEvent = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Lokasi:</strong> {event.mdl_lokasi || 'Online'}
+                <strong>Lokasi:</strong> {event.mdl_lokasi || "Online"}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -384,7 +533,9 @@ const DetailEvent = () => {
                 <Calendar className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Pendaftaran:</strong> {formatDate(event.mdl_pendaftaran_mulai)} - {formatDate(event.mdl_pendaftaran_selesai)}
+                <strong>Tanggal Pendaftaran:</strong>{" "}
+                {formatDate(event.mdl_pendaftaran_mulai)} -{" "}
+                {formatDate(event.mdl_pendaftaran_selesai)}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -392,7 +543,8 @@ const DetailEvent = () => {
                 <Calendar className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Acara:</strong> {formatDate(event.mdl_acara_mulai)}
+                <strong>Tanggal Acara:</strong>{" "}
+                {formatDate(event.mdl_acara_mulai)}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -400,7 +552,8 @@ const DetailEvent = () => {
                 <Clock className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)} - {formatTime(event.mdl_acara_selesai)} WIB
+                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)}{" "}
+                - {formatTime(event.mdl_acara_selesai)} WIB
               </Typography>
             </div>
           </div>
@@ -423,19 +576,37 @@ const DetailEvent = () => {
         )}
 
         {/* Confirm Modal */}
-        {showConfirmModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelRegis}>
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <Typography type="heading5" weight="bold" className="text-gray-900 mb-4">
-                Konfirmasi Pendaftaran
+        {showCancelModal && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setShowCancelModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Typography
+                type="heading5"
+                weight="bold"
+                className="text-gray-900 mb-4"
+              >
+                Batalkan Pendaftaran
               </Typography>
               <Typography type="body" className="text-gray-600 mb-6">
-                Apakah Anda bersedia mengikuti event "{event.mdl_nama}"?
+                Apakah Anda yakin ingin membatalkan pendaftaran pada event "
+                {event.mdl_nama}"?
               </Typography>
 
               <div className="flex justify-center gap-3">
-                <Button variant="red" onClick={cancelRegis}>Tidak</Button>
-                <Button variant="primary" onClick={confirmRegis}>Ya, Saya Bersedia</Button>
+                <Button
+                  variant="third"
+                  onClick={() => setShowCancelModal(false)}
+                >
+                  Tidak
+                </Button>
+                <Button variant="red" onClick={cancelEventRegis}>
+                  Ya, Batalkan
+                </Button>
               </div>
             </div>
           </div>

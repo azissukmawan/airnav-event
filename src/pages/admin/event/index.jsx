@@ -1,90 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
 import Sidebar from "../../../components/sidebar";
 import Table from "../../../components/table";
 import Search from "../../../components/form/SearchBar";
 import Breadcrumb from "../../../components/breadcrumb";
-import { Bell } from "lucide-react";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
+import { ArrowUpDown } from "lucide-react";
 import AddEvent from "../../../components/AddEvent";
 import Pagination from "../../../components/pagination";
 import DeletePopup from "../../../components/Popup/Delete";
 
+export const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+
 const AdminEvent = () => {
+  const [eventData, setEventData] = useState([]);
   const [search, setSearch] = useState("");
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isDeleteSuccess, setIsDeleteSuccess] = useState(false);
   const [selectedEventId, setSelectedEventId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // 🔹 Data awal event
-  const initialData = [
-    {
-      id: 1,
-      nama: "Rapat Koordinasi Tahunan",
-      tglBuka: "01/10/2025",
-      jenis: "Rapat",
-      tglAcara: "10/10/2025",
-      status: "Berlangsung",
-      peserta: 120,
-    },
-    {
-      id: 2,
-      nama: "Pelatihan Manajemen Risiko",
-      tglBuka: "03/10/2025",
-      jenis: "Pelatihan",
-      tglAcara: "15/10/2025",
-      status: "Segera Hadir",
-      peserta: 85,
-    },
-    {
-      id: 3,
-      nama: "Workshop Sistem Informasi",
-      tglBuka: "05/10/2025",
-      jenis: "Workshop",
-      tglAcara: "18/10/2025",
-      status: "Berakhir",
-      peserta: 60,
-    },
-    {
-      id: 4,
-      nama: "Rapat Evaluasi Triwulan",
-      tglBuka: "08/10/2025",
-      jenis: "Rapat",
-      tglAcara: "20/10/2025",
-      status: "Segera Hadir",
-      peserta: 45,
-    },
-    {
-      id: 5,
-      nama: "Sosialisasi Kebijakan Baru",
-      tglBuka: "10/10/2025",
-      jenis: "Sosialisasi",
-      tglAcara: "22/10/2025",
-      status: "Berlangsung",
-      peserta: 90,
-    },
-    {
-      id: 6,
-      nama: "Rapat Pimpinan",
-      tglBuka: "12/10/2025",
-      jenis: "Rapat",
-      tglAcara: "25/10/2025",
-      status: "Berakhir",
-      peserta: 30,
-    },
-    {
-      id: 7,
-      nama: "Seminar Keselamatan Penerbangan",
-      tglBuka: "13/10/2025",
-      jenis: "Seminar",
-      tglAcara: "28/10/2025",
-      status: "Segera Hadir",
-      peserta: 200,
-    },
-  ];
-
-  const [eventData, setEventData] = useState(initialData);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -93,117 +30,142 @@ const AdminEvent = () => {
     { label: "Daftar Acara" },
   ];
 
-  // 🔹 Search handler
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE_URL}/admin/events?per_page=100`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("📦 Response API:", res.data);
+        const events = Array.isArray(res.data?.data?.data)
+          ? res.data.data.data
+          : [];
+
+        setEventData(events);
+      } catch (error) {
+        console.error("❌ Gagal fetch event:", error);
+        setError("Gagal mengambil data event");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, [token]);
+
+  // === SEARCH ===
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
-  // 🔹 Filtered data
   const filteredData = eventData.filter((item) =>
-    item.nama.toLowerCase().includes(search.toLowerCase())
+    item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
   );
 
-  // 🔹 Pagination
+  // === PAGINATION ===
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
-  // 🔹 Delete action
-  const handleDelete = () => {
-    setEventData((prev) => prev.filter((item) => item.id !== selectedEventId));
-    setIsDeleteOpen(false);
-    setTimeout(() => setIsDeleteSuccess(true), 300);
+  // === DELETE ===
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/events/${selectedEventId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEventData((prev) => prev.filter((item) => item.id !== selectedEventId));
+      setIsDeleteOpen(false);
+    } catch (err) {
+      console.error("❌ Gagal menghapus event:", err);
+      alert("Gagal menghapus event!");
+    }
   };
 
+  // === SORT (dummy function, bisa diimplementasikan nanti) ===
+  const handleSort = (field) => {
+    console.log("Sort by:", field);
+    // Implementasi sorting bisa ditambahkan di sini
+  };
+
+  // === TABLE COLUMNS ===
   const columns = [
-    {
-      header: "No",
-      accessor: (row) => row.id,
-      className: "w-16 text-center",
+    { 
+      header: "No", 
+      accessor: (row, i) => {
+        const index = paginatedData.indexOf(row);
+        return index === -1 ? '-' : ((currentPage - 1) * rowsPerPage) + index + 1;
+      },
+      className: "w-16 text-center" 
     },
+    { header: "Nama Acara", accessor: (row) => row.mdl_nama || "-" },
     {
-      header: "Nama Acara",
-      accessor: (row) => row.nama,
-      className: "text-left",
+      header: "Tanggal Buka Pendaftaran",
+      accessor: (row) =>
+        row.mdl_pendaftaran_mulai
+          ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
+          : "-",
+    },
+    { header: "Jenis Acara", accessor: (row) => row.mdl_kategori || "-" },
+    {
+      header: "Tanggal Acara",
+      accessor: (row) =>
+        row.mdl_acara_mulai
+          ? new Date(row.mdl_acara_mulai).toLocaleDateString("id-ID")
+          : "-",
     },
     {
       header: (
-        <div className="whitespace-normal">
-          Tanggal Buka <br /> Pendaftaran
+        <div
+          onClick={() => handleSort("status")}
+          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
+        >
+          Status <ArrowUpDown size={14} />
         </div>
       ),
-      accessor: (row) => row.tglBuka,
-    },
-    { header: "Jenis Acara", accessor: (row) => row.jenis },
-    { header: "Tanggal Acara", accessor: (row) => row.tglAcara },
-    {
-      header: "Status",
       accessor: (row) => {
-        let statusClass = "";
-        switch (row.status) {
-          case "Berlangsung":
-            statusClass = "bg-green-100 text-green-700";
-            break;
-          case "Segera Hadir":
-            statusClass = "bg-yellow-100 text-yellow-700";
-            break;
-          case "Berakhir":
-            statusClass = "bg-red-100 text-red-700";
-            break;
-          default:
-            statusClass = "bg-gray-100 text-gray-600";
-        }
+        const status = row.mdl_status || "unknown";
+        const statusClass =
+          status === "berlangsung"
+            ? "bg-green-100 text-green-700"
+            : status === "draft"
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-gray-100 text-gray-700";
         return (
-          <span
-            className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}
-          >
-            {row.status}
+          <span className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}>
+            {status}
           </span>
         );
       },
     },
     {
-      header: "Peserta",
-      accessor: (row) => row.peserta,
-      className: "text-center",
-    },
-    {
       header: "Aksi",
-      className: "text-center",
       accessor: (row) => (
         <div className="flex justify-center items-center space-x-3">
-          {/* VIEW DETAIL */}
-          <Link to="/Admin/detail">
-            <button
-              onClick={() => console.log("View:", row.id)}
-              className="text-blue-500 hover:text-blue-700 transition-colors"
-              title="Lihat"
-            >
+          <Link to={`/admin/event/${row.id}`}>
+            <button className="text-blue-500 hover:text-blue-700" title="Lihat">
               <FiEye size={18} />
             </button>
           </Link>
-
-          {/* EDIT */}
-          <Link to="/InfoAcara">
-            <button
-              onClick={() => console.log("Edit:", row.id)}
-              className="text-yellow-500 hover:text-yellow-700 transition-colors"
-              title="Edit"
-            >
-              <FiEdit size={18} />
-            </button>
-          </Link>
-
-          {/* DELETE */}
+          <button
+            onClick={() => console.log("Edit:", row.id)}
+            className="text-yellow-500 hover:text-yellow-700"
+            title="Edit"
+          >
+            <FiEdit size={18} />
+          </button>
           <button
             onClick={() => {
               setSelectedEventId(row.id);
               setIsDeleteOpen(true);
             }}
-            className="text-red-500 hover:text-red-700 transition-colors"
+            className="text-red-500 hover:text-red-700"
             title="Hapus"
           >
             <FiTrash2 size={18} />
@@ -214,41 +176,21 @@ const AdminEvent = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-50">
       <Sidebar role="admin" />
-
-      <main className="flex-1 p-6  space-y-6 bg-gray-50 min-w-0">
-        {/* Breadcrumb */}
-        <div className="mt-4">
-          <Breadcrumb items={breadcrumbItems} />
-        </div>
-        {/* Header */}
+      <main className="flex-1 p-6 space-y-6 bg-gray-50">
+        <Breadcrumb items={breadcrumbItems} />
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold text-blue-900">Daftar Acara</h1>
-          <button
-            className="mt-1 mr-2 py-3 px-4 rounded-4xl bg-blue-100"
-            onClick={() => console.log("Broadcast")}
-          >
-            <Bell />
-          </button>
         </div>
 
-        <p className="text-gray-500">
-          Menampilkan Halaman Event dari Acara{" "}
-          <span className="font-semibold italic">“Nama Acara”</span>
-        </p>
-
-        {/* Search & Button */}
-        <div className="flex md:flex-row items-center md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
-          <div className="flex-1 w-full">
-            <Search
-              placeholder="Search nama acara..."
-              onSearch={handleSearchChange}
-            />
+        {/* Search + Button */}
+        <div className="flex md:flex-row items-center md:space-x-4 mb-10">
+          <div className="flex-1">
+            <Search placeholder="Cari nama acara..." onSearch={handleSearchChange} />
           </div>
-
           <Link
-            className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+            className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950"
             onClick={() => setIsAddEventOpen(true)}
           >
             Tambah Acara
@@ -257,11 +199,13 @@ const AdminEvent = () => {
 
         {/* Table */}
         <section className="bg-white rounded-lg shadow-md p-6">
-          <div className="relative w-full overflow-x-auto rounded-lg border border-gray-200 admin-event-table">
+          {loading ? (
+            <p className="text-center text-gray-500">Memuat data...</p>
+          ) : error ? (
+            <p className="text-center text-red-500">{error}</p>
+          ) : (
             <Table columns={columns} data={paginatedData} />
-          </div>
-
-          {/* Pagination */}
+          )}
           <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
             <Pagination
               currentPage={currentPage}
@@ -269,60 +213,20 @@ const AdminEvent = () => {
               totalItems={filteredData.length}
               onPageChange={setCurrentPage}
               rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(value) => {
-                setRowsPerPage(value);
+              onRowsPerPageChange={(val) => {
+                setRowsPerPage(val);
                 setCurrentPage(1);
               }}
             />
           </div>
         </section>
 
-        {/* Popup Add Event */}
-        <AddEvent
-          isOpen={isAddEventOpen}
-          onClose={() => setIsAddEventOpen(false)}
-        />
-
-        {/* Popup Delete Confirm */}
+        <AddEvent isOpen={isAddEventOpen} onClose={() => setIsAddEventOpen(false)} />
         <DeletePopup
           isOpen={isDeleteOpen}
           onClose={() => setIsDeleteOpen(false)}
           onConfirm={handleDelete}
         />
-
-        {/* Popup Delete Success */}
-        {isDeleteSuccess && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="mx-auto mb-3 text-green-500"
-                width="48"
-                height="48"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Berhasil!
-              </h3>
-              <p className="text-gray-600 mb-5">Data berhasil dihapus.</p>
-              <button
-                onClick={() => setIsDeleteSuccess(false)}
-                className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
-              >
-                Tutup
-              </button>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );

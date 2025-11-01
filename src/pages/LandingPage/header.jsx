@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/button";
-import { Menu as MenuIcon, X } from "lucide-react";
+import { Menu as MenuIcon, X, User } from "lucide-react";
 
 export default function Header({ menuItems }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [show, setShow] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
-  // hide header saat scroll ke bawah
+  // cek login
+  const token = localStorage.getItem("token"); // bisa ganti sesuai auth
+  const [loggedIn, setLoggedIn] = useState(!!token);
+
   useEffect(() => {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
@@ -20,18 +24,13 @@ export default function Header({ menuItems }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // fungsi smooth scroll
   const handleScrollTo = (e, href) => {
     e.preventDefault();
     const targetId = href.replace("/#", "#");
-
-    // jika belum di halaman home → arahkan ke home dulu, lalu scroll setelah pindah
     if (location.pathname !== "/") {
       navigate("/", { state: { scrollTo: targetId } });
       return;
     }
-
-    // kalau sudah di home → langsung scroll
     const target = document.querySelector(targetId);
     if (target) {
       const yOffset = -80;
@@ -39,6 +38,12 @@ export default function Header({ menuItems }) {
       window.scrollTo({ top: y, behavior: "smooth" });
       setMenuOpen(false);
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setLoggedIn(false);
+    navigate("/"); // redirect ke home
   };
 
   return (
@@ -85,12 +90,20 @@ export default function Header({ menuItems }) {
 
       {/* Tombol desktop */}
       <div className="hidden md:flex items-center gap-3">
-        <Button variant="primary" to="/login">
-          Login
-        </Button>
-        <Button variant="secondary" to="/register">
-          Daftar Akun
-        </Button>
+        {loggedIn ? (
+          <Button variant="primary" to="/user/profile">
+            Profile
+          </Button>
+        ) : (
+          <>
+            <Button variant="primary" to="/login">
+              Login
+            </Button>
+            <Button variant="secondary" to="/register">
+              Daftar Akun
+            </Button>
+          </>
+        )}
       </div>
 
       {/* Tombol mobile menu */}
@@ -132,12 +145,35 @@ export default function Header({ menuItems }) {
               );
             })}
             <div className="flex flex-col gap-3 mt-4 w-full px-8">
-              <Button variant="primary" onClick={() => setMenuOpen(false)}>
-                Login
-              </Button>
-              <Button variant="secondary" onClick={() => setMenuOpen(false)}>
-                Daftar Akun
-              </Button>
+              {loggedIn ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="block w-full text-center bg-gray-100 py-2 rounded-lg"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full bg-gray-100 py-2 rounded-lg"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Button variant="primary" onClick={() => setMenuOpen(false)}>
+                    Login
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Daftar Akun
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>
