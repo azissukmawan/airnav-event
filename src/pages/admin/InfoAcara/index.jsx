@@ -5,8 +5,7 @@ import { Button } from "../../../components/button";
 import AirnavLogo from "../../../assets/airnav2.png";
 import { Pencil, MapPin, CalendarPlus, Clock, Wallpaper, FileSearch, FileStack, FileUser} from "lucide-react";
 import { RadioGroup } from "../../../components/form/Radiogroup";
-import Breadcrumb from "../../../components/Breadcrumb";
-
+import Breadcrumb from "../../../components/breadcrumb";
 
 const InfoAcara = () => {
   const statusField = [
