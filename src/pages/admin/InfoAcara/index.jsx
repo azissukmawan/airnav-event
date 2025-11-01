@@ -13,7 +13,7 @@ import {
   FileUser,
 } from "lucide-react";
 import { RadioGroup } from "../../../components/form/Radiogroup";
-import Breadcrumb from "../../../components/Breadcrumb";
+import Breadcrumb from "../../../components/breadcrumb";
 import EditEvent from "../../../components/Popup/EditEvent";
 
 const InfoAcara = () => {
