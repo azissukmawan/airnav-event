@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Calendar, MapPin, Clock, Download, Copy, Facebook, MessageCircle, X } from "lucide-react";
 import { Typography } from "../../../../components/typography";
 import { Button } from "../../../../components/button";
-import Breadcrumb from "../../../../components/Breadcrumb";
+import Breadcrumb from "../../../../components/breadcrumb";
 import { useEvents } from "../../../../contexts/EventContext";
 
 const breadcrumbItems = [

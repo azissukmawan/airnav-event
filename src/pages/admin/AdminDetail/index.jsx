@@ -5,7 +5,7 @@ import axios from "axios";
 import Sidebar from "../../../components/sidebar";
 import CardList from "../../../components/CardStatus/CardList";
 import Search from "../../../components/form/SearchBar";
-import Breadcrumb from "../../../components/Breadcrumb";
+import Breadcrumb from "../../../components/breadcrumb";
 import TableParticipants from "../../../components/TableParticipants";
 import ParticipantPreview from "../../../components/ParticipantPreview";
 import { Bell, Radio } from "lucide-react";

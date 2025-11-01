@@ -4,10 +4,10 @@ import { useWindowSize } from "react-use";
 import { Wheel } from "react-custom-roulette";
 import Confetti from "react-confetti";
 import axios from "axios";
-import Modal from "../../../components/Modal";
+import Modal from "../../../components/modal";
 import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
-import Breadcrumb from "../../../components/Breadcrumb";
+import Breadcrumb from "../../../components/breadcrumb";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 
