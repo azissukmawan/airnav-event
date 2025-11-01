@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Award, ArrowUpDown } from "lucide-react";
-import Pagination from "../../../components/pagination";
+import Pagination from "../pagination";
 
 const TableParticipants = ({ participants = [], winners = [], onPreview }) => {
   const [sortField, setSortField] = useState(null);
