@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Typography } from "../../../../components/typography";
 import { Button } from "../../../../components/button";
-import Breadcrumb from "../../../../components/Breadcrumb";
+import Breadcrumb from "../../../../components/breadcrumb";
 import { useEvents } from "../../../../contexts/EventContext";
 import Alert from "../../../../components/alert";
 import axios from "axios";
