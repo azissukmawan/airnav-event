@@ -8,7 +8,7 @@ import Breadcrumb from "../../../components/breadcrumb";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 import { ArrowUpDown } from "lucide-react";
 import AddEvent from "../../../components/AddEvent";
-import Pagination from "../../../components/Pagination";
+import Pagination from "../../../components/pagination";
 import DeletePopup from "../../../components/Popup/Delete";
 
 const AdminEvent = () => {
