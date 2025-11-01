@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Typography } from "../../components/typography";
 import CardLanding from "../../components/cardLanding";
 import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
@@ -8,69 +9,29 @@ import kemenhub from "../../assets/kemenhub.png";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
-export default function Content() {
-  const events = [
-    {
-      id: 1,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Segera Hadir",
-      type: "Online",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-    {
-      id: 2,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Bisa Daftar",
-      type: "Hybrid",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-    {
-      id: 3,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Terdaftar",
-      type: "Offline",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-    {
-      id: 4,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Ditutup",
-      type: "Online",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-    {
-      id: 5,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Ditutup",
-      type: "Hybrid",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-    {
-      id: 6,
-      title: "Rapat Koordinator Bersama Jajaran Direktur",
-      date: "25 November 2025, 09:00 WIB",
-      location: "Gedung Dormitory",
-      status: "Terdaftar",
-      type: "Offline",
-      image:
-        "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    },
-  ];
+export default function Home() {
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/events/all`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          const mappedEvents = data.data.events.map((event) => ({
+            id: event.id,
+            slug: event.slug,
+            title: event.nama,
+            date: event.tanggal_mulai,
+            location: event.lokasi,
+            image: event.banner,
+            status: event.status_acara,
+            type: event.tipe,
+          }));
+          setEvents(mappedEvents);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   // Animasi dasar
   const fadeUp = {
@@ -153,7 +114,7 @@ export default function Content() {
       {/* === ABOUT SECTION === */}
       <section
         className="bg-blue-50 py-16 px-8 md:px-16 grid md:grid-cols-2 md:gap-6 gap-8 items-center"
-        id="about"
+        id="tentang"
       >
         <FadeInSection delay={0.1}>
           <div className="flex justify-center">
@@ -187,27 +148,33 @@ export default function Content() {
       </section>
 
       {/* === EVENTS SECTION === */}
-      <section className="py-20 px-8 md:px-16 bg-white text-center" id="events">
+      <section
+        className="py-20 px-4 sm:px-8 md:px-16 bg-white text-center overflow-hidden"
+        id="acara"
+      >
         <FadeInSection delay={0.1}>
           <Typography type="heading4" weight="bold" className="mb-10">
             AirNav Events
           </Typography>
         </FadeInSection>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-          {events.map((event, index) => (
-            <FadeInSection key={event.id} delay={index * 0.2}>
-              <CardLanding
-                id={event.id}
-                title={event.title}
-                date={event.date}
-                location={event.location}
-                image={event.image}
-                status={event.status}
-                type={event.type}
-              />
-            </FadeInSection>
-          ))}
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((event, index) => (
+              <FadeInSection key={event.id} delay={index * 0.2}>
+                <CardLanding
+                  id={event.id}
+                  slug={event.slug}
+                  title={event.title}
+                  date={event.date}
+                  location={event.location}
+                  image={event.image}
+                  status={event.status}
+                  type={event.type}
+                />
+              </FadeInSection>
+            ))}
+          </div>
         </div>
       </section>
 

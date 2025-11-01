@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Modal from "../modal";
 import { X } from "lucide-react";
 import Broadcast from "../Popup/Broadcast";
 
@@ -15,20 +16,26 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
 
   return (
     <>
+      {/* Overlay */}
       <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 relative">
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 transition"
-          >
-            <X size={22} />
-          </button>
+        {/* Modal Content */}
+        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg max-h-[90vh] overflow-y-auto relative">
+          {/* Header */}
+          <div className="flex justify-between items-center p-6 border-b border-gray-300">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Share Event Information
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-800 transition"
+            >
+              <X size={22} />
+            </button>
+          </div>
 
-          <h2 className="text-xl font-semibold text-gray-900 mb-6 border-b pb-2">
-            Share Event Information
-          </h2>
-
-          <form className="space-y-4" onSubmit={handleKirim}>
+          {/* Form Content */}
+          <form className="p-6 space-y-4" onSubmit={handleKirim}>
+            {/* Nama Acara */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Nama Acara
@@ -40,6 +47,8 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
                 className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
               />
             </div>
+
+            {/* Lokasi */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Lokasi
@@ -51,52 +60,30 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
                 className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
               />
             </div>
+
+            {/* Detail Acara */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mulai Pendaftaran
-                </label>
-                <input
-                  type="text"
-                  value={data.tanggalAcara || ""}
-                  readOnly
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Penutupan Pendaftaran
-                </label>
-                <input
-                  type="text"
-                  value={data.tanggalAcara || ""}
-                  readOnly
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Tanggal Acara
-                </label>
-                <input
-                  type="text"
-                  value={data.tanggalAcara || ""}
-                  readOnly
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Jam Acara
-                </label>
-                <input
-                  type="text"
-                  value={data.jamAcara || ""}
-                  readOnly
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-                />
-              </div>
+              {[
+                { label: "Mulai Pendaftaran", value: data.tanggalMulai },
+                { label: "Penutupan Pendaftaran", value: data.tanggalTutup },
+                { label: "Tanggal Acara", value: data.tanggalAcara },
+                { label: "Jam Acara", value: data.jamAcara },
+              ].map((item, i) => (
+                <div key={i}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {item.label}
+                  </label>
+                  <input
+                    type="text"
+                    value={item.value || ""}
+                    readOnly
+                    className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
+                  />
+                </div>
+              ))}
             </div>
+
+            {/* Modul Acara */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Modul Acara
@@ -106,7 +93,7 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
                   href={data.modulAcara}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5 text-green-600 hover:underline"
+                  className="inline-block w-full rounded-lg bg-gray-100 text-green-600 p-2.5 hover:underline"
                 >
                   Lihat Modul (PDF)
                 </a>
@@ -114,43 +101,29 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
                 <p className="text-gray-400">Belum ada modul diunggah</p>
               )}
             </div>
+
+            {/* Susunan Acara */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 Susunan Acara
               </label>
-              {data.modulAcara ? (
+              {data.susunanAcara ? (
                 <a
-                  href={data.modulAcara}
+                  href={data.susunanAcara}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5 text-green-600 hover:underline"
+                  className="inline-block w-full rounded-lg bg-gray-100 text-green-600 p-2.5 hover:underline"
                 >
                   Lihat Susunan Acara (PDF)
                 </a>
               ) : (
-                <p className="text-gray-400">Belum ada modul diunggah</p>
+                <p className="text-gray-400">
+                  Belum ada susunan acara diunggah
+                </p>
               )}
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Modul Acara
-              </label>
-              <input
-                type="text"
-                value={data.jamAcara || ""}
-                readOnly
-                className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Susunan Acara
-              </label>
-              <input
-                type="text"
-                value={data.jamAcara || ""}
-                readOnly
-                className="w-full rounded-lg bg-gray-100 text-gray-800 p-2.5"
-              />
-            </div>
+
+            {/* Pesan */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Pesan*
@@ -162,8 +135,10 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
                 rows={3}
                 className="w-full rounded-lg bg-white border border-gray-300 text-gray-800 p-2.5 focus:ring-1 focus:ring-green-500 resize-none"
               />
-            </div>{" "}
-            <div className="flex justify-end mt-8 gap-3">
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end mt-6 gap-3 border-t border-gray-200 pt-4">
               <button
                 type="button"
                 onClick={onClose}
@@ -181,8 +156,7 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
           </form>
         </div>
       </div>
-
-      {/* {showSuccess && (
+      {showSuccess && (
         <Broadcast
           title="Berhasil!"
           message="Informasi berhasil dikirim ke semua peserta melalui WhatsApp."
@@ -191,7 +165,7 @@ const ParticipantPreview = ({ isOpen, onClose, data }) => {
             onClose();
           }}
         />
-      )} */}
+      )}
     </>
   );
 };

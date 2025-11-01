@@ -1,11 +1,18 @@
 import React, { useState } from "react";
-import { Button } from "../../../components/button"; // Pastikan path ini benar
-import Spinner from "../../../components/spinner"; // Pastikan path ini benar
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { Button } from "../../../components/button";
+import Spinner from "../../../components/spinner";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
-import AirNav from "../../../assets/airnav-logo.png"; // Pastikan path ini benar
-import loginImage from "../../../assets/loginimage.png"; // Pastikan path ini benar
+import AirNav from "../../../assets/airnav-logo.png";
+import loginImage from "../../../assets/loginimage.png";
+
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     usernameOrEmail: "",
     password: "",
@@ -13,42 +20,97 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
+    setError("");
+  };
 
   const handleRememberChange = (e) => {
     setRememberMe(e.target.checked);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    if (!formData.usernameOrEmail.trim() || !formData.password.trim()) {
+      setError("Username/Email dan Password harus diisi.");
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const response = await axios.post(`${API_BASE_URL}/login`, {
+        login: formData.usernameOrEmail,
+        password: formData.password,
+      });
+
+      console.log("Full response:", response.data);
+
+      if (response.data.success) {
+        const userData = response.data.data.user;
+        const token = response.data.data.access_token;
+
+        console.log("User data:", userData);
+        console.log("Token received:", token);
+
+        if (!token) {
+          setError("Login berhasil tapi token tidak ditemukan. Hubungi admin.");
+          setLoading(false);
+          return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(userData));
+        localStorage.setItem("token", token);
+
+        if (rememberMe) {
+          localStorage.setItem("rememberMe", "true");
+        }
+
+        const role = userData.role?.toLowerCase();
+
+        if (role === "superadmin") {
+          console.log("Redirecting to /admin...");
+          navigate("/admin");
+        } else {
+          console.log("Redirecting to /user...");
+          navigate("/user");
+        }
+      } else {
+        console.error("Login tidak berhasil:", response.data);
+        setError(response.data.message || "Login gagal. Silakan coba lagi.");
+      }
+    } catch (error) {
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.response?.status === 401) {
+        setError("Username/Email atau Password salah.");
+      } else if (error.response?.status === 422) {
+        setError("Data yang dimasukkan tidak valid.");
+      } else {
+        setError("Terjadi kesalahan. Silakan coba lagi nanti.");
+      }
+    } finally {
       setLoading(false);
-      alert("Login simulasi selesai");
-    }, 1500);
+    }
   };
 
   return (
-    // Wrapper Halaman Penuh
     <div className="min-h-screen flex items-center justify-center bg-[#eff2f9] p-6">
-      {/* Layout Kartu Tunggal (Responsif) */}
       <div className="w-full max-w-md md:max-w-5xl bg-white rounded-2xl shadow-lg overflow-hidden">
-        {/* Grid Internal (Mobile: 1 kolom, Desktop: 2 kolom) */}
         <div className="grid md:grid-cols-[4fr_5fr]">
-          {/* === SISI KIRI/ATAS: GAMBAR === */}
+          {/* KIRI: Gambar */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
             style={{ backgroundImage: `url(${loginImage})` }}
           >
-            {/* Logo "kaca buram" */}
             <div className="absolute top-6 left-6 bg-white/30 backdrop-blur-md p-3 rounded-2xl shadow-md">
               <img src={AirNav} alt="AirNav Logo" className="w-20" />
             </div>
-            {/* Overlay Gradasi Hitam */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            {/* Teks Judul */}
             <div className="relative text-white z-10">
               <h1 className="text-3xl font-bold mb-2">
                 Event Management System
@@ -59,15 +121,21 @@ export default function Login() {
             </div>
           </div>
 
-          {/* === SISI KANAN/BAWAH: FORMULIR === */}
+          {/* KANAN: Form Login */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
             <h2 className="text-2xl font-bold text-center mb-6">Masuk</h2>
             <p className="text-sm text-gray-500 text-center mb-6 -mt-4">
               Silakan masuk untuk melanjutkan
             </p>
 
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Input: Username / Email */}
+              {/* Username / Email */}
               <div>
                 <label
                   htmlFor="usernameOrEmail"
@@ -93,7 +161,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Input: Password */}
+              {/* Password */}
               <div>
                 <label
                   htmlFor="password"
@@ -127,7 +195,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Checkbox "Remember Me" dan "Lupa kata sandi?" */}
+              {/* Remember Me */}
               <div className="flex items-center justify-between !mt-2">
                 <label className="inline-flex items-center cursor-pointer">
                   <input
@@ -149,17 +217,17 @@ export default function Login() {
                 </a>
               </div>
 
-              {/* Tombol Submit (DENGAN PERBAIKAN) */}
+              {/* Tombol Login */}
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full rounded-lg !mt-6 h-11 flex items-center justify-center" // <-- TINGGI TETAP h-11
+                className="w-full rounded-lg !mt-6 h-11 flex items-center justify-center"
                 disabled={loading}
               >
                 {loading ? <Spinner /> : "Masuk"}
               </Button>
 
-              {/* Link ke Halaman Register */}
+              {/* Daftar */}
               <p className="text-center text-sm !mt-4">
                 Belum punya akun?{" "}
                 <a

@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
+import axios from "axios";
+
 import Sidebar from "../../../components/sidebar";
 import CardList from "../../../components/CardStatus/CardList";
 import Search from "../../../components/form/SearchBar";
-import Breadcrumb from "../../../components/breadcrumb";
+import Breadcrumb from "../../../components/Breadcrumb";
 import TableParticipants from "../../../components/TableParticipants";
 import ParticipantPreview from "../../../components/ParticipantPreview";
 import { Bell, Radio } from "lucide-react";
@@ -13,6 +15,13 @@ const AdminDetail = () => {
   const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [openBroadcastForm, setOpenBroadcastForm] = useState(false);
   const [search, setSearch] = useState("");
+  const [participants, setParticipants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const token = localStorage.getItem("token");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -20,83 +29,79 @@ const AdminDetail = () => {
     { label: "Informasi Acara" },
   ];
 
-  // Data broadcast / detail acara
   const broadcastData = {
-    namaAcara: "Nama Acara",
-    lokasi: "AirNav",
-    tanggalMulaiPendaftaran: "2025-11-01",
-    tanggalPenutupanPendaftaran: "2025-11-27",
-    tanggalAcara: "2025-11-28",
-    jamAcara: "09.00 - 17.00",
-    modulAcara: "https://example.com/modul.pdf",
-    susunanAcara: "Pembukaan, Sesi 1, Sesi 2",
-    deskripsi: "Deskripsi acara",
+    namaAcara: "Pelatihan Digitalisasi Airnav",
+    success: true,
+    data: [],
   };
 
-  // Data peserta
-  const participants = [
-    {
-      id: 1,
-      name: "Airnav",
-      whatsapp: "081931284014",
-      email: "Airnav@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/32.jpg",
-    },
-    {
-      id: 2,
-      name: "Dayeuhkolot",
-      whatsapp: "081983881730",
-      email: "dayeuhkolot@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/45.jpg",
-    },
-    {
-      id: 3,
-      name: "Budi",
-      whatsapp: "081234567890",
-      email: "budi@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/20.jpg",
-    },
-    {
-      id: 4,
-      name: "Airnav",
-      whatsapp: "081931284014",
-      email: "Airnav@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/42.jpg",
-    },
-    {
-      id: 5,
-      name: "Dayeuhkolot",
-      whatsapp: "081983881730",
-      email: "dayeuhkolot@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/48.jpg",
-    },
-    {
-      id: 6,
-      name: "Budi",
-      whatsapp: "081234567890",
-      email: "budi@gmail.com",
-      photo: "https://randomuser.me/api/portraits/men/50.jpg",
-    },
-  ];
+  // === FETCH PARTICIPANTS ===
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_BASE_URL}/admin/events/2/participants`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+        });
+        console.log("📦 Data peserta dari API:", res.data);
 
-  const filteredParticipants = participants.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+        // Sesuaikan dengan respon API
+        setParticipants(res.data.data || []);
+      } catch (err) {
+        console.error("❌ Gagal mengambil data peserta:", err);
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Handlers modal peserta
+    fetchParticipants();
+  }, []);
+
+  // === FILTER PARTICIPANTS ===
+  const filteredParticipants = useMemo(() => {
+    return participants.filter((p) =>
+      p.nama.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [participants, search]);
+
+  const currentTableData = useMemo(() => {
+    const firstPageIndex = (currentPage - 1) * rowsPerPage;
+    const lastPageIndex = firstPageIndex + rowsPerPage;
+    return filteredParticipants.slice(firstPageIndex, lastPageIndex);
+  }, [currentPage, filteredParticipants, rowsPerPage]);
+
+  const totalPages = Math.ceil(filteredParticipants.length / rowsPerPage);
+
+  // === HANDLERS ===
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleRowsPerPageChange = (value) => {
+    setRowsPerPage(value);
+    setCurrentPage(1);
+  };
+
   const handleOpenPreview = (participant) => {
     setSelectedParticipant(participant);
     setOpenPreview(true);
   };
+
   const handleClosePreview = () => {
     setOpenPreview(false);
     setSelectedParticipant(null);
   };
 
-  // Handlers modal broadcast
   const handleOpenBroadcastForm = () => setOpenBroadcastForm(true);
   const handleCloseBroadcastForm = () => setOpenBroadcastForm(false);
 
+  // === RENDER ===
   return (
     <div className="min-h-screen flex relative bg-gray-50">
       <Sidebar role="admin" />
@@ -131,7 +136,7 @@ const AdminDetail = () => {
           <div className="flex-1 w-full">
             <Search
               placeholder="Search nama peserta..."
-              onSearch={(value) => setSearch(value)}
+              onSearch={handleSearchChange}
             />
           </div>
           <Link
@@ -144,28 +149,22 @@ const AdminDetail = () => {
 
         {/* Card Info Acara */}
         <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-5 w-full">
-          <h2 className="text-xl font-semibold text-blue-900">Nama Acara</h2>
+          <h2 className="text-xl font-semibold text-blue-900 mb-2">
+            Nama Acara
+          </h2>
           <Link to="/InfoAcara">
-            <p className="text-sm text-blue-900 mt-2 leading-relaxed">
+            <button className="px-3 py-2 rounded-xl bg-blue-900 hover:bg-blue-200 hover:text-blue-950 text-sm text-blue-50 mt-2 leading-relaxed">
               Lihat Detail Acara
-            </p>
+            </button>
           </Link>
-        </div>
-        {/* Live Broadcast */}
-        <div
-          className="flex items-center gap-2 mt-4 mb-5 text-blue-900 bg-green-200 px-3 py-2 rounded-lg w-fit cursor-pointer"
-          onClick={handleOpenBroadcastForm}
-        >
-          <Radio size={22} weight="fill" />
-          <span className="text-sm font-medium">Live Broadcast Aktif</span>
         </div>
 
         {/* Card List */}
-        <CardList participantsCount={participants.length} />
+        <CardList participants={participants} />
 
         {/* Table Participants */}
         <TableParticipants
-          participants={filteredParticipants}
+          participants={currentTableData}
           onPreview={handleOpenPreview}
         />
       </div>
@@ -179,7 +178,7 @@ const AdminDetail = () => {
         />
       )}
 
-      {/* Broadcast Preview Modal */}
+      {/* Broadcast Modal */}
       {openBroadcastForm && (
         <ParticipantPreview
           isOpen={openBroadcastForm}

@@ -74,7 +74,7 @@ export default function Modal({
       >
         {/* header (no extra border so divide-y provides single divider) */}
         <div className="flex items-center justify-between px-6 py-4">
-          <h3 className="text-lg font-medium text-gray-800">{title}</h3>
+          <h3 className="text-lg font-bold text-gray-800">{title}</h3>
           {showCloseButton && (
             <button
               ref={closeBtnRef}

@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
-import { Download, ScanLine, Bell } from "lucide-react";
+import { Download, ScanLine } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
 
@@ -9,29 +10,101 @@ const Activity = () => {
   const [query, setQuery] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState(null);
-  const [activities, setActivities] = useState([
-    {
-      id: 1,
-      title: "HUT AirNav Indonesia",
-      date: "20 November 2025",
-      status: "On Going",
-      isDownloaded: false,
-    },
-    {
-      id: 2,
-      title: "Pelatihan Safety Management",
-      date: "5 October 2025",
-      status: "Selesai",
-      isDownloaded: false,
-    },
-    {
-      id: 3,
-      title: "Workshop Inovasi Digital",
-      date: "15 December 2025",
-      status: "Selesai",
-      isDownloaded: true,
-    },
-  ]);
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState("User");
+  const [profileImage, setProfileImage] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        
+        if (!token) return;
+
+        const response = await axios.get(`${API_BASE_URL}/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
+        const data = response.data.data;
+        setUserName(data.name || "User");
+
+        if (data.profile_photo) {
+          setProfileImage(data.profile_photo);
+        } else {
+          const avatarName = encodeURIComponent(data.name || "User");
+          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+
+        const user = localStorage.getItem("user");
+        if (user) {
+          try {
+            const parsedUser = JSON.parse(user);
+            setUserName(parsedUser.name || "User");
+            const avatarName = encodeURIComponent(parsedUser.name || "User");
+            setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+          } catch (e) {
+            console.error("Error parsing user data:", e);
+          }
+        }
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const fetchedData = response.data.data.data.map((item) => {
+          const acara = item.modul_acara;
+
+          const mulai = new Date(acara.mdl_acara_mulai);
+          const selesai = new Date(acara.mdl_acara_selesai);
+          const sekarang = new Date();
+
+          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
+          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
+          const sekarangDate = new Date(sekarang.getFullYear(), sekarang.getMonth(), sekarang.getDate());
+
+          let status = "";
+          if (sekarangDate < mulaiDate) status = "Belum Dimulai";
+          else if (sekarangDate >= mulaiDate && sekarangDate <= selesaiDate)
+            status = "On Going";
+          else status = "Selesai";
+
+          return {
+            id: item.id,
+            title: acara.mdl_nama,
+            date: acara.mdl_acara_mulai,
+            status,
+            isDownloaded: item.no_sertifikat !== null,
+          };
+        });
+
+        setActivities(fetchedData);
+      } catch (error) {
+        console.error("Gagal memuat aktivitas:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, []);
 
   const filteredActivities = activities.filter((activity) =>
     activity.title.toLowerCase().includes(query.toLowerCase())
@@ -57,9 +130,7 @@ const Activity = () => {
 
     setActivities((prev) =>
       prev.map((item) =>
-        item.id === selectedActivity.id
-          ? { ...item, status: "Selesai" }
-          : item
+        item.id === selectedActivity.id ? { ...item, status: "Selesai" } : item
       )
     );
 
@@ -68,6 +139,14 @@ const Activity = () => {
       setSelectedActivity(null);
     }, 2000);
   };
+
+  if (loading) {
+    return (
+      <Typography type="body" className="text-gray-600 text-center py-10">
+        Memuat aktivitas...
+      </Typography>
+    );
+  }
 
   return (
     <div>
@@ -79,21 +158,16 @@ const Activity = () => {
           <h1 className="text-sm md:text-md text-typo-secondary mb-1">
             Berikut daftar aktivitas yang tersedia
           </h1>
-          <Typography type="body" className="text-typo-secondary">
-          </Typography>
+          <Typography type="body" className="text-typo-secondary"></Typography>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            className="p-3 rounded-full bg-primary-10 text-primary"
-            onClick={() => {}}
-          >
-            <Bell />
-          </button>
-          <img 
-            src="https://ui-avatars.com/api/?name=User+Name&size=200&background=3b82f6&color=fff&bold=true"
-            alt="Profile" 
-            className="hidden lg:block w-14 h-14 rounded-full object-cover border-gray-200 shadow-sm"
-          />
+          {profileImage && (
+            <img 
+              src={profileImage}
+              alt="Profile" 
+              className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+            />
+          )}
         </div>
       </div>
 
@@ -107,10 +181,12 @@ const Activity = () => {
       <div className="space-y-4">
         {filteredActivities.length > 0 ? (
           filteredActivities.map((activity) => {
-            const isOngoing = activity.status === "On Going";
-            const statusColor = isOngoing
-              ? "bg-warning-10 text-warning"
-              : "bg-success-10 text-success";
+            const statusColor =
+              activity.status === "On Going"
+                ? "bg-warning-10 text-warning"
+                : activity.status === "Belum Dimulai"
+                ? "bg-blue-100 text-blue-600"
+                : "bg-success-10 text-success";
 
             return (
               <div
@@ -122,16 +198,11 @@ const Activity = () => {
                     {activity.title}
                   </Typography>
                   <Typography type="body" weight="bold">
-                    <span className="block md:hidden">
-                      {new Date(activity.date).toLocaleDateString("id-ID")}
-                    </span>
-                    <span className="hidden md:block">
-                      {new Date(activity.date).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "long",
-                        year: "numeric",
-                      })}
-                    </span>
+                    {new Date(activity.date).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
                   </Typography>
                 </div>
 
@@ -145,7 +216,7 @@ const Activity = () => {
                     </span>
                   </Typography>
 
-                  {isOngoing ? (
+                  {activity.status === "On Going" && (
                     <Button
                       variant="primary"
                       onClick={() => handleScanClick(activity)}
@@ -154,27 +225,19 @@ const Activity = () => {
                     >
                       Scan
                     </Button>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`w-3 h-3 rounded-full ${
-                          activity.isDownloaded ? "bg-gray-400" : "bg-success"
-                        }`}
-                        title={
-                          activity.isDownloaded
-                            ? "Sertifikat sudah diunduh"
-                            : "Sertifikat belum diunduh"
-                        }
-                      ></span>
+                  )}
 
+                  {activity.status === "Selesai" && (
+                    <div className="flex items-center gap-3">
                       <Button
-                        variant={activity.isDownloaded ? "third" : "secondary"}
-                        onClick={() => handleDownload(activity.id)}
+                        variant="secondary"
                         iconLeft={<Download size={18} />}
                         className="w-30"
-                        disabled={activity.isDownloaded}
+                        onClick={() =>
+                          window.open("/user/certificate", "_blank")
+                        }
                       >
-                        {activity.isDownloaded ? "Terunduh" : "Sertifikat"}
+                        Sertifikat
                       </Button>
                     </div>
                   )}
@@ -183,10 +246,7 @@ const Activity = () => {
             );
           })
         ) : (
-          <Typography
-            type="body"
-            className="text-gray-600 text-center py-4"
-          >
+          <Typography type="body" className="text-gray-600 text-center py-4">
             Tidak ada aktivitas yang cocok dengan pencarian.
           </Typography>
         )}

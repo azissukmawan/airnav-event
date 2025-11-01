@@ -1,254 +1,304 @@
-import { useState, useEffect, useRef } from "react";
-import { Typography } from "../../../components/typography";
+import React, { useState, useEffect, useMemo } from "react";
+import ReactDOM from "react-dom";
+import { useWindowSize } from "react-use";
+import { Wheel } from "react-custom-roulette";
+import Confetti from "react-confetti";
+import axios from "axios";
+import Modal from "../../../components/Modal";
 import { Button } from "../../../components/button";
+import { Typography } from "../../../components/typography";
+import Breadcrumb from "../../../components/Breadcrumb";
+import { useNavigate } from "react-router-dom";
+import Sidebar from "../../../components/sidebar";
 
-export default function Doorprize() {
-  const names = [
-    "nunik",
-    "melanie",
-    "azzah",
-    "kinop",
-    "fatih",
-    "najib",
-    "nana",
-    "nini",
+export default function EventWheel() {
+  const navigate = useNavigate();
+  const { width, height } = useWindowSize();
+  const token = localStorage.getItem("token");
+  const [data, setData] = useState([]);
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+  const [winner, setWinner] = useState(null);
+  const [newWinner, setNewWinner] = useState(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [winners, setWinners] = useState([]);
+  const [eventTitle, setEventTitle] = useState("Judul tidak tersedia");
+  // Hanya peserta yang hadir tapi belum menang
+  const wheelData = data.filter(
+    (p) =>
+      !winners.some(
+        (w) => w.toLowerCase().trim() === p.option.toLowerCase().trim()
+      )
+  );
+
+  const breadcrumbItems = [
+    { label: "Dashboard", link: "/admin" },
+    { label: "Acara", link: "/admin/events" },
+    { label: "Informasi Acara", link: "/admin/detail" },
+    { label: "Doorprize" },
   ];
 
-  const [scroll, setScroll] = useState(0);
-  const [isRolling, setIsRolling] = useState(false);
-  const [winner, setWinner] = useState("");
-  const [speed, setSpeed] = useState(10);
-  const [itemHeight, setItemHeight] = useState(0);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const ref = useRef(null);
-
-  const visible = 7;
-  const repeated = [...names, ...names, ...names, ...names]; // Lebih banyak repeat
-  const midIndex = Math.floor(visible / 2);
-
   useEffect(() => {
-    const resize = () => setItemHeight((window.innerHeight * 0.4) / visible);
-    resize();
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-  }, []);
+    if (!token) return;
 
-  const toggleRoll = () => {
-    if (isRolling) {
-      let s = speed;
-      const slow = setInterval(() => {
-        s += 5;
-        setSpeed(s);
-        if (s > 120) {
-          clearInterval(slow);
-          cancelAnimationFrame(ref.current);
-          setIsRolling(false);
-          setSpeed(10);
+    const fetchEventDetail = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/admin/events/3`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setEventTitle(res.data.data?.mdl_nama || "Judul tidak tersedia");
+      } catch (err) {
+        console.error(err);
+        setEventTitle("Judul tidak tersedia");
+      }
+    };
 
-          // Ambil nama yang ada di tengah berdasarkan posisi scroll
-          const centerPosition = scroll;
-          const itemIndex = Math.round(centerPosition / itemHeight);
-          const winnerName = repeated[itemIndex % repeated.length];
+    const fetchParticipantsAndWinners = async () => {
+      try {
+        const [participantsRes, winnersRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/admin/events/3/participants`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_BASE_URL}/admin/events/3/winners`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
 
-          setWinner(winnerName);
-          setIsConfirmed(false);
-        }
-      }, 100);
-    } else {
-      setWinner("");
-      setIsConfirmed(false);
-      setScroll(0);
-      setSpeed(10);
-      setIsRolling(true);
+        // Semua peserta yang hadir
+        const hadirOnly = (participantsRes.data.data || []).filter(
+          (p) => p.status === "Hadir"
+        );
+        setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
+
+        // Pemenang
+        const winnerData = winnersRes.data.data?.winners || [];
+        setWinners(winnerData.map((w) => w.name));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchEventDetail();
+    fetchParticipantsAndWinners();
+  }, [token]);
+
+  const handleSpinClick = async () => {
+    if (mustSpin || wheelData.length === 0) return;
+
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/admin/events/3/draw-winner`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const winnerFromAPI = response.data.data.winner;
+
+      // Cari index di wheelData (bukan data asli)
+      const selectedIndex = wheelData.findIndex(
+        (p) =>
+          p.option.toLowerCase().trim() ===
+          winnerFromAPI.name.toLowerCase().trim()
+      );
+
+      if (selectedIndex === -1) {
+        alert(
+          `${winnerFromAPI.name} sudah menang sebelumnya atau tidak ada di wheel.`
+        );
+        return;
+      }
+
+      setPrizeNumber(selectedIndex);
+      setNewWinner(winnerFromAPI.name);
+      setMustSpin(true);
+      setShowConfetti(false);
+    } catch (err) {
+      console.error(err.response || err);
+      alert(err.response?.data?.message || "Gagal melakukan undian.");
     }
   };
 
-  const confirmWinner = () => {
-    setIsConfirmed(true);
+  const handleStopSpinning = () => {
+    setMustSpin(false);
+    setWinner(newWinner);
+
+    // Tambahkan ke daftar pemenang
+    setWinners((prev) =>
+      newWinner && !prev.includes(newWinner) ? [...prev, newWinner] : prev
+    );
+
+    setModalOpen(true);
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 6000);
   };
 
-  useEffect(() => {
-    let last = Date.now();
-    const move = () => {
-      if (isRolling) {
-        const now = Date.now();
-        const maxScroll = itemHeight * repeated.length;
-        setScroll((p) => {
-          const newScroll = p + ((now - last) / speed) * 10;
-          return newScroll % maxScroll;
-        });
-        last = now;
-        ref.current = requestAnimationFrame(move);
-      }
-    };
-    if (isRolling) ref.current = requestAnimationFrame(move);
-    return () => cancelAnimationFrame(ref.current);
-  }, [isRolling, speed, itemHeight]);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* 🎯 Konten Utama */}
-      <div className="max-w-6xl w-full">
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-          <div className="grid md:grid-cols-2 gap-0">
-            {/* Left Side - Header Info */}
-            <div className="bg-gradient-to-br from-[#478FC8] to-[#175FA4] p-8 flex flex-col justify-center text-white">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
-                  <span className="text-5xl">🎁</span>
-                </div>
-                <div className="flex-1">
-                  <Typography type="heading3" weight="bold" className="mb-1">
-                    Company Annual
-                  </Typography>
-                  <Typography type="heading3" weight="bold">
-                    Gathering 2025
+    <div className="min-h-screen flex relative bg-gray-50">
+      <Sidebar role="admin" />
+      <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+        {showConfetti &&
+          ReactDOM.createPortal(
+            <div className="fixed inset-0 z-[9999] pointer-events-none">
+              <Confetti
+                width={width}
+                height={height}
+                recycle={false}
+                numberOfPieces={500}
+                gravity={0.4}
+                tweenDuration={800}
+              />
+            </div>,
+            document.body
+          )}
+
+        <Breadcrumb items={breadcrumbItems} />
+
+        <div className="flex flex-col mt-5">
+          <div className="flex items-center justify-between">
+            <h1 className="text-4xl font-bold text-blue-900">Doorprize</h1>
+          </div>
+          <p className="text-gray-500 mt-2">{eventTitle}</p>
+        </div>
+
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Roda */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full">
+                  <Typography type="body" className="text-blue-700 font-medium">
+                    {data.length} Peserta Hadir
                   </Typography>
                 </div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20 mb-6">
-                <Typography type="caption1" weight="medium" className="mb-1">
-                  DOORPRIZE DRAW
-                </Typography>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <Typography type="body" weight="semibold">
-                    {names.length} Peserta Terdaftar
-                  </Typography>
-                </div>
-              </div>
-
-              {/* 🏆 Pemenang Section */}
-              {winner && !isRolling && (
-                <div className="animate-in fade-in duration-500">
-                  <div className="bg-gradient-to-br from-white to-[#EDFAFF] rounded-2xl p-6 shadow-xl border-2 border-[#A1D9F5]">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-[#FDE047] to-[#EAB308] rounded-xl flex items-center justify-center">
-                        <span className="text-2xl">🏆</span>
-                      </div>
-                      <div className="flex-1">
-                        <Typography
-                          type="caption1"
-                          weight="medium"
-                          className="text-[#64646D] mb-1"
-                        >
-                          Pemenang Doorprize
-                        </Typography>
-                        <Typography
-                          type="heading3"
-                          weight="bold"
-                          className="text-[#175FA4] capitalize"
-                        >
-                          {winner}
-                        </Typography>
-                      </div>
-                    </div>
-
-                    {!isConfirmed ? (
-                      <Button
-                        onClick={confirmWinner}
-                        className="w-full bg-gradient-to-r from-[#10B981] to-[#059669] hover:from-[#059669] hover:to-[#047857] text-white font-bold py-3 rounded-xl shadow-lg transition-all duration-300"
-                      >
-                        ✓ Konfirmasi Pemenang
-                      </Button>
+              <div className="flex justify-center mb-8">
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-2xl opacity-30 animate-pulse"></div>
+                  <div className="relative w-[300px] sm:w-[360px] md:w-[420px] flex justify-center">
+                    {wheelData.length > 0 ? (
+                      <Wheel
+                        mustStartSpinning={mustSpin}
+                        prizeNumber={prizeNumber}
+                        data={wheelData}
+                        outerBorderColor={["#f2f2f2"]}
+                        outerBorderWidth={[6]}
+                        radiusLineColor={["#ffffff"]}
+                        radiusLineWidth={[1]}
+                        fontSize={13}
+                        textColors={["#ffffff"]}
+                        backgroundColors={[
+                          "#F22B35",
+                          "#F99533",
+                          "#24CA69",
+                          "#514E50",
+                          "#46AEFF",
+                          "#9145B7",
+                        ]}
+                        onStopSpinning={handleStopSpinning}
+                      />
                     ) : (
-                      <div className="bg-gradient-to-r from-[#D1FAE5] to-[#A7F3D0] rounded-xl p-3 text-center border-2 border-[#10B981]">
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-[#047857] text-xl">✓</span>
-                          <Typography
-                            type="body"
-                            weight="bold"
-                            className="text-[#047857]"
-                          >
-                            Pemenang Telah Dikonfirmasi
-                          </Typography>
-                        </div>
-                      </div>
+                      <Typography type="body" className="text-gray-500">
+                        Semua peserta sudah menang
+                      </Typography>
                     )}
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Right Side - Shuffle Area */}
-            <div className="p-8 flex flex-col justify-center">
-              {/* 🌀 Area Scroll Nama dengan Panah */}
-              <div className="relative mb-6">
-                {/* Panah Kiri - Mengarah ke Dalam */}
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 z-30">
-                  <div className="flex items-center">
-                    <div className="w-2 h-16 bg-[#175FA4] rounded-l-lg"></div>
-                    <div className="w-0 h-0 border-t-[20px] border-t-transparent border-b-[20px] border-b-transparent border-l-[25px] border-l-[#175FA4]"></div>
-                  </div>
-                </div>
-
-                {/* Card Scroll */}
-                <div className="bg-gradient-to-br from-[#F3F4F6] to-[#CFEEFA] rounded-2xl shadow-inner overflow-hidden relative border-2 border-[#A1D9F5]">
-                  <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-[#CFEEFA] to-transparent z-20 pointer-events-none"></div>
-                  <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#CFEEFA] to-transparent z-20 pointer-events-none"></div>
-
-                  <div
-                    style={{
-                      height: `${itemHeight * visible}px`,
-                      position: "relative",
-                    }}
-                  >
-                    <div
-                      className="absolute left-0 right-0"
-                      style={{
-                        transform: `translateY(${
-                          itemHeight * midIndex -
-                          (scroll % (itemHeight * repeated.length))
-                        }px)`,
-                      }}
-                    >
-                      {repeated.map((n, i) => {
-                        const bgColor =
-                          i % 2 === 0 ? "bg-white" : "bg-[#EDFAFF]";
-                        return (
-                          <div
-                            key={i}
-                            className={`flex items-center justify-center text-3xl font-bold text-[#0F172A] ${bgColor} transition-colors capitalize`}
-                            style={{ height: `${itemHeight}px` }}
-                          >
-                            {n}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* 🔘 Tombol Start / Stop */}
-              <Button
-                onClick={toggleRoll}
-                disabled={isConfirmed}
-                className={`w-full py-5 text-xl font-bold rounded-2xl shadow-lg transition-all duration-300 ${
-                  isConfirmed
-                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                    : isRolling
-                    ? "bg-gradient-to-r from-[#F87171] to-[#EF4444] hover:from-[#EF4444] hover:to-[#DC2626] text-white"
-                    : "bg-gradient-to-r from-[#478FC8] to-[#175FA4] hover:from-[#175FA4] hover:to-[#10498D] text-white"
-                } ${
-                  !isConfirmed &&
-                  "hover:shadow-xl hover:scale-[1.02] active:scale-95"
-                }`}
-              >
-                {isRolling ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <span>⏸</span> STOP SEKARANG
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-3">
-                    <span>▶</span> MULAI UNDIAN
+              <div className="flex justify-center">
+                <button
+                  onClick={handleSpinClick}
+                  disabled={mustSpin || data.length === 0}
+                  className={`px-10 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform ${
+                    mustSpin || data.length === 0
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl hover:scale-105"
+                  }`}
+                >
+                  {mustSpin ? "Memutar..." : "Putar Sekarang"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Daftar Pemenang */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 sticky top-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-blue-800">
+                  Daftar Pemenang
+                </h3>
+                {winners.length > 0 && (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
+                    {winners.length}
                   </span>
                 )}
-              </Button>
+              </div>
+
+              {winners.length > 0 ? (
+                <ul className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                  {winners.map((name, index) => (
+                    <li
+                      key={index}
+                      className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
+                    >
+                      <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </span>
+                      <span className="text-gray-800 font-medium">{name}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-center py-12">
+                  <Typography type="body" className="text-gray-400">
+                    Belum ada pemenang
+                  </Typography>
+                  <Typography type="small" className="text-gray-400 mt-1">
+                    Putar roda untuk memulai!
+                  </Typography>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Modal */}
+        <Modal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Hasil Undian"
+          footer={
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+              Tutup
+            </Button>
+          }
+        >
+          <div className="flex flex-col items-center justify-center text-center py-6">
+            <div className="text-6xl mb-4 animate-bounce">🎉</div>
+            <Typography
+              type="heading5"
+              weight="semibold"
+              className="text-gray-700 mb-3"
+            >
+              Selamat kepada
+            </Typography>
+            <Typography
+              type="heading3"
+              weight="bold"
+              className="text-blue-700 mb-2"
+            >
+              {winner}
+            </Typography>
+            <div className="mt-4 px-6 py-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
+              <Typography type="body" className="text-yellow-800 font-semibold">
+                🏆 Pemenang Doorprize 🏆
+              </Typography>
+            </div>
+          </div>
+        </Modal>
       </div>
     </div>
   );

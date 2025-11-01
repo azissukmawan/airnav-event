@@ -1,14 +1,16 @@
-// CardList.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import CardStatus from "../../components/CardStatus/index";
 import { Users, UserCheck, Lightbulb, Laptop, User } from "lucide-react";
 
-const CardList = ({ participantsCount = 0 }) => {
+const CardList = () => {
+  const { participants, winners } = useDoorprize();
+
   return (
-    <div className="grid  md:grid-cols-5 gap-4 mb-10">
+    <div className="grid md:grid-cols-5 gap-4 mb-10">
       <CardStatus
         icon={<Users className="text-blue-500" />}
-        value={participantsCount}
+        value={participants.length}
         label="Jumlah Pendaftar"
         color="border-blue-500"
       />
@@ -28,11 +30,11 @@ const CardList = ({ participantsCount = 0 }) => {
         icon={<User className="text-red-500" />}
         value="62"
         label="Offline"
-        color="border-red-500"
+        color="border-indigo-500"
       />
       <CardStatus
         icon={<Lightbulb className="text-green-500" />}
-        value="2"
+        value={winners.length}
         label="Status Doorprize"
         color="border-green-500"
       />

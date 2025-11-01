@@ -91,7 +91,7 @@ export default function Register() {
     setLoading(true);
     try {
       const response = await axios.post(
-        "https://mediumpurple-swallow-757782.hostingersite.com/api/register",
+        `${API_BASE_URL}/register`,
         {
           name: formData.name,
           username: formData.username,

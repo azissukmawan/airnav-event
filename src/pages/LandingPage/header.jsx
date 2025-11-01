@@ -23,15 +23,16 @@ export default function Header({ menuItems }) {
   // fungsi smooth scroll
   const handleScrollTo = (e, href) => {
     e.preventDefault();
+    const targetId = href.replace("/#", "#");
 
-    // kalau sedang di halaman lain, pindah dulu ke '/'
+    // jika belum di halaman home → arahkan ke home dulu, lalu scroll setelah pindah
     if (location.pathname !== "/") {
-      window.location.href = href; // biar scroll otomatis di home
+      navigate("/", { state: { scrollTo: targetId } });
       return;
     }
 
-    // kalau sudah di home, scroll langsung
-    const target = document.querySelector(href.replace("/#", "#"));
+    // kalau sudah di home → langsung scroll
+    const target = document.querySelector(targetId);
     if (target) {
       const yOffset = -80;
       const y = target.getBoundingClientRect().top + window.scrollY + yOffset;

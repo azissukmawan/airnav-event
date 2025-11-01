@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Layout from "./layout";
+import { EventProvider } from "./contexts/EventContext";
 
 // Auth pages
 import Login from "./pages/auth/login";
@@ -25,13 +26,20 @@ import Event from "./pages/user/event";
 import DetailEvent from "./pages/user/event/detail";
 import Activity from "./pages/user/activity";
 import Profile from "./pages/user/profile";
+import CertificatePreview from "./pages/user/certificate";
 
 function App() {
+
   return (
     <Router>
       <Routes>
-        {/* Auth routes */}
+        {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
+        <Route path="/event/:slug" element={<EventDetail />} />
+
+        {/* test sertifikat */}
+        <Route path="/user/certificate" element={<CertificatePreview />} />
+
         <Route path="/style" element={<Style />} />
 
         {/* Auth routes */}
@@ -39,10 +47,6 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* Landing page routes */}
-        <Route path="/event/:id" element={<EventDetail />} />
-        <Route path="/landing-page" element={<LandingPage />} />
 
         {/* Admin routes */}
         <Route path="/admin" element={<Dashboard />} />
@@ -53,10 +57,19 @@ function App() {
         <Route path="/doorprize" element={<Doorprize />} />
 
         {/* User routes */}
-        <Route path="/user" element={<Layout role="user"><Event /></Layout>}/>
-        <Route path="/user/event/:id" element={<Layout role="user"><DetailEvent/></Layout>}/>
-        <Route path="/user/activities" element={<Layout role="user"><Activity /></Layout>}/>
-        <Route path="/user/profile" element={<Layout role="user"><Profile /></Layout>}/>
+        <Route
+          path="/user/*"
+          element={
+            <EventProvider>
+              <Routes>
+                <Route path="" element={<Layout role="user"><Event /></Layout>} />
+                <Route path="event/:id" element={<Layout role="user"><DetailEvent /></Layout>} />
+                <Route path="activities" element={<Layout role="user"><Activity /></Layout>} />
+                <Route path="profile" element={<Layout role="user"><Profile /></Layout>} />
+              </Routes>
+            </EventProvider>
+          }
+        />
       </Routes>
     </Router>
   );

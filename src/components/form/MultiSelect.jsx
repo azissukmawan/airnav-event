@@ -40,7 +40,7 @@ export const MultiSelect = ({
   const variantStyle = variantClasses[variant] || variantClasses.primary;
 
   return (
-    <div className="relative w-full">
+  <div className="relative w-fullQ~!`   ">
       {/* Tombol utama */}
       <button
         type="button"

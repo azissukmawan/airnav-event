@@ -8,12 +8,17 @@ import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 import AirNav from "../../../assets/airnav-logo.png";
 import loginImage from "../../../assets/loginimage.png";
 
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
+
 export default function VerifyCode() {
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [timer, setTimer] = useState(179);
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [canResend, setCanResend] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef([]);
@@ -28,9 +33,18 @@ export default function VerifyCode() {
   }, []);
 
   useEffect(() => {
-    if (timer === 0) return;
+    if (timer === 0) {
+      setCanResend(true);
+      return;
+    }
     const intervalId = setInterval(() => {
-      setTimer((prev) => prev - 1);
+      setTimer((prev) => {
+        if (prev <= 1) {
+          setCanResend(true);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(intervalId);
   }, [timer]);
@@ -57,13 +71,46 @@ export default function VerifyCode() {
     }
   };
 
-  const handleResend = () => {
-    if (timer === 0) {
-      setTimer(179);
-      setOtp(new Array(6).fill(""));
-      setError("");
-      inputRefs.current[0]?.current.focus();
-      alert("Kode OTP baru telah dikirim ke email Anda (simulasi).");
+  const handleResend = async () => {
+    if (!canResend || resendLoading) return;
+
+    if (!email) {
+      setError("Email tidak ditemukan. Silakan daftar ulang.");
+      return;
+    }
+
+    setResendLoading(true);
+    setError("");
+
+    try {
+      // Kirim request untuk resend OTP
+      const response = await axios.post(`${API_BASE_URL}/resend-otp`, {
+        email: email,
+      });
+
+      if (response.data?.success || response.status === 200) {
+        // Reset timer dan OTP
+        setTimer(179);
+        setOtp(new Array(6).fill(""));
+        setCanResend(false);
+        inputRefs.current[0]?.current.focus();
+
+        // Tampilkan pesan sukses
+        alert("Kode OTP baru telah dikirim ke email Anda.");
+      } else {
+        setError("Gagal mengirim ulang OTP. Silakan coba lagi.");
+      }
+    } catch (err) {
+      console.error("Error resend OTP:", err);
+      if (err.response?.status === 404) {
+        setError("Email tidak ditemukan. Silakan registrasi ulang.");
+      } else if (err.response?.status === 429) {
+        setError("Terlalu banyak permintaan. Tunggu beberapa saat.");
+      } else {
+        setError("Terjadi kesalahan saat mengirim ulang OTP.");
+      }
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -87,10 +134,10 @@ export default function VerifyCode() {
 
     try {
       // Kirim ke backend
-      const response = await axios.post(
-        "https://mediumpurple-swallow-757782.hostingersite.com/api/verify-otp",
-        { email, otp: finalOtp }
-      );
+      const response = await axios.post(`${API_BASE_URL}/verify-otp`, {
+        email,
+        otp: finalOtp,
+      });
 
       // Jika sukses
       if (response.data?.success || response.status === 200) {
@@ -99,7 +146,7 @@ export default function VerifyCode() {
         setError("Verifikasi gagal. Kode OTP tidak cocok.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error verify OTP:", err);
       // Custom error (bukan dari backend mentah)
       if (err.response?.status === 400) {
         setError("Kode OTP salah atau sudah kadaluarsa.");
@@ -176,22 +223,35 @@ export default function VerifyCode() {
                     </div>
                   )}
 
-                  <p className="text-sm text-gray-500">
-                    You can resend the code in{" "}
-                    <span className="font-medium text-blue-600">
-                      {formatTime(timer)}
-                    </span>
-                  </p>
-                  <p className="text-sm text-gray-500 mt-2">
-                    Didn't receive the code?{" "}
-                    <button
-                      onClick={handleResend}
-                      disabled={timer > 0}
-                      className="text-blue-600 hover:underline font-medium disabled:text-gray-400 disabled:no-underline"
-                    >
-                      Resend it
-                    </button>
-                  </p>
+                  {/* Tampilkan timer atau tombol resend */}
+                  {canResend ? (
+                    <div className="text-sm text-gray-500 mt-2">
+                      <p className="mb-2">Didn't receive the code?</p>
+                      <button
+                        onClick={handleResend}
+                        disabled={resendLoading}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg font-medium disabled:text-gray-400 disabled:bg-transparent transition-colors"
+                      >
+                        {resendLoading ? (
+                          <>
+                            <Spinner className="w-4 h-4" />
+                            <span>Sending...</span>
+                          </>
+                        ) : (
+                          "Resend OTP"
+                        )}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-gray-500 mt-2">
+                      <p>
+                        You can resend the code in{" "}
+                        <span className="font-medium text-blue-600">
+                          {formatTime(timer)}
+                        </span>
+                      </p>
+                    </div>
+                  )}
 
                   <Button
                     onClick={handleSubmit}

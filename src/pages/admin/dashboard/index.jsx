@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
 import { Link } from "react-router-dom";
+import axios from "axios";
 
-import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
-import { Bell, Plus, Calendar, ChevronsRight, XCircle } from "lucide-react";
+import { Bell, Calendar, ChevronsRight, XCircle } from "lucide-react";
 import AddEvent from "../../../components/AddEvent";
 
 function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
@@ -26,10 +26,30 @@ function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
 }
 
 export default function AdminDashboard() {
-  const handleOpenBroadcastForm = () => setOpenBroadcastForm(true);
+  const [stats, setStats] = useState({
+    comingSoon: 0,
+    ongoing: 0,
+    closed: 0,
+  });
+
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+
   const handleOpenAddEvent = () => setIsAddEventOpen(true);
   const handleCloseAddEvent = () => setIsAddEventOpen(false);
+
+  // 🔹 Fetch data dari API saat komponen dimuat
+  useEffect(() => {
+    axios
+      .get("https://mediumpurple-swallow-757782.hostingersite.com/api/dashboard-admin/stats")
+      .then((response) => {
+        // Pastikan response.data sesuai struktur API kamu
+        setStats(response.data);
+      })
+      .catch((error) => {
+        console.error("Gagal ambil data stats:", error);
+      });
+  }, []);
+
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar role="admin" />
@@ -57,29 +77,27 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <button
-            className="mt-1 mr-2 py-3 px-4 rounded-4xl bg-blue-100"
-            onClick={handleOpenBroadcastForm}
-          >
+          <button className="mt-1 mr-2 py-3 px-4 rounded-4xl bg-blue-100">
             <Bell />
           </button>
         </header>
+
         {/* Tombol Tambah */}
         <div className="flex justify-end mt-5 mb-5">
           <Link
-            
             className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
-          onClick={() => setIsAddEventOpen(true)} 
+            onClick={handleOpenAddEvent}
           >
             Tambah Acara
           </Link>
         </div>
 
+        {/* Kartu Statistik */}
         <div className="flex flex-wrap gap-4 mb-10">
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<Calendar />}
-              value="67"
+              value={stats.comingSoon}
               title="Event Coming Soon"
               iconBgColor="bg-blue-100"
               iconColor="text-blue-600"
@@ -88,7 +106,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<ChevronsRight />}
-              value="45"
+              value={stats.ongoing}
               title="Event OnGoing"
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
@@ -97,17 +115,15 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<XCircle />}
-              value="2"
+              value={stats.closed}
               title="Event Closed"
               iconBgColor="bg-red-100"
               iconColor="text-red-600"
             />
           </div>
         </div>
-         <AddEvent
-          isOpen={isAddEventOpen}
-          onClose={handleCloseAddEvent}
-        />
+
+        <AddEvent isOpen={isAddEventOpen} onClose={handleCloseAddEvent} />
       </main>
     </div>
   );

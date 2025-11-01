@@ -34,12 +34,6 @@ const EditEvent = ({
             </p>
             <div className="flex justify-center gap-3">
               <button
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg border border-gray-400 text-gray-700 hover:bg-gray-100 transition"
-              >
-                Batal
-              </button>
-              <button
                 onClick={onConfirm}
                 className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
               >

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import AirnavLogo from "../../assets/airnav-logo.png";
 import { Button } from "../button";
+import axios from "axios";
 
 export default function Sidebar({ role = "admin" }) {
   const location = useLocation();
@@ -53,14 +54,29 @@ export default function Sidebar({ role = "admin" }) {
 
   const menuItems = role === "admin" ? adminMenu : userMenu;
 
-  const handleLogout = () => {
-    setShowLogoutModal(false);
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/logout`, {}, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      localStorage.removeItem("token");
+
+      setShowLogoutModal(false);
+      navigate("/login");
+    } catch (error) {
+      console.error("Error during logout:", error);
+      localStorage.removeItem("token");
+      setShowLogoutModal(false);
+      navigate("/login");
+    }
   };
 
   return (
     <>
-      {/* Mobile */}
+      {/* Mobile*/}
       <div className="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-50">
         <div className="flex items-center justify-between px-4 py-3">
           <button
@@ -87,24 +103,21 @@ export default function Sidebar({ role = "admin" }) {
         >
           <div className="px-4 py-2 bg-white border-t border-gray-200">
             <div className="flex flex-col space-y-1 items-center">
-              {menuItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setIsOpen(false)}
+              {menuItems.map((item) => (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Typography
+                    type="body"
+                    weight="medium"
+                    className="text-typo p-2"
                   >
-                    <Typography
-                      type="body"
-                      weight="medium"
-                      className="text-typo p-2"
-                    >
-                      {item.label}
-                    </Typography>
-                  </Link>
-                );
-              })}
+                    {item.label}
+                  </Typography>
+                </Link>
+              ))}
 
               {role === "user" && (
                 <>
@@ -150,7 +163,7 @@ export default function Sidebar({ role = "admin" }) {
       </div>
 
       {/* Desktop */}
-      <nav className="hidden lg:flex bg-white text-secondary p-4 w-52 h-auto flex-col justify-between">
+      <nav className="hidden lg:flex bg-white text-secondary p-4 w-52 h-screen flex-col justify-between">
         <div>
           <div className="w-28 mx-auto mb-4">
             <Link to="/" className="flex items-center space-x-2">
@@ -184,9 +197,9 @@ export default function Sidebar({ role = "admin" }) {
           </div>
         </div>
 
-        {role === "user" && (
-          <div className="flex flex-col border-t border-gray-300 pt-4">
-            {userExtraMenu.map((item) => {
+        <div className="flex flex-col border-t border-gray-300 pt-4">
+          {role === "user" &&
+            userExtraMenu.map((item) => {
               const isActive = location.pathname === item.path;
 
               if (item.isLogout) {
@@ -223,14 +236,28 @@ export default function Sidebar({ role = "admin" }) {
                 </Link>
               );
             })}
-          </div>
-        )}
+
+          {role === "admin" && (
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="rounded-md p-1.5 mt-1 flex items-center gap-2 text-gray-400 hover:bg-primary hover:text-white transition-colors"
+            >
+              <LogOut size={20} />
+              Logout
+            </button>
+          )}
+        </div>
       </nav>
 
-      {/* Logout Modal */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowLogoutModal(false)}>
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-80 text-center">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowLogoutModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-lg p-6 w-80 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Typography type="title" weight="semibold" className="mb-3">
               Konfirmasi Logout
             </Typography>
@@ -239,8 +266,12 @@ export default function Sidebar({ role = "admin" }) {
             </Typography>
 
             <div className="flex justify-center gap-3">
-              <Button variant="red" onClick={() => setShowLogoutModal(false)}>Batal</Button>
-              <Button variant="primary" onClick={handleLogout}>Logout</Button>
+              <Button variant="red" onClick={() => setShowLogoutModal(false)}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={handleLogout}>
+                Logout
+              </Button>
             </div>
           </div>
         </div>

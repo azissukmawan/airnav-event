@@ -1,125 +1,116 @@
-import { Typography } from "../../../components/typography";
+import { useState, useEffect } from "react";
 import Card from "../../../components/card";
-import { Bell } from "lucide-react";
-
-const events = [
-  {
-    id: 1,
-    title: "Rapat Koordinator Bersama Jajaran Direktur",
-    date: "25 November 2025, 09:00 WIB",
-    location: "Gedung Dormitory",
-    status: "Bisa Daftar",
-    image:
-      "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    description:
-      "Rapat koordinasi antara para koordinator divisi dan jajaran direktur Airnav Indonesia untuk membahas rencana strategis triwulan keempat tahun 2025. Agenda utama meliputi evaluasi kinerja, penguatan koordinasi lintas divisi, dan penyusunan roadmap operasional tahun 2026.",
-    time: "09.00 - 12.00 WIB",
-    info:
-      "Peserta diharapkan hadir 15 menit sebelum acara dimulai. Dresscode: formal. Harap membawa dokumen presentasi unit kerja masing-masing dalam format digital maupun cetak.",
-    files: [
-      { name: "Agenda_Rapat.pdf", url: "#" },
-      { name: "Template_Presentasi.pptx", url: "#" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Pelatihan Safety Airnav Indonesia",
-    date: "1 Desember 2025, 13:00 WIB",
-    location: "Ruang Rapat Utama",
-    status: "Terdaftar",
-    image: "https://placehold.co/600x400",
-    description:
-      "Pelatihan internal terkait keselamatan kerja di lingkungan Airnav Indonesia. Materi mencakup prosedur evakuasi, penggunaan alat pemadam api ringan (APAR), serta simulasi keadaan darurat di bandara.",
-    time: "13.00 - 16.00 WIB",
-    info:
-      "Diperuntukkan bagi seluruh staf teknis dan manajerial. Sertifikat pelatihan akan diberikan kepada peserta yang mengikuti seluruh sesi hingga selesai.",
-    files: [
-      { name: "Panduan_Safety.pdf", url: "#" },
-      { name: "Simulasi_APAR.mp4", url: "#" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Workshop Sistem Informasi Navigasi",
-    date: "10 Desember 2025, 10:00 WIB",
-    location: "Gedung Pelatihan A",
-    status: "Segera Hadir",
-    image: "https://placehold.co/600x400",
-    description:
-      "Workshop pengenalan dan pembaruan sistem informasi navigasi udara berbasis digital. Kegiatan ini bertujuan untuk meningkatkan efisiensi pengelolaan data dan keamanan penerbangan.",
-    time: "10.00 - 14.00 WIB",
-    info:
-      "Pendaftaran akan dibuka mulai 25 November 2025 melalui portal resmi. Peserta diwajibkan membawa laptop pribadi untuk sesi praktik.",
-    files: [
-      { name: "Panduan_Workshop.pdf", url: "#" },
-      { name: "Materi_Session1.pptx", url: "#" },
-    ],
-  },
-  {
-    id: 4,
-    title: "Pelatihan Dasar Komunikasi ATC",
-    date: "20 Oktober 2025, 08:00 WIB",
-    location: "Ruang Simulator ATC",
-    status: "Ditutup",
-    image: "https://placehold.co/600x400",
-    description:
-      "Pelatihan bagi calon petugas Air Traffic Control (ATC) yang berfokus pada teknik komunikasi efektif antara menara kontrol dan pilot. Termasuk sesi simulasi intensif dengan peralatan asli.",
-    time: "08.00 - 15.00 WIB",
-    info:
-      "Peserta wajib telah mengikuti pelatihan dasar navigasi. Materi dan simulasi disusun oleh tim pelatih bersertifikasi ICAO.",
-    files: [
-      { name: "Materi_ATC_Basic.pdf", url: "#" },
-      { name: "Skenario_Simulasi.docx", url: "#" },
-    ],
-  },
-  {
-    id: 5,
-    title: "Sosialisasi Program K3 dan Lingkungan",
-    date: "5 Oktober 2025, 09:00 WIB",
-    location: "Aula Gedung Utama",
-    status: "Ditutup",
-    image: "https://placehold.co/600x400",
-    description:
-      "Acara sosialisasi kebijakan terbaru mengenai keselamatan dan kesehatan kerja (K3) serta program ramah lingkungan di seluruh unit kerja Airnav Indonesia.",
-    time: "09.00 - 11.30 WIB",
-    info:
-      "Kegiatan ini telah selesai dilaksanakan. Materi sosialisasi dapat diakses melalui portal internal perusahaan untuk referensi peserta.",
-    files: [
-      { name: "Materi_K3_2025.pdf", url: "#" },
-      { name: "Form_Evaluasi.xlsx", url: "#" },
-    ],
-  },
-];
+// import { Bell } from "lucide-react";
+import { useEvents } from "../../../contexts/EventContext";
+import axios from "axios";
 
 const Event = () => {
-  const registeredEventsCount = events.filter(event => event.status === "Terdaftar").length;
-  const totalEventsCount = events.filter(event => event.status === "Bisa Daftar").length;
+  const { events, loading } = useEvents();
+  const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [loadingRegistered, setLoadingRegistered] = useState(true);
+  const [userName, setUserName] = useState("User");
+  const [profileImage, setProfileImage] = useState("");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        
+        if (!token) return;
+
+        const response = await axios.get(`${API_BASE_URL}/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        });
+        
+        const data = response.data.data;
+        setUserName(data.name || "User");
+
+        if (data.profile_photo) {
+          setProfileImage(data.profile_photo);
+        } else {
+          const avatarName = encodeURIComponent(data.name || "User");
+          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+
+        const user = localStorage.getItem("user");
+        if (user) {
+          try {
+            const parsedUser = JSON.parse(user);
+            setUserName(parsedUser.name || "User");
+            const avatarName = encodeURIComponent(parsedUser.name || "User");
+            setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+          } catch (e) {
+            console.error("Error parsing user data:", e);
+          }
+        }
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  useEffect(() => {
+    const fetchRegisteredEvents = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/me/pendaftaran`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const result = await response.json();
+        
+        if (result.success) {
+          setRegisteredEvents(result.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching registered events:", error);
+      } finally {
+        setLoadingRegistered(false);
+      }
+    };
+
+    fetchRegisteredEvents();
+  }, []);
+
+  const registeredEventsCount = registeredEvents.length;
+  const totalEventsCount = events.length;
+
+  if (loading || loadingRegistered) return <p>Loading...</p>;
 
   return (
     <div>
       <div className="flex justify-between mb-6">
         <div>
           <h1 className="text-lg md:text-2xl text-primary font-bold mb-1">
-            Selamat Datang, Akbar!
+            Selamat Datang, {userName}!
           </h1>
           <h1 className="text-sm md:text-md text-typo-secondary mb-1">
-          Kamu terdaftar di {registeredEventsCount} dari {totalEventsCount} event yang tersedia
+            Kamu terdaftar di {registeredEventsCount} dari {totalEventsCount} event yang tersedia
           </h1>
-          <Typography type="body" className="text-typo-secondary">
-          </Typography>
         </div>
         <div className="flex items-center gap-3">
-          <button
+          {/* <button
             className="p-3 rounded-full bg-primary-10 text-primary"
             onClick={() => {}}
           >
             <Bell />
-          </button>
-          <img 
-            src="https://ui-avatars.com/api/?name=User+Name&size=200&background=3b82f6&color=fff&bold=true"
-            alt="Profile" 
-            className="hidden lg:block w-14 h-14 rounded-full object-cover border-gray-200 shadow-sm"
-          />
+          </button> */}
+          {profileImage && (
+            <img 
+              src={profileImage}
+              alt="Profile" 
+              className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+            />
+          )}
         </div>
       </div>
 
@@ -128,11 +119,16 @@ const Event = () => {
           <Card
             key={event.id}
             id={event.id}
-            title={event.title}
-            date={event.date}
-            location={event.location}
-            status={event.status}
-            image={event.image}
+            title={event.mdl_nama}
+            date={event.mdl_acara_mulai}
+            location={event.mdl_lokasi}
+            image={event.media_urls.banner}
+            mdl_pendaftaran_mulai={event.mdl_pendaftaran_mulai}
+            mdl_pendaftaran_selesai={event.mdl_pendaftaran_selesai}
+            mdl_acara_mulai={event.mdl_acara_mulai}
+            mdl_acara_selesai={event.mdl_acara_selesai}
+            tipe={event.mdl_tipe}
+            registeredEvents={registeredEvents}
           />
         ))}
       </div>

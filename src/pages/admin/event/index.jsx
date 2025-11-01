@@ -6,35 +6,164 @@ import Search from "../../../components/form/SearchBar";
 import Breadcrumb from "../../../components/breadcrumb";
 import { Bell } from "lucide-react";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
+import AddEvent from "../../../components/AddEvent";
+import Pagination from "../../../components/pagination";
+import DeletePopup from "../../../components/Popup/Delete";
 
 const AdminEvent = () => {
   const [search, setSearch] = useState("");
-  const [openBroadcastForm, setOpenBroadcastForm] = useState(false);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteSuccess, setIsDeleteSuccess] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState(null);
 
-  const handleOpenBroadcastForm = () => setOpenBroadcastForm(true);
+  // 🔹 Data awal event
+  const initialData = [
+    {
+      id: 1,
+      nama: "Rapat Koordinasi Tahunan",
+      tglBuka: "01/10/2025",
+      jenis: "Rapat",
+      tglAcara: "10/10/2025",
+      status: "Berlangsung",
+      peserta: 120,
+    },
+    {
+      id: 2,
+      nama: "Pelatihan Manajemen Risiko",
+      tglBuka: "03/10/2025",
+      jenis: "Pelatihan",
+      tglAcara: "15/10/2025",
+      status: "Segera Hadir",
+      peserta: 85,
+    },
+    {
+      id: 3,
+      nama: "Workshop Sistem Informasi",
+      tglBuka: "05/10/2025",
+      jenis: "Workshop",
+      tglAcara: "18/10/2025",
+      status: "Berakhir",
+      peserta: 60,
+    },
+    {
+      id: 4,
+      nama: "Rapat Evaluasi Triwulan",
+      tglBuka: "08/10/2025",
+      jenis: "Rapat",
+      tglAcara: "20/10/2025",
+      status: "Segera Hadir",
+      peserta: 45,
+    },
+    {
+      id: 5,
+      nama: "Sosialisasi Kebijakan Baru",
+      tglBuka: "10/10/2025",
+      jenis: "Sosialisasi",
+      tglAcara: "22/10/2025",
+      status: "Berlangsung",
+      peserta: 90,
+    },
+    {
+      id: 6,
+      nama: "Rapat Pimpinan",
+      tglBuka: "12/10/2025",
+      jenis: "Rapat",
+      tglAcara: "25/10/2025",
+      status: "Berakhir",
+      peserta: 30,
+    },
+    {
+      id: 7,
+      nama: "Seminar Keselamatan Penerbangan",
+      tglBuka: "13/10/2025",
+      jenis: "Seminar",
+      tglAcara: "28/10/2025",
+      status: "Segera Hadir",
+      peserta: 200,
+    },
+  ];
+
+  const [eventData, setEventData] = useState(initialData);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
     { label: "Daftar Acara" },
   ];
 
+  // 🔹 Search handler
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  // 🔹 Filtered data
+  const filteredData = eventData.filter((item) =>
+    item.nama.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // 🔹 Pagination
+  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
+  );
+
+  // 🔹 Delete action
+  const handleDelete = () => {
+    setEventData((prev) => prev.filter((item) => item.id !== selectedEventId));
+    setIsDeleteOpen(false);
+    setTimeout(() => setIsDeleteSuccess(true), 300);
+  };
+
   const columns = [
     {
       header: "No",
-      accessor: (row, i) => row.id,
+      accessor: (row) => row.id,
       className: "w-16 text-center",
     },
-    { header: "Nama Acara", accessor: (row) => row.nama },
-    { header: "Tanggal Buka Pendaftaran", accessor: (row) => row.tglBuka },
-    { header: "Tanggal Tutup Pendaftaran", accessor: (row) => row.tglTutup },
+    {
+      header: "Nama Acara",
+      accessor: (row) => row.nama,
+      className: "text-left",
+    },
+    {
+      header: (
+        <div className="whitespace-normal">
+          Tanggal Buka <br /> Pendaftaran
+        </div>
+      ),
+      accessor: (row) => row.tglBuka,
+    },
+    { header: "Jenis Acara", accessor: (row) => row.jenis },
     { header: "Tanggal Acara", accessor: (row) => row.tglAcara },
     {
       header: "Status",
-      accessor: (row) => (
-        <span className="bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-          {row.status}
-        </span>
-      ),
+      accessor: (row) => {
+        let statusClass = "";
+        switch (row.status) {
+          case "Berlangsung":
+            statusClass = "bg-green-100 text-green-700";
+            break;
+          case "Segera Hadir":
+            statusClass = "bg-yellow-100 text-yellow-700";
+            break;
+          case "Berakhir":
+            statusClass = "bg-red-100 text-red-700";
+            break;
+          default:
+            statusClass = "bg-gray-100 text-gray-600";
+        }
+        return (
+          <span
+            className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}
+          >
+            {row.status}
+          </span>
+        );
+      },
     },
     {
       header: "Peserta",
@@ -43,108 +172,157 @@ const AdminEvent = () => {
     },
     {
       header: "Aksi",
+      className: "text-center",
       accessor: (row) => (
-        <div className="flex justify-center gap-3 text-lg">
-          <button className="text-blue-600 hover:text-blue-800">
-            <FiEye />
-          </button>
-          <button className="text-yellow-600 hover:text-yellow-800">
-            <FiEdit />
-          </button>
-          <button className="text-red-600 hover:text-red-800">
-            <FiTrash2 />
+        <div className="flex justify-center items-center space-x-3">
+          {/* VIEW DETAIL */}
+          <Link to="/Admin/detail">
+            <button
+              onClick={() => console.log("View:", row.id)}
+              className="text-blue-500 hover:text-blue-700 transition-colors"
+              title="Lihat"
+            >
+              <FiEye size={18} />
+            </button>
+          </Link>
+
+          {/* EDIT */}
+          <Link to="/InfoAcara">
+            <button
+              onClick={() => console.log("Edit:", row.id)}
+              className="text-yellow-500 hover:text-yellow-700 transition-colors"
+              title="Edit"
+            >
+              <FiEdit size={18} />
+            </button>
+          </Link>
+
+          {/* DELETE */}
+          <button
+            onClick={() => {
+              setSelectedEventId(row.id);
+              setIsDeleteOpen(true);
+            }}
+            className="text-red-500 hover:text-red-700 transition-colors"
+            title="Hapus"
+          >
+            <FiTrash2 size={18} />
           </button>
         </div>
       ),
-      className: "w-24",
     },
   ];
-
-  const rowData = {
-    nama: "Rapat Airnav",
-    tglBuka: "11/9/2025",
-    tglTutup: "11/9/2025",
-    tglAcara: "11/9/2025",
-    status: "Aktif",
-    peserta: 5,
-  };
-
-  const data = Array(12)
-    .fill(rowData)
-    .map((item, index) => ({
-      ...item,
-      id: index + 1,
-      peserta: index === 1 ? 4 : 5,
-    }));
 
   return (
     <div className="flex min-h-screen bg-gray-100">
       <Sidebar role="admin" />
 
-      <main className="flex-1 p-6 mt-4 space-y-6 bg-gray-50">
+      <main className="flex-1 p-6  space-y-6 bg-gray-50 min-w-0">
         {/* Breadcrumb */}
-        <Breadcrumb items={breadcrumbItems} />
-        {/* Header: Title + Notification */}
+        <div className="mt-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+        {/* Header */}
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold text-blue-900">Daftar Acara</h1>
           <button
             className="mt-1 mr-2 py-3 px-4 rounded-4xl bg-blue-100"
-            onClick={handleOpenBroadcastForm}
+            onClick={() => console.log("Broadcast")}
           >
             <Bell />
           </button>
-        </div>{" "}
-        <p className="text-gray-500 ">
+        </div>
+
+        <p className="text-gray-500">
           Menampilkan Halaman Event dari Acara{" "}
           <span className="font-semibold italic">“Nama Acara”</span>
         </p>
+
+        {/* Search & Button */}
         <div className="flex md:flex-row items-center md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
           <div className="flex-1 w-full">
             <Search
-              placeholder="Search nama peserta..."
-              onSearch={(value) => setSearch(value)}
+              placeholder="Search nama acara..."
+              onSearch={handleSearchChange}
             />
           </div>
 
           <Link
-            to="/TambahAcara"
             className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+            onClick={() => setIsAddEventOpen(true)}
           >
             Tambah Acara
           </Link>
         </div>
+
         {/* Table */}
         <section className="bg-white rounded-lg shadow-md p-6">
-          <div className="overflow-x-auto admin-event-table">
-            <style>{`
-              .admin-event-table table,
-              .admin-event-table table th,
-              .admin-event-table table td {
-                text-align: center !important;
-                vertical-align: middle !important;
-              }
-            `}</style>
-            <Table columns={columns} data={data} />
+          <div className="relative w-full overflow-x-auto rounded-lg border border-gray-200 admin-event-table">
+            <Table columns={columns} data={paginatedData} />
           </div>
 
           {/* Pagination */}
-          <div className="flex justify-end items-center mt-6 pt-4 border-t border-gray-200">
-            <nav className="flex items-center gap-2 text-sm">
-              <button className="text-gray-600 hover:text-gray-800 px-3 py-1 rounded">
-                &lt; Previous
-              </button>
-              <button className="px-3 py-1 rounded-md bg-blue-600 text-white font-medium">
-                1
-              </button>
-              <button className="px-3 py-1 rounded-md text-gray-700 hover:bg-gray-100 font-medium">
-                2
-              </button>
-              <button className="text-gray-600 hover:text-gray-800 px-3 py-1 rounded">
-                Next &gt;
-              </button>
-            </nav>
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredData.length}
+              onPageChange={setCurrentPage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(value) => {
+                setRowsPerPage(value);
+                setCurrentPage(1);
+              }}
+            />
           </div>
         </section>
+
+        {/* Popup Add Event */}
+        <AddEvent
+          isOpen={isAddEventOpen}
+          onClose={() => setIsAddEventOpen(false)}
+        />
+
+        {/* Popup Delete Confirm */}
+        <DeletePopup
+          isOpen={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          onConfirm={handleDelete}
+        />
+
+        {/* Popup Delete Success */}
+        {isDeleteSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto mb-3 text-green-500"
+                width="48"
+                height="48"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Berhasil!
+              </h3>
+              <p className="text-gray-600 mb-5">Data berhasil dihapus.</p>
+              <button
+                onClick={() => setIsDeleteSuccess(false)}
+                className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

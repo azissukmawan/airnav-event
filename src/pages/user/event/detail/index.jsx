@@ -1,113 +1,55 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Calendar, MapPin, Clock, FileText, Download, Copy, Facebook, MessageCircle, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Download, Copy, Facebook, MessageCircle, X } from "lucide-react";
 import { Typography } from "../../../../components/typography";
 import { Button } from "../../../../components/button";
-import Breadcrumb from "../../../../components/breadcrumb";
-
-const events = [
-  {
-    id: 1,
-    title: "Rapat Koordinator Bersama Jajaran Direktur",
-    date: "25 November 2025, 09:00 WIB",
-    location: "Gedung Dormitory",
-    status: "Bisa Daftar",
-    image:
-      "https://firstindonesiamagz.id/wp-content/uploads/2022/11/WhatsApp-Image-2022-11-10-at-13.54.09.jpeg",
-    description:
-      "Rapat koordinasi antara para koordinator divisi dan jajaran direktur Airnav Indonesia untuk membahas rencana strategis triwulan keempat tahun 2025. Agenda utama meliputi evaluasi kinerja, penguatan koordinasi lintas divisi, dan penyusunan roadmap operasional tahun 2026.",
-    time: "09.00 - 12.00 WIB",
-    info:
-      "Peserta diharapkan hadir 15 menit sebelum acara dimulai. Dresscode: formal. Harap membawa dokumen presentasi unit kerja masing-masing dalam format digital maupun cetak.",
-    files: [
-      { name: "Agenda_Rapat.pdf", url: "#", type: "rundown" },
-      { name: "Template_Presentasi.pptx", url: "#", type: "module" },
-      { name: "Template_Presentasi2.pptx", url: "#", type: "module" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Pelatihan Safety Airnav Indonesia",
-    date: "1 Desember 2025, 13:00 WIB",
-    location: "Ruang Rapat Utama",
-    status: "Terdaftar",
-    image: "https://placehold.co/600x400",
-    description:
-      "Pelatihan internal terkait keselamatan kerja di lingkungan Airnav Indonesia. Materi mencakup prosedur evakuasi, penggunaan alat pemadam api ringan (APAR), serta simulasi keadaan darurat di bandara.",
-    time: "13.00 - 16.00 WIB",
-    info:
-      "Diperuntukkan bagi seluruh staf teknis dan manajerial. Sertifikat pelatihan akan diberikan kepada peserta yang mengikuti seluruh sesi hingga selesai.",
-    files: [
-      { name: "Panduan_Safety.pdf", url: "#", type: "rundown" },
-      { name: "Simulasi_APAR.mp4", url: "#", type: "module" },
-      { name: "Simulasi_APAR2.mp4", url: "#", type: "module" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Workshop Sistem Informasi Navigasi",
-    date: "10 Desember 2025, 10:00 WIB",
-    location: "Gedung Pelatihan A",
-    status: "Segera Hadir",
-    image: "https://placehold.co/600x400",
-    description:
-      "Workshop pengenalan dan pembaruan sistem informasi navigasi udara berbasis digital. Kegiatan ini bertujuan untuk meningkatkan efisiensi pengelolaan data dan keamanan penerbangan.",
-    time: "10.00 - 14.00 WIB",
-    info:
-      "Pendaftaran akan dibuka mulai 25 November 2025 melalui portal resmi. Peserta diwajibkan membawa laptop pribadi untuk sesi praktik.",
-    files: [
-      { name: "Panduan_Workshop.pdf", url: "#", type: "rundown" },
-      { name: "Materi_Session1.pptx", url: "#", type: "module" },
-    ],
-  },
-  {
-    id: 4,
-    title: "Pelatihan Dasar Komunikasi ATC",
-    date: "20 Oktober 2025, 08:00 WIB",
-    location: "Ruang Simulator ATC",
-    status: "Ditutup",
-    image: "https://placehold.co/600x400",
-    description:
-      "Pelatihan bagi calon petugas Air Traffic Control (ATC) yang berfokus pada teknik komunikasi efektif antara menara kontrol dan pilot. Termasuk sesi simulasi intensif dengan peralatan asli.",
-    time: "08.00 - 15.00 WIB",
-    info:
-      "Peserta wajib telah mengikuti pelatihan dasar navigasi. Materi dan simulasi disusun oleh tim pelatih bersertifikasi ICAO.",
-    files: [
-      { name: "Materi_ATC_Basic.pdf", url: "#", type: "rundown" },
-      { name: "Skenario_Simulasi.docx", url: "#", type: "module" },
-    ],
-  },
-  {
-    id: 5,
-    title: "Sosialisasi Program K3 dan Lingkungan",
-    date: "5 Oktober 2025, 09:00 WIB",
-    location: "Aula Gedung Utama",
-    status: "Ditutup",
-    image: "https://placehold.co/600x400",
-    description:
-      "Acara sosialisasi kebijakan terbaru mengenai keselamatan dan kesehatan kerja (K3) serta program ramah lingkungan di seluruh unit kerja Airnav Indonesia.",
-    time: "09.00 - 11.30 WIB",
-    info:
-      "Kegiatan ini telah selesai dilaksanakan. Materi sosialisasi dapat diakses melalui portal internal perusahaan untuk referensi peserta.",
-    files: [
-      { name: "Materi_K3_2025.pdf", url: "#", type: "rundown" },
-      { name: "Form_Evaluasi.xlsx", url: "#", type: "module" },
-    ],
-  },
-];
+import Breadcrumb from "../../../../components/Breadcrumb";
+import { useEvents } from "../../../../contexts/EventContext";
 
 const breadcrumbItems = [
   { label: "Beranda", link: "/user" },
-  { label: "Detail Aktivitas" },
+  { label: "Detail Acara" },
 ];
 
 const DetailEvent = () => {
   const { id } = useParams();
+  const { events, loading } = useEvents();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [loadingRegistered, setLoadingRegistered] = useState(true);
 
   const event = events.find((e) => e.id === parseInt(id));
+
+  // Fetch data pendaftaran user
+  useEffect(() => {
+    const fetchRegisteredEvents = async () => {
+      try {
+        const response = await fetch(
+          "https://mediumpurple-swallow-757782.hostingersite.com/api/me/pendaftaran",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const result = await response.json();
+        
+        if (result.success) {
+          setRegisteredEvents(result.data.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching registered events:", error);
+      } finally {
+        setLoadingRegistered(false);
+      }
+    };
+
+    fetchRegisteredEvents();
+  }, []);
+
+  if (loading || loadingRegistered) return <div>Loading...</div>;
 
   // Handle jika event tidak ditemukan
   if (!event) {
@@ -126,6 +68,37 @@ const DetailEvent = () => {
     );
   }
 
+  // Logika status berdasarkan tanggal (sama seperti Card component)
+  const now = new Date();
+  const registrationStart = new Date(event.mdl_pendaftaran_mulai);
+  const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
+  const eventStart = new Date(event.mdl_acara_mulai);
+  const eventEnd = new Date(event.mdl_acara_selesai);
+  
+  const isRegistered = registeredEvents.some(e => e.modul_acara_id === event.id);
+
+  let buttonText = "";
+  let buttonVariant = "primary";
+  let canRegister = false;
+
+  if (now > eventEnd) {
+    buttonText = "Acara Telah Selesai";
+    buttonVariant = "third";
+  } else if (isRegistered) {
+    buttonText = "Terdaftar";
+    buttonVariant = "green";
+  } else if (now >= registrationStart && now <= registrationEnd) {
+    buttonText = "Daftar Sekarang";
+    buttonVariant = "primary";
+    canRegister = true;
+  } else if (now < registrationStart) {
+    buttonText = "Segera Hadir";
+    buttonVariant = "third";
+  } else {
+    buttonText = "Pendaftaran Ditutup";
+    buttonVariant = "third";
+  }
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -133,14 +106,20 @@ const DetailEvent = () => {
   };
 
   const handleRegister = () => {
-    if (event.status === "Bisa Daftar") {
+    if (canRegister) {
       setShowConfirmModal(true);
     }
   };
 
-  const confirmRegis = () => {
-    alert("Anda berhasil mendaftar event!");
-    setShowConfirmModal(false);
+  const confirmRegis = async () => {
+    try {
+      alert("Anda berhasil mendaftar event!");
+      setShowConfirmModal(false);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error registering:", error);
+      alert("Gagal mendaftar. Silakan coba lagi.");
+    }
   };
 
   const cancelRegis = () => {
@@ -162,9 +141,41 @@ const DetailEvent = () => {
     }
   };
 
-  const shareToFacebook = () => alert("Share ke Facebook");
-  const shareToWhatsApp = () => alert("Share ke WhatsApp");
-  const shareToX = () => alert("Share ke X (Twitter)");
+  const shareToFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+  };
+
+  const shareToWhatsApp = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Lihat event ini: ${event.mdl_nama}`);
+    window.open(`https://wa.me/?text=${text}%20${url}`, '_blank');
+  };
+
+  const shareToX = () => {
+    const url = encodeURIComponent(window.location.href);
+    const text = encodeURIComponent(`Lihat event ini: ${event.mdl_nama}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  };
+
+  // Format tanggal
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <div className="pb-10">
@@ -173,8 +184,8 @@ const DetailEvent = () => {
       <div className="relative w-full h-64 sm:h-72 md:h-80 rounded-2xl overflow-hidden mt-6">
         <div className="absolute inset-0 w-full h-full">
           <img
-            src={event.image}
-            alt={event.title}
+            src={event.media_urls?.banner || 'https://via.placeholder.com/1200x600?text=Event+Banner'}
+            alt={event.mdl_nama}
             className="w-full h-full object-cover blur-sm scale-110"
           />
         </div>
@@ -189,21 +200,21 @@ const DetailEvent = () => {
                 weight="bold"
                 className="text-white drop-shadow-lg mb-4 text-xl sm:text-2xl md:text-3xl lg:text-4xl leading-tight"
               >
-                {event.title}
+                {event.mdl_nama}
               </Typography>
               
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-white/90">
                   <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
                   <Typography type="body" className="text-white text-sm sm:text-base">
-                    {event.location}
+                    {event.mdl_lokasi || 'Lokasi belum ditentukan'}
                   </Typography>
                 </div>
                 
                 <div className="flex items-center gap-2 text-white/90">
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
                   <Typography type="body" className="text-white text-sm sm:text-base">
-                    {event.date}
+                    {formatDate(event.mdl_acara_mulai)}
                   </Typography>
                 </div>
               </div>
@@ -212,7 +223,7 @@ const DetailEvent = () => {
             <div className="hidden lg:block">
               <div className="h-48 lg:h-64 rounded-xl overflow-hidden shadow-2xl">
                 <img
-                  src={event.image}
+                  src={event.media_urls?.banner || 'https://via.placeholder.com/400x300?text=Event'}
                   alt="Event thumbnail"
                   className="w-full h-full object-cover"
                 />
@@ -233,31 +244,18 @@ const DetailEvent = () => {
               type="body"
               className="text-typo-secondary"
             >
-              {event.description}
+              {event.mdl_deskripsi || 'Tidak ada deskripsi'}
             </Typography>
           </div>
 
           <div className="flex flex-col justify-center space-y-6">
             <Button 
-              variant={
-                event.status === "Bisa Daftar"
-                  ? "primary"
-                  : event.status === "Terdaftar"
-                  ? "green"
-                  : event.status === "Segera Hadir"
-                  ? "third"
-                  : "third"
-              }
+              variant={buttonVariant}
               className="w-full md:w-auto"
               onClick={handleRegister}
+              disabled={!canRegister}
             >
-              {event.status === "Bisa Daftar"
-                ? "Daftar Sekarang"
-                : event.status === "Terdaftar"
-                ? "Terdaftar"
-                : event.status === "Segera Hadir"
-                ? "Segera Hadir"
-                : "Segera Hadir"}
+              {buttonText}
             </Button>
 
             <div className="flex flex-col gap-3">
@@ -304,11 +302,11 @@ const DetailEvent = () => {
         </div>
 
         {/* File Pendukung */}
-        {event.status === "Terdaftar" && (
+        {isRegistered && (
           <div className="grid md:grid-cols-2 gap-6">
-            {event.files.find(f => f.type === "rundown") && (
+            {event.media_urls?.file_rundown && (
               <a
-                href={event.files.find(f => f.type === "rundown").url}
+                href={event.media_urls.file_rundown}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col gap-3 bg-white hover:bg-primary-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
@@ -322,7 +320,7 @@ const DetailEvent = () => {
                       Rundown
                     </Typography>
                     <Typography type="caption2" className="text-typo-secondary">
-                      {event.files.find(f => f.type === "rundown").name}
+                      File rundown acara
                     </Typography>
                   </div>
                 </div>
@@ -330,24 +328,28 @@ const DetailEvent = () => {
             )}
 
             {/* Card Module */}
-            <button
-              onClick={downloadAllModules}
-              className="flex flex-col gap-3 bg-white hover:bg-success-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <div className="bg-success text-white p-4 rounded-full">
-                  <Download className="w-8 h-8" />
+            {event.media_urls?.file_acara && (
+              <a
+                href={event.media_urls.file_acara}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex flex-col gap-3 bg-white hover:bg-success-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="bg-success text-white p-4 rounded-full">
+                    <Download className="w-8 h-8" />
+                  </div>
+                  <div className="text-left">
+                    <Typography type="body" weight="bold" className="text-success mb-1">
+                      Modul
+                    </Typography>
+                    <Typography type="caption2" className="text-typo-secondary">
+                      File modul acara
+                    </Typography>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <Typography type="body" weight="bold" className="text-success mb-1">
-                    Modul
-                  </Typography>
-                  <Typography type="caption2" className="text-typo-secondary">
-                    {event.files.filter(f => f.type === "module").length} file tersedia
-                  </Typography>
-                </div>
-              </div>
-            </button>
+              </a>
+            )}
           </div>
         )}
 
@@ -366,7 +368,15 @@ const DetailEvent = () => {
                 <MapPin className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Alamat:</strong> {event.location}
+                <strong>Tipe:</strong> {event.mdl_tipe}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Lokasi:</strong> {event.mdl_lokasi || 'Online'}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -374,7 +384,7 @@ const DetailEvent = () => {
                 <Calendar className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Pendaftaran:</strong> {event.date}
+                <strong>Tanggal Pendaftaran:</strong> {formatDate(event.mdl_pendaftaran_mulai)} - {formatDate(event.mdl_pendaftaran_selesai)}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -382,7 +392,7 @@ const DetailEvent = () => {
                 <Calendar className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Acara:</strong> {event.date}
+                <strong>Tanggal Acara:</strong> {formatDate(event.mdl_acara_mulai)}
               </Typography>
             </div>
             <div className="flex items-center gap-3">
@@ -390,35 +400,37 @@ const DetailEvent = () => {
                 <Clock className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Jam Acara:</strong> {event.time}
+                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)} - {formatTime(event.mdl_acara_selesai)} WIB
               </Typography>
             </div>
           </div>
         </div>
 
         {/* Info Tambahan */}
-        <div className="bg-white p-8 rounded-xl shadow-sm">
-          <Typography
-            type="heading5"
-            weight="semibold"
-            className="mb-2 flex items-center gap-3"
-          >
-            Informasi Tambahan
-          </Typography>
-          <Typography type="body" className="text-typo-secondary">
-            {event.info}
-          </Typography>
-        </div>
+        {event.mdl_catatan && event.mdl_catatan.trim() !== "" && (
+          <div className="bg-white p-8 rounded-xl shadow-sm mt-6">
+            <Typography
+              type="heading5"
+              weight="semibold"
+              className="mb-2 flex items-center gap-3"
+            >
+              Informasi Tambahan
+            </Typography>
+            <Typography type="body" className="text-typo-secondary">
+              {event.mdl_catatan}
+            </Typography>
+          </div>
+        )}
 
-        {/* Cofirm Modal */}
+        {/* Confirm Modal */}
         {showConfirmModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={cancelRegis}>
-            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <Typography type="heading5" weight="bold" className="text-gray-900 mb-4">
                 Konfirmasi Pendaftaran
               </Typography>
               <Typography type="body" className="text-gray-600 mb-6">
-                Apakah Anda bersedia mengikuti event "{event.title}"?
+                Apakah Anda bersedia mengikuti event "{event.mdl_nama}"?
               </Typography>
 
               <div className="flex justify-center gap-3">
