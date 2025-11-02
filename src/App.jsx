@@ -19,7 +19,6 @@ import EventDetail from "./pages/LandingPage/event";
 // Admin pages
 import Dashboard from "./pages/admin/dashboard";
 import AdminEvent from "./pages/admin/event";
-import Style from "./pages/style";
 import Doorprize from "./pages/admin/doorprize";
 
 // User pages
@@ -36,7 +35,6 @@ function App() {
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/event/:slug" element={<EventDetail />} />
-        <Route path="/style" element={<Style />} />
 
         {/* Auth routes */}
         <Route path="/login" element={<Login />} />

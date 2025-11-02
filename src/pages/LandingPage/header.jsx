@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/button";
-import AirNavLogo from "../../assets/airnav-logo.png";
+import AirNavLogo from "../../public/assets/airnav-logo.png";
 import { Menu as MenuIcon, X, User } from "lucide-react";
 
 export default function Header({ menuItems = [] }) {
