@@ -238,7 +238,19 @@ const Event = () => {
 
   const hasActiveFilters = filters.status !== 'all' || filters.tipe !== 'all';
 
-  if (loading || loadingRegistered) return <p>Loading...</p>;
+  if (loading || loadingRegistered) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.2s]"></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.4s]"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -331,7 +343,7 @@ const Event = () => {
               title={event.mdl_nama}
               date={event.mdl_acara_mulai}
               location={event.mdl_lokasi}
-              image={event.media_urls.banner}
+              image={event.media_urls.banner || null}
               mdl_pendaftaran_mulai={event.mdl_pendaftaran_mulai}
               mdl_pendaftaran_selesai={event.mdl_pendaftaran_selesai}
               mdl_acara_mulai={event.mdl_acara_mulai}

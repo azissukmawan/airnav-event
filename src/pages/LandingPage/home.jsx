@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { Typography } from "../../components/typography";
 import CardLanding from "../../components/cardLanding";
+import Spinner from "../../components/spinner";
 import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
 import heroImage from "../../assets/hero.png";
 import airnav from "../../assets/airnav.png";
@@ -13,17 +14,10 @@ export default function Home() {
   const [events, setEvents] = useState([]);
   const [visibleCount, setVisibleCount] = useState(6);
   const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [prevVisibleCount, setPrevVisibleCount] = useState(0);
 
-  // sentinel hook dari react-intersection-observer
-  const [loaderRef, loaderInView] = useInView({
-    root: null,
-    rootMargin: "0px",
-    threshold: 0,
-  });
-
-  // fetch semua event sekali (atau ganti dengan pagination endpoint)
+  // Fetch events
   useEffect(() => {
     setLoading(true);
     fetch(`${API_BASE_URL}/events/all`)
@@ -32,64 +26,56 @@ export default function Home() {
         if (data?.success && Array.isArray(data.data?.events)) {
           const mappedEvents = data.data.events.map((event) => ({
             id: event.id,
-            slug: event.slug,
-            title: event.nama,
-            date: event.tanggal_mulai,
-            location: event.lokasi,
-            image: event.banner,
+            slug: event.mdl_slug,
+            title: event.mdl_nama,
+            date: event.mdl_acara_mulai,
+            location: event.mdl_lokasi,
+            image: event.media_urls?.banner,
             status: event.status_acara,
-            type: event.tipe,
+            type: event.mdl_tipe,
+            mdl_pendaftaran_mulai: event.mdl_pendaftaran_mulai,
+            mdl_pendaftaran_selesai: event.mdl_pendaftaran_selesai,
+            mdl_acara_mulai: event.mdl_acara_mulai,
+            mdl_acara_selesai: event.mdl_acara_selesai,
           }));
           setEvents(mappedEvents);
-          setHasMore(mappedEvents.length > 6);
         } else {
           setEvents([]);
-          setHasMore(false);
         }
       })
       .catch((err) => {
-        console.error("Fetch events error:", err);
+        console.error(err);
         setEvents([]);
-        setHasMore(false);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  // ketika sentinel terlihat, tambah visibleCount
-  useEffect(() => {
-    if (loaderInView && !loading && hasMore) {
-      setLoading(true);
-      setTimeout(() => {
-        setPrevVisibleCount(visibleCount); // simpan batas lama
-        setVisibleCount((prev) => {
-          const next = prev + 6;
-          if (next >= events.length) {
-            setHasMore(false);
-            return events.length;
-          }
-          return next;
-        });
-        setLoading(false);
-      }, 600);
-    }
-  }, [loaderInView, loading, hasMore, events.length, visibleCount]);
+  // Load More Button
+  const handleLoadMore = () => {
+    setLoadingMore(true);
+    setPrevVisibleCount(visibleCount); // simpan batas lama untuk fade-in
+    setTimeout(() => {
+      setVisibleCount((prev) => Math.min(prev + 6, events.length));
+      setLoadingMore(false);
+    }, 600); // simulasi loading
+  };
 
-  // Animasi dasar & FadeInSection (tetap pakai yang sebelumnya)
+  // Fade-in animation
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.8, ease: "easeOut" },
+      transition: { duration: 0.6, ease: "easeOut" },
     },
   };
 
-  const FadeInSection = ({ children, delay = 0, variant = fadeUp }) => {
+  const FadeInSection = ({ children, delay = 0 }) => {
     const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
     return (
       <motion.div
         ref={ref}
-        variants={variant}
+        variants={fadeUp}
         initial="hidden"
         animate={inView ? "visible" : "hidden"}
         transition={{ delay }}
@@ -111,8 +97,6 @@ export default function Home() {
         }}
       >
         <div className="absolute inset-0 bg-black/50 z-10"></div>
-
-        {/* Text masuk dari kiri */}
         <motion.div
           initial={{ opacity: 0, x: -100 }}
           animate={{ opacity: 1, x: 0 }}
@@ -133,8 +117,6 @@ export default function Home() {
             dengan presisi, akurasi, dan efisiensi tinggi.
           </Typography>
         </motion.div>
-
-        {/* Logo masuk dari kanan */}
         <motion.div
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
@@ -155,7 +137,7 @@ export default function Home() {
         id="tentang"
       >
         <FadeInSection delay={0.1}>
-          <div className="">
+          <div>
             <img
               src={airnav}
               alt="AirNav Event Management"
@@ -186,9 +168,8 @@ export default function Home() {
       </section>
 
       {/* === EVENTS SECTION === */}
-
       <section
-        className="py-20 px-8 md:px-28 bg-white text-center overflow-hidden"
+        className="py-20 px-8 md:px-28 bg-white text-center overflow-hidden gap-10"
         id="acara"
       >
         <FadeInSection delay={0.1}>
@@ -213,14 +194,21 @@ export default function Home() {
           })}
         </div>
 
-        {/* SENTINEL UNTUK TRIGGER LOAD BERIKUTNYA */}
-        <div
-          ref={loaderRef}
-          className="h-10 flex justify-center items-center mt-8"
-        >
-          {loading && <p className="text-gray-500">Memuat...</p>}
-        </div>
+        {/* Load More Button */}
+        {visibleCount < events.length && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleLoadMore}
+              className="px-6 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 flex items-center justify-center gap-2 transition h-10"
+            >
+              {loadingMore && <Spinner className="w-4 h-4 text-white" />}
+              <span>{loadingMore ? "Memuat..." : "Load More"}</span>
+            </button>
+          </div>
+        )}
       </section>
+
+      {/* === SUPPORTED BY SECTION === */}
       <section className="bg-blue-50 py-16 text-center px-4 sm:px-8">
         <FadeInSection delay={0.1}>
           <Typography

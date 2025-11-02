@@ -2,6 +2,7 @@ import { Typography } from "../typography";
 import { Calendar, MapPin, Building, Laptop, RefreshCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../button";
+import defaultImage from "../../assets/no-image.jpg";
 
 export default function Card({
   id,
@@ -96,7 +97,7 @@ export default function Card({
   const CardContent = (
     <div className="w-full bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
       <div className="relative">
-        <img src={image} alt={title} className="w-full h-56 object-cover" />
+        <img src={image || defaultImage} alt={title} className="w-full h-56 object-cover" />
         {displayStatus && (
           <Typography
             type="caption1"

@@ -11,7 +11,7 @@ import AddEvent from "../../../components/AddEvent";
 import Pagination from "../../../components/pagination";
 import DeletePopup from "../../../components/Popup/Delete";
 
-export const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);
@@ -41,14 +41,14 @@ const AdminEvent = () => {
         });
 
         console.log("📦 Response API:", res.data);
-        const events = Array.isArray(res.data?.data?.data)
-          ? res.data.data.data
-          : [];
+
+        const events = Array.isArray(res.data?.data) ? res.data.data : [];
 
         setEventData(events);
       } catch (error) {
         console.error("❌ Gagal fetch event:", error);
         setError("Gagal mengambil data event");
+        setEventData([]);
       } finally {
         setLoading(false);
       }
@@ -153,13 +153,15 @@ const AdminEvent = () => {
               <FiEye size={18} />
             </button>
           </Link>
-          <button
-            onClick={() => console.log("Edit:", row.id)}
-            className="text-yellow-500 hover:text-yellow-700"
-            title="Edit"
-          >
-            <FiEdit size={18} />
-          </button>
+          {/* BUTTON EDIT - Link ke halaman InfoAcara dengan ID dinamis */}
+          <Link to={`/admin/event/edit/${row.id}`}>
+            <button
+              className="text-yellow-500 hover:text-yellow-700"
+              title="Edit"
+            >
+              <FiEdit size={18} />
+            </button>
+          </Link>
           <button
             onClick={() => {
               setSelectedEventId(row.id);
@@ -189,12 +191,12 @@ const AdminEvent = () => {
           <div className="flex-1">
             <Search placeholder="Cari nama acara..." onSearch={handleSearchChange} />
           </div>
-          <Link
+          <button
             className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950"
             onClick={() => setIsAddEventOpen(true)}
           >
             Tambah Acara
-          </Link>
+          </button>
         </div>
 
         {/* Table */}

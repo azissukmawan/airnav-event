@@ -36,10 +36,6 @@ function App() {
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/event/:slug" element={<EventDetail />} />
-
-        {/* test sertifikat */}
-        <Route path="/user/certificate" element={<CertificatePreview />} />
-
         <Route path="/style" element={<Style />} />
 
         {/* Auth routes */}
@@ -55,10 +51,10 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin" element={<Dashboard />} />
         <Route path="/admin/event/:id" element={<AdminDetail />} />
+        <Route path="/admin/event/edit/:id" element={<InfoAcara />} />
         <Route path="/admin/events" element={<AdminEvent />} />
         <Route path="/admin/event/doorprize/:id" element={<Doorprize />} />
         <Route path="/InfoAcara" element={<InfoAcara />} />
-        {/* <Route path="/doorprize" element={<Doorprize />} /> */}
 
         {/* User routes */}
         <Route
@@ -70,6 +66,7 @@ function App() {
                 <Route path="event/:id" element={<Layout role="user"><DetailEvent /></Layout>} />
                 <Route path="activities" element={<Layout role="user"><Activity /></Layout>} />
                 <Route path="profile" element={<Layout role="user"><Profile /></Layout>} />
+                <Route path="/certificate" element={<CertificatePreview />} />
               </Routes>
             </EventProvider>
           }

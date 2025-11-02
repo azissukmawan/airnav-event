@@ -3,21 +3,21 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/button";
 import { Menu as MenuIcon, X, User } from "lucide-react";
 
-export default function Header({ menuItems }) {
+export default function Header({ menuItems = [] }) {
+  // default ke array kosong
   const [menuOpen, setMenuOpen] = useState(false);
   const [show, setShow] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
   // cek login
-  const token = localStorage.getItem("token"); // bisa ganti sesuai auth
+  const token = localStorage.getItem("token");
   const [loggedIn, setLoggedIn] = useState(!!token);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
-      if (window.scrollY > lastScrollY && window.scrollY > 100) setShow(false);
-      else setShow(true);
+      setShow(window.scrollY < lastScrollY || window.scrollY <= 100);
       lastScrollY = window.scrollY;
     };
     window.addEventListener("scroll", handleScroll);
@@ -43,7 +43,7 @@ export default function Header({ menuItems }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setLoggedIn(false);
-    navigate("/"); // redirect ke home
+    navigate("/");
   };
 
   return (
@@ -52,7 +52,6 @@ export default function Header({ menuItems }) {
         show ? "translate-y-0" : "-translate-y-full"
       } font-poppins`}
     >
-      {/* Logo */}
       <div className="flex items-center gap-3">
         <img
           src="/src/assets/airnav-logo.png"
@@ -63,29 +62,29 @@ export default function Header({ menuItems }) {
 
       {/* Menu desktop */}
       <nav className="hidden md:flex items-center gap-6 text-gray-600">
-        {menuItems.map((item) => {
-          const isAnchor = item.href.includes("#");
-
-          return isAnchor ? (
-            <a
-              key={item.name}
-              href={item.href}
-              onClick={(e) => handleScrollTo(e, item.href)}
-              className="hover:text-blue-600 transition-colors"
-            >
-              {item.name}
-            </a>
-          ) : (
-            <Link
-              key={item.name}
-              to={item.href}
-              className="hover:text-blue-600 transition-colors"
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.name}
-            </Link>
-          );
-        })}
+        {Array.isArray(menuItems) &&
+          menuItems.map((item) => {
+            const isAnchor = item.href?.includes("#");
+            return isAnchor ? (
+              <a
+                key={item.name}
+                href={item.href}
+                onClick={(e) => handleScrollTo(e, item.href)}
+                className="hover:text-blue-600 transition-colors"
+              >
+                {item.name}
+              </a>
+            ) : (
+              <Link
+                key={item.name}
+                to={item.href || "/"}
+                className="hover:text-blue-600 transition-colors"
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.name}
+              </Link>
+            );
+          })}
       </nav>
 
       {/* Tombol desktop */}
@@ -122,28 +121,29 @@ export default function Header({ menuItems }) {
       {menuOpen && (
         <div className="absolute top-full left-0 w-full bg-white shadow-lg md:hidden z-50 border-t">
           <nav className="flex flex-col items-center gap-4 py-6">
-            {menuItems.map((item) => {
-              const isAnchor = item.href.includes("#");
-              return isAnchor ? (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  onClick={(e) => handleScrollTo(e, item.href)}
-                  className="hover:text-blue-600 transition-colors py-2"
-                >
-                  {item.name}
-                </a>
-              ) : (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="hover:text-blue-600 transition-colors py-2"
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
+            {Array.isArray(menuItems) &&
+              menuItems.map((item) => {
+                const isAnchor = item.href?.includes("#");
+                return isAnchor ? (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    onClick={(e) => handleScrollTo(e, item.href)}
+                    className="hover:text-blue-600 transition-colors py-2"
+                  >
+                    {item.name}
+                  </a>
+                ) : (
+                  <Link
+                    key={item.name}
+                    to={item.href || "/"}
+                    onClick={() => setMenuOpen(false)}
+                    className="hover:text-blue-600 transition-colors py-2"
+                  >
+                    {item.name}
+                  </Link>
+                );
+              })}
             <div className="flex flex-col gap-3 mt-4 w-full px-8">
               {loggedIn ? (
                 <>

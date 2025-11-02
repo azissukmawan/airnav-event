@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "./header";
 import Footer from "./footer";
 import {
@@ -15,33 +15,198 @@ import Tabs from "../../components/tabs";
 import { Typography } from "../../components/typography";
 import defaultImage from "../../assets/no-image.jpg";
 import Loading from "../../components/loading";
+import axios from "axios";
+import Alert from "../../components/alert";
 
 const EventDetail = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [registeredEvents, setRegisteredEvents] = useState([]);
+  const [loadingRegistered, setLoadingRegistered] = useState(true);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [alert, setAlert] = useState(null);
+  const [fetchedRegistered, setFetchedRegistered] = useState(false);
+
   const shareUrl = window.location.href;
+  const token = localStorage.getItem("token");
+  const API_BASE_URL =
+    "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
   useEffect(() => {
+    const stored = localStorage.getItem("registeredEvents");
+    if (stored) setRegisteredEvents(JSON.parse(stored));
+
     const fetchEvent = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/events/${slug}`);
         const json = await res.json();
-        if (json.success && json.data?.event) {
-          setEvent(json.data.event);
-        } else {
-          setEvent(null);
-        }
+        if (json.success && json.data?.event) setEvent(json.data.event);
+        else setEvent(null);
       } catch (err) {
         console.error("Gagal mengambil event:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchEvent();
   }, [slug]);
+
+  useEffect(() => {
+    const fetchRegistered = async () => {
+      if (!token) return setLoadingRegistered(false);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.data?.success) {
+          const serverData = Array.isArray(response.data.data)
+            ? response.data.data
+            : [];
+          // hanya set state jika belum ada data lokal baru
+          setRegisteredEvents((prev) => {
+            const merged = [...prev];
+            serverData.forEach((s) => {
+              if (
+                !merged.some(
+                  (e) => Number(e.modul_acara_id) === Number(s.modul_acara_id)
+                )
+              ) {
+                merged.push(s);
+              }
+            });
+            return merged;
+          });
+        }
+      } catch (err) {
+        console.error("Gagal fetch registered events", err);
+      } finally {
+        setLoadingRegistered(false);
+        setFetchedRegistered(true);
+      }
+    };
+    fetchRegistered();
+  }, [token]);
+
+  if (loading || loadingRegistered) return <Loading />;
+
+  if (!event) {
+    return (
+      <div className="text-center py-20">
+        <Typography type="heading4">Event tidak ditemukan</Typography>
+        <Button variant="primary" onClick={() => navigate("/")}>
+          Kembali
+        </Button>
+      </div>
+    );
+  }
+
+  // ================= LOGIKA TOMBOL =================
+  const now = new Date();
+  const registrationStart = new Date(event.pendaftaran?.mulai);
+  const registrationEnd = new Date(event.pendaftaran?.selesai);
+  const eventStart = new Date(event.acara?.mulai);
+  const eventEnd = new Date(event.acara?.selesai);
+
+  const isRegistered = Array.isArray(registeredEvents)
+    ? registeredEvents.some(
+        (e) => Number(e.modul_acara_id) === Number(event.id)
+      )
+    : false;
+
+  let buttonText = "";
+  let buttonVariant = "primary";
+  let canRegister = false;
+
+  if (now > eventEnd) {
+    buttonText = "Acara Telah Selesai";
+    buttonVariant = "third";
+  } else if (isRegistered) {
+    if (now < eventStart) {
+      buttonText = "Batal Daftar";
+      buttonVariant = "red";
+      canRegister = true; // tetap aktif supaya bisa batal
+    } else {
+      buttonText = "Terdaftar";
+      buttonVariant = "green";
+    }
+  } else if (now >= registrationStart && now <= registrationEnd) {
+    buttonText = "Daftar Sekarang";
+    buttonVariant = "primary";
+    canRegister = true;
+  } else if (now < registrationStart) {
+    buttonText = "Segera Hadir";
+    buttonVariant = "third";
+  } else {
+    buttonText = "Pendaftaran Ditutup";
+    buttonVariant = "third";
+  }
+
+  // ================= HANDLE REGISTER =================
+  const handleRegister = () => {
+    if (isRegistered && now < eventStart) {
+      setShowCancelModal(true);
+    } else if (canRegister && !isRegistered) {
+      setShowConfirmModal(true);
+    }
+  };
+
+  const confirmRegis = async () => {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/events/${event.id}/daftar`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        const updated = [...registeredEvents, { modul_acara_id: event.id }];
+        setRegisteredEvents(updated);
+        localStorage.setItem("registeredEvents", JSON.stringify(updated));
+        setShowConfirmModal(false);
+        setAlert({ type: "success", message: "Berhasil mendaftar event." });
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({
+        type: "error",
+        message: err.response?.data?.message || "Gagal mendaftar event.",
+      });
+    }
+  };
+
+  const cancelEventRegis = async () => {
+    try {
+      const response = await axios.delete(
+        `${API_BASE_URL}/events/${event.id}/batal-daftar`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data?.success) {
+        const updated = registeredEvents.filter(
+          (e) => e.modul_acara_id !== event.id
+        );
+        setRegisteredEvents(updated);
+        localStorage.setItem("registeredEvents", JSON.stringify(updated));
+        setShowCancelModal(false);
+        setAlert({ type: "info", message: "Pendaftaran dibatalkan." });
+      } else {
+        setAlert({
+          type: "error",
+          message: response.data?.message || "Gagal membatalkan pendaftaran.",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      setAlert({
+        type: "error",
+        message: "Terjadi kesalahan saat membatalkan pendaftaran.",
+      });
+    }
+  };
+
+  const cancelRegis = () => setShowConfirmModal(false);
 
   const copyToClipboard = async () => {
     try {
@@ -49,148 +214,56 @@ const EventDetail = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Gagal menyalin tautan:", err);
+      console.error(err);
     }
   };
 
-  const shareToFacebook = () => {
+  const shareToFacebook = () =>
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
         shareUrl
       )}`,
       "_blank"
     );
-  };
-
-  const shareToWhatsApp = () => {
+  const shareToWhatsApp = () =>
     window.open(
       `https://wa.me/?text=${encodeURIComponent(
         "Cek event keren ini! " + shareUrl
       )}`,
       "_blank"
     );
-  };
-
-  const shareToX = () => {
+  const shareToX = () =>
     window.open(
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(
         shareUrl
       )}&text=Cek%20event%20keren%20ini!`,
       "_blank"
     );
-  };
-
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!event) {
-    return (
-      <div className="text-center py-20">
-        <Typography type="heading4">Event tidak ditemukan</Typography>
-      </div>
-    );
-  }
-
-  const bannerImage = event.banner || defaultImage;
-
-  const tabItems = [
-    {
-      label: "Deskripsi",
-      content: (
-        <div className="space-y-10">
-          <div>
-            <Typography
-              type="heading5"
-              weight="semibold"
-              className="text-gray-900 mb-3"
-            >
-              Tentang <span className="text-blue-600">{event.nama}</span>
-            </Typography>
-            <Typography
-              type="paragraph"
-              className="text-gray-700 leading-relaxed"
-            >
-              {event.deskripsi}
-            </Typography>
-          </div>
-        </div>
-      ),
-    },
-    {
-      label: "Informasi",
-      content: (
-        <div className="space-y-10">
-          <div>
-            <Typography
-              type="heading6"
-              weight="semibold"
-              className="text-gray-900 mb-4"
-            >
-              Informasi Acara
-            </Typography>
-            <ul className="space-y-1 text-gray-700">
-              <li>
-                <strong>Alamat:</strong> {event.lokasi || "Tidak tersedia"}
-              </li>
-              <li>
-                <strong>Tanggal Pendaftaran:</strong>{" "}
-                {event.pendaftaran?.mulai || "-"} –{" "}
-                {event.pendaftaran?.selesai || "-"}
-              </li>
-              <li>
-                <strong>Tanggal Acara:</strong> {event.acara?.mulai || "-"} –{" "}
-                {event.acara?.selesai || "-"}
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <Typography
-              type="heading6"
-              weight="semibold"
-              className="text-gray-900 mb-4"
-            >
-              Informasi Tambahan
-            </Typography>
-            <Typography
-              type="paragraph"
-              className="text-gray-700 leading-relaxed"
-            >
-              {event.catatan || "Tidak ada catatan tambahan."}
-            </Typography>
-          </div>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <div className="font-poppins text-gray-800">
-      <Header
-        menuItems={[
-          { name: "Home", href: "/" },
-          { name: "About", href: "/#about" },
-          { name: "Events", href: "/#events" },
-        ]}
-      />
+      <Header />
+      {alert && (
+        <div className="fixed top-6 right-6 z-50">
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <section className="relative mt-20 overflow-hidden py-10 md:py-20 bg-gray-800">
         <div
           className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{ backgroundImage: `url(${bannerImage})` }}
+          style={{ backgroundImage: `url(${event.banner || defaultImage})` }}
         />
         <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
-
         <div className="relative max-w-6xl mx-auto px-6 lg:px-0 md:px-12 z-10 flex items-center">
           <div className="grid md:grid-cols-2 gap-10 items-center text-white w-full">
             <div>
-              <Typography
-                type="heading3"
-                weight="semibold"
-                className="text-white"
-              >
+              <Typography type="heading3" weight="semibold">
                 {event.nama}
               </Typography>
               <div className="flex items-center gap-3 mt-3 text-gray-200">
@@ -206,10 +279,9 @@ const EventDetail = () => {
                 </Typography>
               </div>
             </div>
-
             <div className="flex justify-center">
               <img
-                src={bannerImage}
+                src={event.banner || defaultImage}
                 alt={event.nama}
                 className="rounded-2xl shadow-2xl w-full max-w-md md:max-h-[250px] sm:max-h-[180px] object-cover hover:scale-105 transition-transform"
               />
@@ -218,18 +290,87 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* TAB & SHARE SECTION */}
+      {/* TAB & SHARE */}
       <section className="w-full px-6 md:px-12 z-10 mb-20 mt-10 flex justify-center">
         <div className="w-full max-w-6xl grid md:grid-cols-[2fr_1fr] gap-10 items-start">
           <div>
-            <Tabs items={tabItems} />
+            <Tabs
+              items={[
+                {
+                  label: "Deskripsi",
+                  content: (
+                    <div className="space-y-10">
+                      <Typography
+                        type="heading5"
+                        weight="semibold"
+                        className="text-gray-900 mb-3"
+                      >
+                        Tentang{" "}
+                        <span className="text-blue-600">{event.nama}</span>
+                      </Typography>
+                      <Typography
+                        type="paragraph"
+                        className="text-gray-700 leading-relaxed"
+                      >
+                        {event.deskripsi}
+                      </Typography>
+                    </div>
+                  ),
+                },
+                {
+                  label: "Informasi",
+                  content: (
+                    <div className="space-y-10">
+                      <Typography
+                        type="heading6"
+                        weight="semibold"
+                        className="text-gray-900 mb-4"
+                      >
+                        Informasi Acara
+                      </Typography>
+                      <ul className="space-y-1 text-gray-700">
+                        <li>
+                          <strong>Alamat:</strong> {event.lokasi || "-"}
+                        </li>
+                        <li>
+                          <strong>Tanggal Pendaftaran:</strong>{" "}
+                          {event.pendaftaran?.mulai || "-"} –{" "}
+                          {event.pendaftaran?.selesai || "-"}
+                        </li>
+                        <li>
+                          <strong>Tanggal Acara:</strong>{" "}
+                          {event.acara?.mulai || "-"} –{" "}
+                          {event.acara?.selesai || "-"}
+                        </li>
+                      </ul>
+                      <Typography
+                        type="heading6"
+                        weight="semibold"
+                        className="text-gray-900 mb-4"
+                      >
+                        Informasi Tambahan
+                      </Typography>
+                      <Typography
+                        type="paragraph"
+                        className="text-gray-700 leading-relaxed"
+                      >
+                        {event.catatan || "Tidak ada catatan tambahan."}
+                      </Typography>
+                    </div>
+                  ),
+                },
+              ]}
+            />
           </div>
 
           <div className="space-y-6">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-lg w-full md:w-auto">
-              {event.status_acara === "Bisa Daftar"
-                ? "Daftar Sekarang"
-                : event.status_acara}
+            <Button
+              variant={buttonVariant}
+              className="w-full md:w-auto"
+              onClick={handleRegister}
+              disabled={!canRegister} // hapus canCancel
+            >
+              {buttonText}
             </Button>
 
             <div className="flex flex-col items-start gap-3">
@@ -275,6 +416,61 @@ const EventDetail = () => {
           </div>
         </div>
       </section>
+
+      {/* Confirm & Cancel Modals */}
+      {showConfirmModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowConfirmModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Typography type="heading5" weight="bold" className="mb-4">
+              Konfirmasi Pendaftaran
+            </Typography>
+            <Typography type="body" className="mb-6">
+              Apakah Anda yakin ingin mendaftar "{event.nama}"?
+            </Typography>
+            <div className="flex justify-center gap-3">
+              <Button variant="third" onClick={cancelRegis}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={confirmRegis}>
+                Ya, Daftar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCancelModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Typography type="heading5" weight="bold" className="mb-4">
+              Batalkan Pendaftaran
+            </Typography>
+            <Typography type="body" className="mb-6">
+              Apakah Anda yakin ingin membatalkan pendaftaran "{event.nama}"?
+            </Typography>
+            <div className="flex justify-center gap-3">
+              <Button variant="third" onClick={() => setShowCancelModal(false)}>
+                Tidak
+              </Button>
+              <Button variant="red" onClick={cancelEventRegis}>
+                Ya, Batalkan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

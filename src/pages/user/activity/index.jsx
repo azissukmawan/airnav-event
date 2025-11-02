@@ -5,6 +5,7 @@ import { Typography } from "../../../components/typography";
 import { Download, ScanLine } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
+import Alert from "../../../components/alert";
 
 const Activity = () => {
   const [query, setQuery] = useState("");
@@ -14,22 +15,23 @@ const Activity = () => {
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
+  const [alert, setAlert] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        
+
         if (!token) return;
 
         const response = await axios.get(`${API_BASE_URL}/profile`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         });
-        
+
         const data = response.data.data;
         setUserName(data.name || "User");
 
@@ -37,7 +39,9 @@ const Activity = () => {
           setProfileImage(data.profile_photo);
         } else {
           const avatarName = encodeURIComponent(data.name || "User");
-          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+          setProfileImage(
+            `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
+          );
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -48,7 +52,9 @@ const Activity = () => {
             const parsedUser = JSON.parse(user);
             setUserName(parsedUser.name || "User");
             const avatarName = encodeURIComponent(parsedUser.name || "User");
-            setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+            setProfileImage(
+              `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
+            );
           } catch (e) {
             console.error("Error parsing user data:", e);
           }
@@ -142,14 +148,31 @@ const Activity = () => {
 
   if (loading) {
     return (
-      <Typography type="body" className="text-gray-600 text-center py-10">
-        Memuat aktivitas...
-      </Typography>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="flex items-center justify-center space-x-2">
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.2s]"></div>
+            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.4s]"></div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <div>
+      {/* Container alert fixed di kanan atas */}
+      <div className="fixed top-4 right-4 z-50">
+        {alert && (
+          <Alert
+            message={alert.message}
+            type={alert.type}
+            onClose={() => setAlert(null)}
+          />
+        )}
+      </div>
+
       <div className="flex justify-between mb-6">
         <div>
           <h1 className="text-lg md:text-2xl text-primary font-bold mb-1">
@@ -162,9 +185,9 @@ const Activity = () => {
         </div>
         <div className="flex items-center gap-3">
           {profileImage && (
-            <img 
+            <img
               src={profileImage}
-              alt="Profile" 
+              alt="Profile"
               className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
             />
           )}

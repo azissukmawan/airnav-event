@@ -43,10 +43,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, {
-        login: formData.usernameOrEmail,
-        password: formData.password,
-      });
+    const response = await axios.post(`${API_BASE_URL}/login`, {
+      login: formData.usernameOrEmail,
+      password: formData.password,
+    });
 
       console.log("Full response:", response.data);
 

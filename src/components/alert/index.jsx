@@ -1,4 +1,5 @@
 import React from "react";
+import { LucideMessageCircleWarning } from "lucide-react";
 
 // Ini warna-warna alert kita
 const alertStyles = {
@@ -8,15 +9,15 @@ const alertStyles = {
   },
   error: {
     wrapper: "bg-red-50 border-red-200 text-red-800",
-    icon: "❌",
+    icon: "",
   },
   warning: {
     wrapper: "bg-yellow-50 border-yellow-200 text-yellow-800",
-    icon: "⚠️",
+    icon: "",
   },
   info: {
     wrapper: "bg-blue-50 border-blue-200 text-blue-800",
-    icon: "ℹ️",
+    icon: "",
   },
 };
 
