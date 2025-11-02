@@ -76,22 +76,22 @@ const Activity = () => {
           const selesai = new Date(acara.mdl_acara_selesai);
           const sekarang = new Date();
 
-          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
-          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
-          const sekarangDate = new Date(sekarang.getFullYear(), sekarang.getMonth(), sekarang.getDate());
-
           let status = "";
-          if (sekarangDate < mulaiDate) status = "Belum Dimulai";
-          else if (sekarangDate >= mulaiDate && sekarangDate <= selesaiDate)
-            status = "On Going";
+          if (sekarang < mulai) status = "Belum Dimulai";
+          else if (sekarang >= mulai && sekarang <= selesai) status = "On Going";
           else status = "Selesai";
+
+          const sudahPresensi = item.presensi !== null;
+          const sudahLewat = sekarang > selesai;
+          const bisaDownload = sudahPresensi && sudahLewat;
 
           return {
             id: item.id,
             title: acara.mdl_nama,
             date: acara.mdl_acara_mulai,
             status,
-            isDownloaded: item.no_sertifikat !== null,
+            sudahPresensi,
+            isDownloaded: bisaDownload,
           };
         });
 
@@ -216,31 +216,34 @@ const Activity = () => {
                     </span>
                   </Typography>
 
-                  {activity.status === "On Going" && (
+                  {activity.isDownloaded ? (
                     <Button
-                      variant="primary"
-                      onClick={() => handleScanClick(activity)}
-                      iconLeft={<ScanLine size={18} />}
+                      variant="secondary"
+                      iconLeft={<Download size={18} />}
                       className="w-30"
+                      onClick={() => window.open("/user/certificate", "_blank")}
                     >
-                      Scan
+                      Sertifikat
                     </Button>
-                  )}
-
-                  {activity.status === "Selesai" && (
-                    <div className="flex items-center gap-3">
+                    ) : activity.sudahPresensi && activity.status !== "Selesai" ? (
                       <Button
-                        variant="secondary"
+                        variant="third"
                         iconLeft={<Download size={18} />}
-                        className="w-30"
-                        onClick={() =>
-                          window.open("/user/certificate", "_blank")
-                        }
+                        className="w-30 opacity-60 cursor-not-allowed"
+                        disabled
                       >
                         Sertifikat
                       </Button>
-                    </div>
-                  )}
+                    ) : activity.status === "On Going" ? (
+                      <Button
+                        variant="primary"
+                        onClick={() => handleScanClick(activity)}
+                        iconLeft={<ScanLine size={18} />}
+                        className="w-30"
+                      >
+                        Scan
+                      </Button>
+                    ) : null}
                 </div>
               </div>
             );

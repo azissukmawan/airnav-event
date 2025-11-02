@@ -35,7 +35,6 @@ const DetailEvent = () => {
 
   const event = events.find((e) => e.id === parseInt(id));
 
-  // Fetch data pendaftaran user
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
@@ -64,7 +63,6 @@ const DetailEvent = () => {
 
   if (loading || loadingRegistered) return <div>Loading...</div>;
 
-  // Handle jika event tidak ditemukan
   if (!event) {
     return (
       <div className="pb-10">
@@ -81,7 +79,6 @@ const DetailEvent = () => {
     );
   }
 
-  // Logika status berdasarkan tanggal (sama seperti Card component)
   const now = new Date();
   const registrationStart = new Date(event.mdl_pendaftaran_mulai);
   const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
@@ -103,7 +100,7 @@ const DetailEvent = () => {
     if (now < eventStart) {
       buttonText = "Batal Daftar";
       buttonVariant = "red";
-      canRegister = true; // pakai flag yang sama untuk aksi
+      canRegister = true;
     } else {
       buttonText = "Terdaftar";
       buttonVariant = "green";
@@ -187,7 +184,6 @@ const DetailEvent = () => {
         });
         setShowConfirmModal(false);
 
-        // reload setelah 1,5 detik supaya alert sempat tampil
         setTimeout(() => window.location.reload(), 1500);
       } else {
         setAlert({
@@ -247,7 +243,6 @@ const DetailEvent = () => {
     );
   };
 
-  // Format tanggal
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("id-ID", {

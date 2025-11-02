@@ -45,19 +45,23 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
       }
     } catch (err) {
       console.error("Error submitting presensi:", err);
-      
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
-      } else if (err.response?.status === 401) {
-        setError("Sesi Anda telah berakhir. Silakan login kembali.");
-      } else if (err.response?.status === 422) {
-        setError("Kode QR tidak valid atau sudah digunakan.");
+  
+      const errorMessage = err.response?.data?.message || "";
+
+      if (errorMessage.toLowerCase().includes("sudah melakukan presensi")) {
+        setSuccessMessage("Anda sudah melakukan presensi sebelumnya.");
+        setTimeout(() => {
+          onClose();
+        }, 2000);
       } else {
-        setError("Gagal mencatat presensi. Silakan coba lagi.");
+        if (errorMessage) {
+          setError(errorMessage);
+        } else if (err.response?.status === 401) {
+          setError("Sesi Anda telah berakhir. Silakan login kembali.");
+        } else {
+          setError("Gagal mencatat presensi. Silakan coba lagi.");
+        }
       }
-      
-      setScanResult("");
-      setIsSubmitting(false);
     }
   };
 
@@ -107,7 +111,7 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-8">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full p-4 relative shadow-2xl border border-gray-200">
         <button
           onClick={onClose}

@@ -11,6 +11,8 @@ import AddEvent from "../../../components/AddEvent";
 import Pagination from "../../../components/pagination";
 import DeletePopup from "../../../components/Popup/Delete";
 
+export const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);
   const [search, setSearch] = useState("");

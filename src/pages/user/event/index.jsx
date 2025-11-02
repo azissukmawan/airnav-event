@@ -1,14 +1,130 @@
 import { useState, useEffect } from "react";
+import { Search, Filter, X } from "lucide-react";
 import Card from "../../../components/card";
+import Modal from "../../../components/modal";
+import Pagination from "../../../components/pagination";
 import { useEvents } from "../../../contexts/EventContext";
 import axios from "axios";
 
+const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch, onFilterClick }) => {
+  const [query, setQuery] = useState("");
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    if (onSearch) onSearch(value);
+  };
+
+  const handleSearchClick = () => {
+    if (onSearch) onSearch(query);
+  };
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex items-center flex-1 bg-white rounded-full border border-typo-inline overflow-hidden focus-within:ring-2 focus-within:ring-primary-60">
+        <button
+          onClick={handleSearchClick}
+          className="p-4 text-typo-icon hover:text-primary-60 transition-colors"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+
+        <input
+          type="text"
+          placeholder={placeholder}
+          value={query}
+          onChange={handleInputChange}
+          className="flex-1 p-2 outline-none text-typo-secondary placeholder-typo-icon"
+        />
+      </div>
+
+      <button
+        onClick={onFilterClick}
+        className="flex items-center justify-center p-4 bg-white border border-typo-inline rounded-full hover:bg-background-secondary hover:border-primary transition-all"
+      >
+        <Filter className="w-5 h-5 text-typo-icon" />
+      </button>
+    </div>
+  );
+};
+
+const FilterContent = ({ activeFilters, onFilterChange }) => {
+  const statusOptions = [
+    { value: "all", label: "Semua Status" },
+    { value: "active", label: "Aktif" },
+    { value: "inactive", label: "Tidak Aktif" }
+  ];
+
+  const tipeOptions = [
+    { value: "all", label: "Semua Tipe" },
+    { value: "online", label: "Online" },
+    { value: "offline", label: "Offline" },
+    { value: "hybrid", label: "Hybrid" }
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <label className="text-sm font-semibold text-typo-primary mb-3 block">
+          Status Event
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {statusOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onFilterChange('status', option.value)}
+              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                activeFilters.status === option.value
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-background-secondary text-typo-secondary hover:bg-primary-20'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-semibold text-typo-primary mb-3 block">
+          Tipe Event
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {tipeOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onFilterChange('tipe', option.value)}
+              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                activeFilters.tipe === option.value
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-background-secondary text-typo-secondary hover:bg-primary-20'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Event = () => {
-  const { events, loading } = useEvents();
+  const { events, loading, pagination, updateFilters, updatePage, updatePerPage } = useEvents();
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [loadingRegistered, setLoadingRegistered] = useState(true);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState({
+    status: 'all',
+    tipe: 'all'
+  });
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [tempFilters, setTempFilters] = useState({
+    status: 'all',
+    tipe: 'all'
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -80,8 +196,47 @@ const Event = () => {
     fetchRegisteredEvents();
   }, []);
 
-  const registeredEventsCount = registeredEvents.length;
-  const totalEventsCount = events.length;
+  const filteredEvents = events.filter(event => 
+    event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleTempFilterChange = (filterType, value) => {
+    setTempFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  const handleResetFilters = () => {
+    setTempFilters({ status: 'all', tipe: 'all' });
+  };
+
+  const handleApplyFilters = () => {
+    setFilters(tempFilters);
+    updateFilters(tempFilters);
+    setIsFilterModalOpen(false);
+  };
+
+  const handleOpenFilterModal = () => {
+    setTempFilters(filters);
+    setIsFilterModalOpen(true);
+  };
+
+  const handlePageChange = (page) => {
+    updatePage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleRowsPerPageChange = (perPage) => {
+    updatePerPage(perPage);
+  };
+
+  const hasActiveFilters = filters.status !== 'all' || filters.tipe !== 'all';
 
   if (loading || loadingRegistered) return <p>Loading...</p>;
 
@@ -93,7 +248,7 @@ const Event = () => {
             Selamat Datang, {userName}!
           </h1>
           <h1 className="text-sm md:text-md text-typo-secondary mb-1">
-            Kamu terdaftar di {registeredEventsCount} dari {totalEventsCount} event yang tersedia
+            Lihat semua event yang tersedia untuk kamu
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -107,24 +262,139 @@ const Event = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {events.map((event) => (
-          <Card
-            key={event.id}
-            id={event.id}
-            title={event.mdl_nama}
-            date={event.mdl_acara_mulai}
-            location={event.mdl_lokasi}
-            image={event.media_urls.banner}
-            mdl_pendaftaran_mulai={event.mdl_pendaftaran_mulai}
-            mdl_pendaftaran_selesai={event.mdl_pendaftaran_selesai}
-            mdl_acara_mulai={event.mdl_acara_mulai}
-            mdl_acara_selesai={event.mdl_acara_selesai}
-            tipe={event.mdl_tipe}
-            registeredEvents={registeredEvents}
-          />
-        ))}
+      <div className="mb-4">
+        <SearchBar 
+          placeholder="Cari event berdasarkan nama atau lokasi..." 
+          onSearch={handleSearch}
+          onFilterClick={handleOpenFilterModal}
+        />
       </div>
+
+      {hasActiveFilters && (
+        <div className="mb-4 flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-typo-secondary">Filter aktif:</span>
+          {filters.status !== 'all' && (
+            <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
+              Status: {filters.status}
+              <button
+                onClick={() => {
+                  const newFilters = { ...filters, status: 'all' };
+                  setFilters(newFilters);
+                  updateFilters(newFilters);
+                }}
+                className="hover:bg-primary-40 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          {filters.tipe !== 'all' && (
+            <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
+              Tipe: {filters.tipe}
+              <button
+                onClick={() => {
+                  const newFilters = { ...filters, tipe: 'all' };
+                  setFilters(newFilters);
+                  updateFilters(newFilters);
+                }}
+                className="hover:bg-primary-40 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+          <button
+            onClick={() => {
+              const newFilters = { status: 'all', tipe: 'all' };
+              setFilters(newFilters);
+              updateFilters(newFilters);
+            }}
+            className="text-sm text-primary hover:text-primary-60 font-medium"
+          >
+            Reset semua
+          </button>
+        </div>
+      )}
+
+      <div className="mb-4 flex items-center justify-between">
+        <div className="text-sm text-typo-secondary">
+          Menampilkan <span className="font-semibold">{filteredEvents.length}</span> event pada halaman ini
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-3 gap-6">
+        {filteredEvents.length > 0 ? (
+          filteredEvents.map((event) => (
+            <Card
+              key={event.id}
+              id={event.id}
+              title={event.mdl_nama}
+              date={event.mdl_acara_mulai}
+              location={event.mdl_lokasi}
+              image={event.media_urls.banner}
+              mdl_pendaftaran_mulai={event.mdl_pendaftaran_mulai}
+              mdl_pendaftaran_selesai={event.mdl_pendaftaran_selesai}
+              mdl_acara_mulai={event.mdl_acara_mulai}
+              mdl_acara_selesai={event.mdl_acara_selesai}
+              tipe={event.mdl_tipe}
+              registeredEvents={registeredEvents}
+            />
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-12">
+            <div className="text-typo-icon mb-2">
+              <Filter className="w-16 h-16 mx-auto mb-4" />
+            </div>
+            <p className="text-typo-secondary font-medium mb-1">
+              Tidak ada event yang ditemukan
+            </p>
+            <p className="text-typo-icon text-sm">
+              Coba ubah filter atau kata kunci pencarian
+            </p>
+          </div>
+        )}
+      </div>
+
+      {filteredEvents.length > 0 && (
+        <div className="mt-8 flex items-center justify-between">
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            onPageChange={handlePageChange}
+            rowsPerPage={pagination.perPage}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
+        </div>
+      )}
+
+      <Modal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        title="Filter Event"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={handleResetFilters}
+              className="px-4 py-2 border border-typo-inline text-typo-primary font-medium rounded-lg hover:bg-background-secondary transition-colors"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleApplyFilters}
+              className="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-60 transition-colors shadow-md"
+            >
+              Terapkan Filter
+            </button>
+          </>
+        }
+      >
+        <FilterContent
+          activeFilters={tempFilters}
+          onFilterChange={handleTempFilterChange}
+        />
+      </Modal>
     </div>
   );
 };

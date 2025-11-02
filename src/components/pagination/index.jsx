@@ -62,13 +62,10 @@ const getPaginationNumbers = (currentPage, totalPages) => {
 const Pagination = ({
   currentPage,
   totalPages,
-  totalItems,
   onPageChange,
   rowsPerPage,
   onRowsPerPageChange,
 }) => {
-  const startItem = (currentPage - 1) * rowsPerPage + 1;
-  const endItem = Math.min(currentPage * rowsPerPage, totalItems || 0);
 
   // Gunakan helper function yang baru
   const pageNumbers = getPaginationNumbers(currentPage, totalPages);
@@ -78,12 +75,6 @@ const Pagination = ({
     <>
       {/* 2. Bagian kiri: Info & dropdown (disederhanakan) */}
       <div className="flex items-center gap-4 text-sm text-gray-700">
-        {/* Info jumlah data */}
-        <span className="text-gray-600">
-          Showing <span className="font-semibold">{startItem}</span>–
-          <span className="font-semibold">{endItem}</span> of{" "}
-          <span className="font-semibold">{totalItems}</span> entries
-        </span>
 
         {/* Dropdown jumlah data per halaman */}
         <div className="flex items-center space-x-2">
