@@ -530,6 +530,16 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                       onChange={handleFileChange}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
                     />
+                     <div className="mt-2">
+                      <a
+                        href="/format-template-sertifikat.jpg"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 text-sm underline hover:text-blue-800"
+                      >
+                        Download Template Sertifikat
+                      </a>
+                    </div>
                   </div>
 
                   <div>
