@@ -169,7 +169,7 @@ export default function Sidebar({ role = "admin" }) {
         <div>
           <div className="w-28 mx-auto mb-4">
             <Link to="/" className="flex items-center space-x-2">
-              <img src={AirnavLogo} alt="airnavlogo" />
+              <img src="/airnav-logo.png" alt="airnavlogo" />
             </Link>
           </div>
 

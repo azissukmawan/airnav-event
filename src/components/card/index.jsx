@@ -16,15 +16,6 @@ export default function Card({
   registeredEvents = [],
   status_karyawan, // ✅ Tambahan prop untuk status karyawan
 }) {
-  // ✅ DEBUGGING: Console log untuk cek status_karyawan
-  console.log("=== CARD DEBUG ===");
-  console.log("Event ID:", id);
-  console.log("Event Title:", title);
-  console.log("status_karyawan:", status_karyawan);
-  console.log("Type of status_karyawan:", typeof status_karyawan);
-  console.log("Is null?", status_karyawan === null);
-  console.log("Is undefined?", status_karyawan === undefined);
-  console.log("==================");
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
     
@@ -114,7 +105,7 @@ export default function Card({
   const CardContent = (
     <div className="w-full bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
       <div className="relative">
-        <img src={image || defaultImage} alt={title} className="w-full h-56 object-cover" />
+        <img src={image || "/no-image.jpg"} alt={title} className="w-full h-56 object-cover" />
         {displayStatus && (
           <Typography
             type="caption1"
