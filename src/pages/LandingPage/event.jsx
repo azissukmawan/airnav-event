@@ -314,7 +314,7 @@ const EventDetail = () => {
           <div>
             <Tabs
               items={[
-                {
+               {
                   label: "Deskripsi",
                   content: (
                     <div className="space-y-10">
@@ -328,9 +328,9 @@ const EventDetail = () => {
                       </Typography>
                       <Typography
                         type="paragraph"
-                        className="text-gray-700 leading-relaxed"
+                        className="text-gray-700 leading-relaxed whitespace-pre-line"
                       >
-                        {event.deskripsi}
+                         {event.deskripsi.replace(/\\n/g, "\n")}
                       </Typography>
                     </div>
                   ),
