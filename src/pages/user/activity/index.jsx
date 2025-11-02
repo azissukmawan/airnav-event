@@ -162,7 +162,7 @@ const Activity = () => {
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div>
@@ -249,25 +249,20 @@ const Activity = () => {
                       iconLeft={<Download size={18} />}
                       className="w-30"
                       onClick={async () => {
+                        console.log(activity);
                         try {
                           const token = localStorage.getItem("token");
 
                           // POST ke API untuk generate sertifikat
                           const response = await axios.post(
                             `${API_BASE_URL}/sertifikat/generate`,
-                            { id_acara: 8 }, // contoh id acara
+                            { id_acara: 43 },
                             {
                               headers: {
                                 Authorization: `Bearer ${token}`,
                                 "Content-Type": "application/json",
                               },
                             }
-                          );
-
-                          // console log response dari API
-                          console.log(
-                            "Response POST /sertifikat/generate:",
-                            response
                           );
 
                           // Simpan data sertifikat
