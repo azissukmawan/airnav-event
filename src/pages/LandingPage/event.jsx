@@ -13,7 +13,6 @@ import {
 import { Button } from "../../components/button";
 import Tabs from "../../components/tabs";
 import { Typography } from "../../components/typography";
-import defaultImage from "../../assets/no-image.jpg";
 import Loading from "../../components/loading";
 import axios from "axios";
 import Alert from "../../components/alert";
@@ -300,7 +299,7 @@ const EventDetail = () => {
             </div>
             <div className="flex justify-center">
               <img
-                src={event.banner || defaultImage}
+                src={event.banner || "/no-image.jpg"}
                 alt={event.nama}
                 className="rounded-2xl shadow-2xl w-full max-w-md md:max-h-[250px] sm:max-h-[180px] object-cover hover:scale-105 transition-transform"
               />

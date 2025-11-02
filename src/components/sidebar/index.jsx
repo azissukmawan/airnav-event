@@ -13,7 +13,6 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import AirnavLogo from "../../assets/airnav-logo.png";
 import { Button } from "../button";
 import axios from "axios";
 
@@ -91,7 +90,7 @@ export default function Sidebar({ role = "admin" }) {
 
           <div className="w-20">
             <Link to="/">
-              <img src={AirnavLogo} alt="airnavlogo" className="w-full" />
+              <img src="/airnav-logo.png" alt="airnavlogo" className="w-full" />
             </Link>
           </div>
 

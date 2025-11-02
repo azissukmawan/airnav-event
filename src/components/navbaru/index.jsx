@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../button";
 import { Typography } from "../typography";
-import AirnavLogo from "../../assets/airnav2.png";
 import { Search, Cog, CheckCircle, Lock, UserCheck, Menu, X } from "lucide-react";
 
 export default function Navbaru() {
@@ -15,7 +14,7 @@ export default function Navbaru() {
         {/* Logo + Text */} 
         <div className="flex items-center gap-2 flex-shrink-0">
           <Link to="/" className="flex items-center gap-2">
-            <img src={AirnavLogo} alt="airnavlogo" className="w-10 h-auto" />
+            <img src="/airnav2.png" alt="airnavlogo" className="w-10 h-auto" />
           </Link>
           <div className="leading-tight text-left">
             <Typography

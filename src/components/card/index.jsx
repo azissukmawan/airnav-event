@@ -2,7 +2,6 @@ import { Typography } from "../typography";
 import { Calendar, MapPin, Building, Laptop, RefreshCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "../button";
-import defaultImage from "../../assets/no-image.jpg";
 
 export default function Card({
   id,

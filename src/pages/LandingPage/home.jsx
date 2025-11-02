@@ -4,12 +4,9 @@ import { useInView } from "react-intersection-observer";
 import { Typography } from "../../components/typography";
 import CardLanding from "../../components/cardLanding";
 import Spinner from "../../components/spinner";
-import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
-import heroImage from "../../assets/hero.png";
-import airnav from "../../assets/airnav.png";
-import bumn from "../../assets/bumn.png";
-import maganghub from "../../assets/maganghub.png";
-import AirNavLogo from "../../assets/airnav-logo.png";
+
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -92,7 +89,7 @@ export default function Home() {
       <section
         className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-28 overflow-hidden mt-16"
         style={{
-          backgroundImage: `url(${heroImage})`,
+          backgroundImage: "url(/hero.png)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
@@ -125,7 +122,7 @@ export default function Home() {
           className="hidden lg:block z-20"
         >
           <img
-            src={airnavLogoOnly}
+            src="/airnav-logo-notext.png"
             alt="AirNav Indonesia"
             className="w-68 mx-20"
           />
@@ -140,7 +137,7 @@ export default function Home() {
         <FadeInSection delay={0.1}>
           <div>
             <img
-              src={airnav}
+              src="/airnav.png"
               alt="AirNav Event Management"
               className="w-full h-auto max-w-120 rounded-xl"
             />
@@ -222,14 +219,14 @@ export default function Home() {
         </FadeInSection>
         <FadeInSection delay={0.3}>
           <div className="flex flex-wrap justify-center items-center gap-6 lg:gap-12 px-4">
-            <img src={bumn} alt="BUMN" className="h-12 sm:h-14 lg:h-20" />
+            <img src="/bumn.png" alt="BUMN" className="h-12 sm:h-14 lg:h-20" />
             <img
-              src={AirNavLogo}
+              src="/airnav-logo.png"
               alt="AirNav Indonesia"
               className="h-12 sm:h-14 lg:h-20"
             />
             <img
-              src={maganghub}
+              src="/maganghub.png"
               alt="Maganghub"
               className="h-12 sm:h-14 lg:h-20"
             />

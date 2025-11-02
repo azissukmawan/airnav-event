@@ -4,8 +4,6 @@ import axios from "axios";
 import { Button } from "../../../components/button";
 import Spinner from "../../../components/spinner";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
-import AirNav from "../../../assets/airnav-logo.png";
-import loginImage from "../../../assets/loginimage.png";
 
 const API_BASE_URL =
   "https://mediumpurple-swallow-757782.hostingersite.com/api";
@@ -112,10 +110,10 @@ export default function Login() {
           {/* KIRI: Gambar */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
-            style={{ backgroundImage: `url(${loginImage})` }}
+            style={{ backgroundImage: "url(/loginimage.png)" }}
           >
             <div className="absolute top-6 left-6 bg-white/30 backdrop-blur-md p-3 rounded-2xl shadow-md">
-              <img src={AirNav} alt="AirNav Logo" className="w-20" />
+              <img src="/airnav-logo.png" alt="AirNav Logo" className="w-20" />
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             <div className="relative text-white z-10">

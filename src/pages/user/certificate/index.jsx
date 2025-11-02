@@ -9,7 +9,6 @@ import {
   Image as PdfImage,
 } from "@react-pdf/renderer";
 import Loading from "../../../components/loading";
-import bgImage from "../../../assets/cert.jpg";
 
 const styles = StyleSheet.create({
   body: {
@@ -69,7 +68,7 @@ export default function CertificatePreview() {
 
   useEffect(() => {
     const loadDefaultBg = () => {
-      return fetch(bgImage)
+      return fetch("/cert.jpg")
         .then((res) => res.blob())
         .then(
           (blob) =>

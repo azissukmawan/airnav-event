@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import airnavLogoOnly from "../../assets/airnav-logo-notext.png";
 
 export default function Loading() {
   const [fadeOut, setFadeOut] = useState(false);
@@ -27,7 +26,7 @@ export default function Loading() {
       <div className="relative">
         <div className="absolute inset-0 blur-3xl opacity-50 animate-pulse bg-white/70 rounded-full scale-150"></div>
         <img
-          src={airnavLogoOnly}
+          src="/airnav-logo-notext.png"
           alt="AirNav Logo"
           className="relative w-24 h-24 animate-[spin_6s_linear_infinite] drop-shadow-xl"
         />
