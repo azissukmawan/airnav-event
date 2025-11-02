@@ -67,14 +67,18 @@ export default function CertificatePreview() {
   const [bgBase64, setBgBase64] = useState(null);
 
   useEffect(() => {
-    const loadDefaultBg = () => {
-      return fetch("/cert.jpg")
-        .then((res) => res.blob())
+    const loadImageAsBase64 = (url) => {
+      return fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to load image: ${url}`);
+          return res.blob();
+        })
         .then(
           (blob) =>
-            new Promise((resolve) => {
+            new Promise((resolve, reject) => {
               const reader = new FileReader();
               reader.onloadend = () => resolve(reader.result);
+              reader.onerror = reject;
               reader.readAsDataURL(blob);
             })
         );
@@ -87,16 +91,35 @@ export default function CertificatePreview() {
         setName(parsed.data?.nama_peserta || parsed.name || "");
         setNumber(parsed.data?.no_sertifikat || parsed.number || "");
 
-        // Cek apakah ada custom background
-        const customBg = parsed.data?.background || parsed.background;
+        const templateUrl = parsed.templateUrl || parsed.data?.templateUrl;
 
-        if (customBg && customBg !== "null" && customBg !== null) {
-          // Gunakan custom background
-          setBgBase64(customBg);
-          setLoading(false);
+        console.log("Template URL from DB:", templateUrl);
+
+        if (templateUrl && templateUrl !== "null" && templateUrl !== null) {
+          if (templateUrl.startsWith("data:image")) {
+            setBgBase64(templateUrl);
+            setLoading(false);
+          } else {
+            loadImageAsBase64(templateUrl)
+              .then((base64) => {
+                console.log("Loaded template from DB successfully");
+                setBgBase64(base64);
+              })
+              .catch((err) => {
+                console.error("Gagal load template dari DB:", err);
+                return loadImageAsBase64("/cert.jpg");
+              })
+              .then((base64) => {
+                if (base64) setBgBase64(base64);
+              })
+              .catch((err) => {
+                console.error("Gagal load default background:", err);
+              })
+              .finally(() => setLoading(false));
+          }
         } else {
-          // Gunakan default background
-          loadDefaultBg()
+          console.log("No template URL, using default /cert.jpg");
+          loadImageAsBase64("/cert.jpg")
             .then((base64) => setBgBase64(base64))
             .catch((err) => {
               console.error("Gagal load default background:", err);
@@ -105,15 +128,14 @@ export default function CertificatePreview() {
         }
       } catch (err) {
         console.error("Gagal parsing cert_data:", err);
-        // Jika error parsing, gunakan default background
-        loadDefaultBg()
+        loadImageAsBase64("/cert.jpg")
           .then((base64) => setBgBase64(base64))
           .catch((err) => console.error("Gagal load default background:", err))
           .finally(() => setLoading(false));
       }
     } else {
-      // Tidak ada cert_data, gunakan default background
-      loadDefaultBg()
+      console.log("No cert_data found, using default /cert.jpg");
+      loadImageAsBase64("/cert.jpg")
         .then((base64) => setBgBase64(base64))
         .catch((err) => console.error("Gagal load default background:", err))
         .finally(() => setLoading(false));
