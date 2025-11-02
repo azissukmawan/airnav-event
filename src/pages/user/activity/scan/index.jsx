@@ -13,12 +13,14 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
   const submitPresensi = async (kode) => {
     setIsSubmitting(true);
     setError("");
+    setSuccessMessage("");
 
     try {
       const token = localStorage.getItem("token");
 
       if (!token) {
         setError("Token tidak ditemukan. Silakan login kembali.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -34,26 +36,41 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
         }
       );
 
-      if (response.data.success) {
-        setSuccessMessage(response.data.message || "Presensi berhasil dicatat!");
+      if (response.data.success === true || response.status === 200 || response.status === 201) {
         setScanResult(kode);
+        setSuccessMessage(response.data.message || "Presensi berhasil dicatat!");
+        setError("");
 
         setTimeout(() => {
-          onScanSuccess(kode, response.data);
+          setIsSubmitting(false);
+          setScanResult("");
+          setSuccessMessage("");
+          if (onScanSuccess) {
+            onScanSuccess(kode, response.data);
+          }
           onClose();
         }, 1500);
+      } else {
+        setError(response.data.message || "Gagal mencatat presensi.");
+        setSuccessMessage("");
+        setIsSubmitting(false);
       }
     } catch (err) {
-      console.error("Error submitting presensi:", err);
-  
       const errorMessage = err.response?.data?.message || "";
 
-      if (errorMessage.toLowerCase().includes("sudah melakukan presensi")) {
+      if (errorMessage.toLowerCase().includes("sudah melakukan presensi") || 
+          errorMessage.toLowerCase().includes("sudah presensi")) {
+        setError("");
         setSuccessMessage("Anda sudah melakukan presensi sebelumnya.");
         setTimeout(() => {
+          setIsSubmitting(false);
+          setScanResult("");
+          setSuccessMessage("");
           onClose();
-        }, 2000);
+          window.location.reload();
+        }, 1500);
       } else {
+        setSuccessMessage("");
         if (errorMessage) {
           setError(errorMessage);
         } else if (err.response?.status === 401) {
@@ -61,12 +78,20 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
         } else {
           setError("Gagal mencatat presensi. Silakan coba lagi.");
         }
+        setIsSubmitting(false);
       }
     }
   };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      setScanning(false);
+      setError("");
+      setScanResult("");
+      setIsSubmitting(false);
+      setSuccessMessage("");
+      return;
+    }
 
     let html5QrCode;
     
@@ -84,9 +109,8 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
             qrbox: { width: 250, height: 250 }
           },
           (decodedText) => {
-            html5QrCode.stop();
+            html5QrCode.stop().catch(console.error);
             setScanning(false);
-
             submitPresensi(decodedText);
           },
         );

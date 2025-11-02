@@ -4,14 +4,14 @@ import axios from "axios";
 import Sidebar from "../../../components/sidebar";
 import Table from "../../../components/table";
 import Search from "../../../components/form/SearchBar";
-import Breadcrumb from "../../../components/breadcrumb";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 import { ArrowUpDown } from "lucide-react";
 import AddEvent from "../../../components/AddEvent";
 import Pagination from "../../../components/pagination";
 import DeletePopup from "../../../components/Popup/Delete";
 
-const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+export const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);
@@ -25,26 +25,30 @@ const AdminEvent = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const breadcrumbItems = [
-    { label: "Dashboard", link: "/admin" },
-    { label: "Daftar Acara" },
-  ];
-
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchEvents = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/admin/events?per_page=100`, {
+        const res = await axios.get(`${API_BASE_URL}/admin/events`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("📦 Response API:", res.data);
 
-        const events = Array.isArray(res.data?.data) ? res.data.data : [];
+        // Coba berbagai kemungkinan struktur data
+        const events =
+          res.data?.data?.data || // kemungkinan ada pagination
+          res.data?.data || // kemungkinan langsung array
+          res.data || // fallback
+          [];
 
-        setEventData(events);
+        if (Array.isArray(events)) {
+          setEventData(events);
+        } else {
+          console.warn("⚠️ Data yang diterima bukan array:", events);
+          setEventData([]);
+        }
       } catch (error) {
         console.error("❌ Gagal fetch event:", error);
         setError("Gagal mengambil data event");
@@ -80,7 +84,9 @@ const AdminEvent = () => {
       await axios.delete(`${API_BASE_URL}/admin/events/${selectedEventId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setEventData((prev) => prev.filter((item) => item.id !== selectedEventId));
+      setEventData((prev) =>
+        prev.filter((item) => item.id !== selectedEventId)
+      );
       setIsDeleteOpen(false);
     } catch (err) {
       console.error("❌ Gagal menghapus event:", err);
@@ -96,13 +102,13 @@ const AdminEvent = () => {
 
   // === TABLE COLUMNS ===
   const columns = [
-    { 
-      header: "No", 
+    {
+      header: "No",
       accessor: (row, i) => {
         const index = paginatedData.indexOf(row);
-        return index === -1 ? '-' : ((currentPage - 1) * rowsPerPage) + index + 1;
+        return index === -1 ? "-" : (currentPage - 1) * rowsPerPage + index + 1;
       },
-      className: "w-16 text-center" 
+      className: "w-16 text-center",
     },
     { header: "Nama Acara", accessor: (row) => row.mdl_nama || "-" },
     {
@@ -138,7 +144,9 @@ const AdminEvent = () => {
             ? "bg-yellow-100 text-yellow-700"
             : "bg-gray-100 text-gray-700";
         return (
-          <span className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}>
+          <span
+            className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}
+          >
             {status}
           </span>
         );
@@ -178,10 +186,12 @@ const AdminEvent = () => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 overflow-hidden">
+      {/* Sidebar tetap */}
       <Sidebar role="admin" />
-      <main className="flex-1 p-6 space-y-6 bg-gray-50">
-        <Breadcrumb items={breadcrumbItems} />
+
+      {/* Main content */}
+      <main className="flex-1 p-6 space-y-6 bg-gray-50 overflow-x-hidden">
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold text-blue-900">Daftar Acara</h1>
         </div>
@@ -189,7 +199,10 @@ const AdminEvent = () => {
         {/* Search + Button */}
         <div className="flex md:flex-row items-center md:space-x-4 mb-10">
           <div className="flex-1">
-            <Search placeholder="Cari nama acara..." onSearch={handleSearchChange} />
+            <Search
+              placeholder="Cari nama acara..."
+              onSearch={handleSearchChange}
+            />
           </div>
           <button
             className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950"
@@ -206,8 +219,15 @@ const AdminEvent = () => {
           ) : error ? (
             <p className="text-center text-red-500">{error}</p>
           ) : (
-            <Table columns={columns} data={paginatedData} />
+            <div className="overflow-x-auto w-full">
+              <div className="min-w-[900px]">
+                {" "}
+                {/* batas minimum biar bisa geser */}
+                <Table columns={columns} data={paginatedData} />
+              </div>
+            </div>
           )}
+
           <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
             <Pagination
               currentPage={currentPage}
@@ -223,7 +243,10 @@ const AdminEvent = () => {
           </div>
         </section>
 
-        <AddEvent isOpen={isAddEventOpen} onClose={() => setIsAddEventOpen(false)} />
+        <AddEvent
+          isOpen={isAddEventOpen}
+          onClose={() => setIsAddEventOpen(false)}
+        />
         <DeletePopup
           isOpen={isDeleteOpen}
           onClose={() => setIsDeleteOpen(false)}

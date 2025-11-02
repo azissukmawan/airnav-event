@@ -11,48 +11,33 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
  * - onRowsPerPageChange: Fungsi callback (terima jumlah baru)
  */
 
-// Helper function untuk membuat logic pagination "..."
 const getPaginationNumbers = (currentPage, totalPages) => {
   const pageNumbers = [];
-  const maxPagesToShow = 5; // Tampilkan 5 nomor/ellipsis
-  const sidePages = 1; // Selalu tampilkan 1 halaman di awal dan 1 di akhir
+  const maxPagesToShow = 5;
+  const sidePages = 1;
 
   if (totalPages <= maxPagesToShow + sidePages) {
-    // Jika total halaman sedikit, tampilkan semua
     for (let i = 1; i <= totalPages; i++) {
       pageNumbers.push(i);
     }
   } else {
-    // Tampilkan halaman pertama
     pageNumbers.push(1);
-
-    // Tampilkan ellipsis jika perlu (kiri)
-    if (currentPage > sidePages + 2) {
-      pageNumbers.push("...");
-    }
-
-    // Hitung halaman tengah
+    if (currentPage > sidePages + 2) pageNumbers.push("...");
     let start = Math.max(2, currentPage - sidePages);
     let end = Math.min(totalPages - 1, currentPage + sidePages);
 
     if (currentPage <= sidePages + 2) {
       start = 2;
-      end = 2 + maxPagesToShow - 3; // 1, 2, 3, 4, ..., 10
+      end = 2 + maxPagesToShow - 3;
     } else if (currentPage >= totalPages - sidePages - 1) {
-      start = totalPages - (maxPagesToShow - 3) - 1; // 1, ..., 7, 8, 9, 10
+      start = totalPages - (maxPagesToShow - 3) - 1;
       end = totalPages - 1;
     }
 
     for (let i = start; i <= end; i++) {
       pageNumbers.push(i);
     }
-
-    // Tampilkan ellipsis jika perlu (kanan)
-    if (currentPage < totalPages - sidePages - 1) {
-      pageNumbers.push("...");
-    }
-
-    // Tampilkan halaman terakhir
+    if (currentPage < totalPages - sidePages - 1) pageNumbers.push("...");
     pageNumbers.push(totalPages);
   }
 
@@ -62,23 +47,28 @@ const getPaginationNumbers = (currentPage, totalPages) => {
 const Pagination = ({
   currentPage,
   totalPages,
+  totalItems,
   onPageChange,
   rowsPerPage,
   onRowsPerPageChange,
 }) => {
-
-  // Gunakan helper function yang baru
   const pageNumbers = getPaginationNumbers(currentPage, totalPages);
 
-  // 1. Ganti <div> pembungkus dengan <React.Fragment> atau <>
+  // Hitung range data yang sedang ditampilkan
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const endItem = Math.min(currentPage * rowsPerPage, totalItems);
+
   return (
-    <>
-      {/* 2. Bagian kiri: Info & dropdown (disederhanakan) */}
-      <div className="flex items-center gap-4 text-sm text-gray-700">
+    <div className="w-full flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-700">
+      {/* Kiri: info jumlah data & dropdown */}
+      <div className="flex items-center gap-4">
+        {/* Info "Menampilkan 1–5 dari 20 data" */}
+        <span className="text-gray-700">
+          Show per page
+        </span>
 
         {/* Dropdown jumlah data per halaman */}
         <div className="flex items-center space-x-2">
-          <span className="text-gray-700">Show</span>
           <select
             value={rowsPerPage}
             onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
@@ -93,7 +83,7 @@ const Pagination = ({
         </div>
       </div>
 
-      {/* 3. Bagian kanan: Pagination (menggunakan logic baru) */}
+      {/* Kanan: tombol pagination */}
       <nav className="flex items-center space-x-1">
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -107,7 +97,6 @@ const Pagination = ({
           <ChevronLeft size={16} /> Previous
         </button>
 
-        {/* Mapping menggunakan logic baru */}
         {pageNumbers.map((page, index) =>
           page === "..." ? (
             <span key={index} className="px-3 py-1 text-gray-500 text-sm">
@@ -140,7 +129,7 @@ const Pagination = ({
           Next <ChevronRight size={16} />
         </button>
       </nav>
-    </>
+    </div>
   );
 };
 

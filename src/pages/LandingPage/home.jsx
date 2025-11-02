@@ -9,6 +9,7 @@ import heroImage from "../../assets/hero.png";
 import airnav from "../../assets/airnav.png";
 import bumn from "../../assets/bumn.png";
 import maganghub from "../../assets/maganghub.png";
+import AirNavLogo from "../../assets/airnav-logo.png";
 
 export default function Home() {
   const [events, setEvents] = useState([]);
@@ -223,7 +224,7 @@ export default function Home() {
           <div className="flex flex-wrap justify-center items-center gap-6 lg:gap-12 px-4">
             <img src={bumn} alt="BUMN" className="h-12 sm:h-14 lg:h-20" />
             <img
-              src="/src/assets/airnav-logo.png"
+              src={AirNavLogo}
               alt="AirNav Indonesia"
               className="h-12 sm:h-14 lg:h-20"
             />

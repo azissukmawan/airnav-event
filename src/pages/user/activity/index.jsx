@@ -6,6 +6,7 @@ import { Download, ScanLine } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
 import Alert from "../../../components/alert";
+import { useNavigate } from "react-router-dom";
 
 const Activity = () => {
   const [query, setQuery] = useState("");
@@ -16,6 +17,8 @@ const Activity = () => {
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
   const [alert, setAlert] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -84,7 +87,8 @@ const Activity = () => {
 
           let status = "";
           if (sekarang < mulai) status = "Belum Dimulai";
-          else if (sekarang >= mulai && sekarang <= selesai) status = "On Going";
+          else if (sekarang >= mulai && sekarang <= selesai)
+            status = "On Going";
           else status = "Selesai";
 
           const sudahPresensi = item.presensi !== null;
@@ -244,29 +248,69 @@ const Activity = () => {
                       variant="secondary"
                       iconLeft={<Download size={18} />}
                       className="w-30"
-                      onClick={() => window.open("/user/certificate", "_blank")}
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem("token");
+
+                          // POST ke API untuk generate sertifikat
+                          const response = await axios.post(
+                            `${API_BASE_URL}/sertifikat/generate`,
+                            { id_acara: 8 }, // contoh id acara
+                            {
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                              },
+                            }
+                          );
+
+                          // console log response dari API
+                          console.log(
+                            "Response POST /sertifikat/generate:",
+                            response
+                          );
+
+                          // Simpan data sertifikat
+                          localStorage.setItem(
+                            "cert_data",
+                            JSON.stringify(response.data)
+                          );
+
+                          // Redirect ke halaman certificate
+                          window.open("/user/certificate", "_blank");
+                        } catch (error) {
+                          console.error("Gagal generate sertifikat:", error);
+                          setAlert({
+                            message:
+                              error.response?.data?.message ||
+                              "Terjadi kesalahan",
+                            type: "error",
+                          });
+                        }
+                      }}
                     >
                       Sertifikat
                     </Button>
-                    ) : activity.sudahPresensi && activity.status !== "Selesai" ? (
-                      <Button
-                        variant="third"
-                        iconLeft={<Download size={18} />}
-                        className="w-30 opacity-60 cursor-not-allowed"
-                        disabled
-                      >
-                        Sertifikat
-                      </Button>
-                    ) : activity.status === "On Going" ? (
-                      <Button
-                        variant="primary"
-                        onClick={() => handleScanClick(activity)}
-                        iconLeft={<ScanLine size={18} />}
-                        className="w-30"
-                      >
-                        Scan
-                      </Button>
-                    ) : null}
+                  ) : activity.sudahPresensi &&
+                    activity.status !== "Selesai" ? (
+                    <Button
+                      variant="third"
+                      iconLeft={<Download size={18} />}
+                      className="w-30 opacity-60 cursor-not-allowed"
+                      disabled
+                    >
+                      Sertifikat
+                    </Button>
+                  ) : activity.status === "On Going" ? (
+                    <Button
+                      variant="primary"
+                      onClick={() => handleScanClick(activity)}
+                      iconLeft={<ScanLine size={18} />}
+                      className="w-30"
+                    >
+                      Scan
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             );

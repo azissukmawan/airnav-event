@@ -17,6 +17,8 @@ import { useEvents } from "../../../../contexts/EventContext";
 import Alert from "../../../../components/alert";
 import axios from "axios";
 
+const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+
 const breadcrumbItems = [
   { label: "Beranda", link: "/user" },
   { label: "Detail Acara" },
@@ -32,20 +34,31 @@ const DetailEvent = () => {
   const [loadingRegistered, setLoadingRegistered] = useState(true);
   const [alert, setAlert] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showWAModal, setShowWAModal] = useState(false);
 
   const event = events.find((e) => e.id === parseInt(id));
 
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
+        const token = localStorage.getItem("token");
+        
+        // ✅ PERBAIKAN 2: Validasi token dulu
+        if (!token) {
+          console.error("❌ Token tidak ditemukan");
+          return;
+        }
+
         const response = await fetch(
-          "https://mediumpurple-swallow-757782.hostingersite.com/api/me/pendaftaran",
+          `${API_BASE_URL}/me/pendaftaran`,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
+              'Accept': 'application/json',
             },
           }
         );
+        
         const result = await response.json();
 
         if (result.success) {
@@ -144,13 +157,30 @@ const DetailEvent = () => {
     }
   };
 
+  // ✅ PERBAIKAN 3: Perbaiki cancelEventRegis dengan error handling yang lebih baik
   const cancelEventRegis = async () => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Validasi token
+      if (!token) {
+        setAlert({
+          type: "error",
+          message: "Sesi Anda telah berakhir. Silakan login kembali.",
+        });
+        setTimeout(() => navigate("/login"), 2000);
+        return;
+      }
+
+      console.log("🔄 Membatalkan pendaftaran event ID:", id);
+
       const response = await axios.delete(
         `${API_BASE_URL}/events/${id}/batal-daftar`,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
         }
       );
 
@@ -168,26 +198,72 @@ const DetailEvent = () => {
         });
       }
     } catch (error) {
-      console.error("Error cancelling registration:", error);
-      setAlert({
-        type: "error",
-        message: "Terjadi kesalahan saat membatalkan pendaftaran.",
-      });
+      console.error("❌ Error cancelling registration:", error);
+      
+      if (error.response?.status === 403) {
+        setAlert({
+          type: "error",
+          message: "Akses ditolak. Silakan login kembali.",
+        });
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }, 2000);
+      } else if (error.response?.status === 401) {
+        setAlert({
+          type: "error",
+          message: "Sesi Anda telah berakhir. Silakan login kembali.",
+        });
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }, 2000);
+      } else {
+        setAlert({
+          type: "error",
+          message: error.response?.data?.message || "Terjadi kesalahan saat membatalkan pendaftaran.",
+        });
+      }
     }
   };
 
+  // ✅ PERBAIKAN 4: Perbaiki confirmRegis dengan error handling yang lebih baik + Modal WA
   const confirmRegis = async () => {
     try {
       const token = localStorage.getItem("token");
+      
+      // Validasi token
+      if (!token) {
+        console.error("❌ Token tidak ditemukan di localStorage");
+        setAlert({
+          type: "error",
+          message: "Sesi Anda telah berakhir. Silakan login kembali.",
+        });
+        setTimeout(() => navigate("/login"), 2000);
+        return;
+      }
+
+      console.log("🔄 Mendaftar event ID:", id);
+      console.log("🔑 Token tersedia:", token ? "Ya" : "Tidak");
+      console.log("🔑 Token length:", token.length);
+      console.log("🔑 Token preview:", token.substring(0, 20) + "...");
+      console.log("📍 URL:", `${API_BASE_URL}/events/${id}/daftar`);
+
       const response = await axios.post(
         `${API_BASE_URL}/events/${id}/daftar`,
         {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          timeout: 15000,
         }
       );
+
+      console.log("✅ Response status:", response.status);
+      console.log("✅ Response data:", response.data);
 
       if (response.data?.success) {
         setAlert({
@@ -195,21 +271,63 @@ const DetailEvent = () => {
           message: "Anda berhasil mendaftar event!",
         });
         setShowConfirmModal(false);
-
-        setTimeout(() => window.location.reload(), 1500);
+        
+        // ✅ FITUR BARU: Tampilkan modal WhatsApp jika ada link WA
+        if (event.mdl_link_wa) {
+          setTimeout(() => {
+            setAlert(null);
+            setShowWAModal(true);
+          }, 1500);
+        } else {
+          setTimeout(() => window.location.reload(), 1500);
+        }
       } else {
         setAlert({
           type: "error",
-          message:
-            response.data?.message || "Gagal mendaftar. Silakan coba lagi.",
+          message: response.data?.message || "Gagal mendaftar. Silakan coba lagi.",
         });
       }
     } catch (error) {
-      console.error("Error registering:", error);
-      setAlert({
-        type: "error",
-        message: "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
-      });
+      console.error("❌ Error registering:", error);
+      console.error("❌ Error response:", error.response);
+      console.error("❌ Error status:", error.response?.status);
+      console.error("❌ Error data:", error.response?.data);
+      console.error("❌ Error headers:", error.response?.headers);
+      
+      if (error.response?.status === 403) {
+        console.error("🚫 403 Forbidden - Detail:", error.response?.data);
+        const errorMsg = error.response?.data?.message || "Akses ditolak. Silakan login kembali.";
+        setAlert({
+          type: "error",
+          message: errorMsg,
+        });
+        
+        // Jangan langsung redirect, biarkan user lihat error message
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }, 3000);
+      } else if (error.response?.status === 401) {
+        console.error("🔐 401 Unauthorized - Token mungkin invalid/expired");
+        setAlert({
+          type: "error",
+          message: "Sesi Anda telah berakhir. Silakan login kembali.",
+        });
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          navigate("/login");
+        }, 2000);
+      } else if (error.code === 'ECONNABORTED') {
+        setAlert({
+          type: "error",
+          message: "Koneksi timeout. Silakan coba lagi.",
+        });
+      } else {
+        setAlert({
+          type: "error",
+          message: error.response?.data?.message || "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
+        });
+      }
     }
   };
 
@@ -218,7 +336,7 @@ const DetailEvent = () => {
   };
 
   const downloadAllModules = () => {
-    const modules = event.files.filter((file) => file.type === "module");
+    const modules = event.files?.filter((file) => file.type === "module");
     if (modules && modules.length > 0) {
       modules.forEach((module) => {
         const link = document.createElement("a");
@@ -363,7 +481,7 @@ const DetailEvent = () => {
             </Typography>
           </div>
 
-          <div className="flex flex-col justify-center space-y-6">
+          <div className="flex flex-col space-y-6">
             <Button
               variant={buttonVariant}
               className="w-full md:w-auto"
@@ -373,6 +491,7 @@ const DetailEvent = () => {
               {buttonText}
             </Button>
 
+            {/* Modal Konfirmasi Pendaftaran */}
             {showConfirmModal && (
               <div
                 className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -582,7 +701,7 @@ const DetailEvent = () => {
           </div>
         )}
 
-        {/* Confirm Modal */}
+        {/* Modal Batal Pendaftaran */}
         {showCancelModal && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -615,6 +734,62 @@ const DetailEvent = () => {
                   Ya, Batalkan
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ MODAL WHATSAPP GROUP - FITUR BARU */}
+        {showWAModal && event.mdl_link_wa && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => {
+              setShowWAModal(false);
+              window.location.reload();
+            }}
+          >
+            <div
+              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Tombol Close (X) di pojok kanan atas */}
+              <button
+                onClick={() => {
+                  setShowWAModal(false);
+                  window.location.reload();
+                }}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                title="Tutup"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                  <MessageCircle className="w-8 h-8 text-green-600" />
+                </div>
+                <Typography
+                  type="heading5"
+                  weight="bold"
+                  className="text-gray-900 mb-2"
+                >
+                  Pendaftaran Berhasil! 🎉
+                </Typography>
+                <Typography type="body" className="text-gray-600">
+                  Bergabunglah dengan grup WhatsApp untuk mendapatkan informasi terbaru tentang event ini.
+                </Typography>
+              </div>
+
+              <Button
+                variant="primary"
+                className="w-full bg-green-500 hover:bg-green-600"
+                onClick={() => {
+                  window.open(event.mdl_link_wa, "_blank");
+                  setShowWAModal(false);
+                  window.location.reload();
+                }}
+              >
+                Gabung Grup WhatsApp
+              </Button>
             </div>
           </div>
         )}

@@ -161,6 +161,7 @@ const EventDetail = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (response.data.success) {
         const updated = [...registeredEvents, { modul_acara_id: event.id }];
         setRegisteredEvents(updated);
@@ -170,9 +171,27 @@ const EventDetail = () => {
       }
     } catch (err) {
       console.error(err);
+
+      // 🔍 Cek apakah error karena belum login
+      const msg = err.response?.data?.message;
+      if (msg === "Unauthenticated.") {
+        setAlert({
+          type: "error",
+          message: "Anda belum login. Silakan login terlebih dahulu.",
+        });
+
+        // Simpan tujuan agar bisa kembali setelah login
+        localStorage.setItem("redirectAfterLogin", `/user/event/${event.id}`);
+
+        // Redirect ke halaman login
+        navigate("/login");
+        return;
+      }
+
+      // 🧾 Error lainnya
       setAlert({
         type: "error",
-        message: err.response?.data?.message || "Gagal mendaftar event.",
+        message: msg || "Gagal mendaftar event.",
       });
     }
   };

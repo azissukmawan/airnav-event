@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Typography } from "../typography";
@@ -25,16 +25,25 @@ export const Dropdown = ({
   type = "basic", // "basic" | "search"
   className = "",
   onSelect,
+  value,
 }) => {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(null);
+  useEffect(() => {
+  if (value) {
+    const matchedOption = options.find((opt) => opt.value === value);
+    setSelected(matchedOption || null);
+  } else {
+    setSelected(null);
+  }
+}, [value, options]);
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleSelect = (option) => {
     setSelected(option);
     setOpen(false);
     setSearchTerm("");
-    if (onSelect) onSelect(option);
+    if (onSelect) onSelect(option.value);
   };
 
   const variantStyle = variantClasses[variant] || variantClasses.primary;

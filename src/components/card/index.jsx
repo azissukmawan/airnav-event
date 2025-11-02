@@ -15,7 +15,17 @@ export default function Card({
   mdl_acara_selesai,
   tipe,
   registeredEvents = [],
+  status_karyawan, // ✅ Tambahan prop untuk status karyawan
 }) {
+  // ✅ DEBUGGING: Console log untuk cek status_karyawan
+  console.log("=== CARD DEBUG ===");
+  console.log("Event ID:", id);
+  console.log("Event Title:", title);
+  console.log("status_karyawan:", status_karyawan);
+  console.log("Type of status_karyawan:", typeof status_karyawan);
+  console.log("Is null?", status_karyawan === null);
+  console.log("Is undefined?", status_karyawan === undefined);
+  console.log("==================");
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
     
@@ -47,8 +57,12 @@ export default function Card({
   let displayStatus = "";
   let statusColor = "";
 
-  // Status card
-  if (isRegistered) {
+  // ✅ PERBAIKAN: Prioritaskan status "Karyawan" jika event khusus karyawan
+  if (status_karyawan === null) {
+    // Event khusus karyawan, user bukan karyawan
+    displayStatus = "Karyawan";
+    statusColor = "bg-orange-100 text-orange-600";
+  } else if (isRegistered) {
     displayStatus = "Terdaftar";
     statusColor = "bg-success-10 text-success";
   } else if (now < registrationStart) {
@@ -78,8 +92,12 @@ export default function Card({
   let buttonVariant = "primary";
   let to = `/user/event/${id}`;
 
-  // Button card
-  if (now < registrationStart) {
+  // ✅ PERBAIKAN: Jika event khusus karyawan, tombol disabled/tidak bisa daftar
+  if (status_karyawan === null) {
+    // Event khusus karyawan, user bukan karyawan
+    buttonText = "Khusus Karyawan";
+    buttonVariant = "third";
+  } else if (now < registrationStart) {
     buttonText = "Lihat Detail";
   } else if (isRegistered) {
     buttonText = "Lihat Detail";

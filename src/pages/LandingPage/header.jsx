@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/button";
+import AirNavLogo from "../../assets/airnav-logo.png";
 import { Menu as MenuIcon, X, User } from "lucide-react";
 
 export default function Header({ menuItems = [] }) {
@@ -54,7 +55,7 @@ export default function Header({ menuItems = [] }) {
     >
       <div className="flex items-center gap-3">
         <img
-          src="/src/assets/airnav-logo.png"
+          src={AirNavLogo}
           alt="AirNav Logo"
           className="h-16"
         />

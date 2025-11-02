@@ -43,10 +43,10 @@ export default function Login() {
     setLoading(true);
 
     try {
-    const response = await axios.post(`${API_BASE_URL}/login`, {
-      login: formData.usernameOrEmail,
-      password: formData.password,
-    });
+      const response = await axios.post(`${API_BASE_URL}/login`, {
+        login: formData.usernameOrEmail,
+        password: formData.password,
+      });
 
       console.log("Full response:", response.data);
 
@@ -70,9 +70,15 @@ export default function Login() {
           localStorage.setItem("rememberMe", "true");
         }
 
+        // 🔁 Tambahan untuk redirect otomatis
+        const redirectTo = localStorage.getItem("redirectAfterLogin");
+        localStorage.removeItem("redirectAfterLogin");
+
         const role = userData.role?.toLowerCase();
 
-        if (role === "superadmin") {
+        if (redirectTo) {
+          navigate(redirectTo);
+        } else if (role === "superadmin") {
           console.log("Redirecting to /admin...");
           navigate("/admin");
         } else {

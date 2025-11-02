@@ -1,46 +1,62 @@
 // src/utils/validateEventForm.js
-
 export default function AddValidate(formData) {
   const errors = {};
 
   // --- Validasi Wajib Diisi ---
-  if (!formData.namaAcara) errors.namaAcara = "Nama Acara wajib diisi.";
-  if (!formData.deskripsi) errors.deskripsi = "Deskripsi Acara wajib diisi.";
-  if (!formData.tipeAcara) errors.tipeAcara = "Tipe Acara wajib dipilih.";
-  if (!formData.lokasi) errors.lokasi = "Lokasi wajib diisi.";
-  if (!formData.jenisAcara) errors.jenisAcara = "Jenis Acara wajib dipilih.";
-  if (!formData.regStartDate) errors.regStartDate = "Tanggal mulai pendaftaran wajib diisi.";
-  if (!formData.regEndDate) errors.regEndDate = "Tanggal akhir pendaftaran wajib diisi.";
-  if (!formData.tanggalAcara) errors.tanggalAcara = "Tanggal Acara wajib diisi.";
-  if (!formData.jamMulai) errors.jamMulai = "Jam Mulai wajib diisi.";
-  if (!formData.jamSelesai) errors.jamSelesai = "Jam Selesai wajib diisi.";
-  if (!formData.urlWA) errors.urlWA = "URL Grup WhatsApp wajib diisi.";
+  if (!formData.mdl_nama) errors.mdl_nama = "Nama Acara wajib diisi.";
+  if (!formData.mdl_deskripsi)
+    errors.mdl_deskripsi = "Deskripsi Acara wajib diisi.";
+  if (!formData.mdl_tipe) errors.mdl_tipe = "Tipe Acara wajib dipilih.";
+  if (!formData.mdl_lokasi) errors.mdl_lokasi = "Lokasi wajib diisi.";
+  if (!formData.mdl_kategori) errors.mdl_kategori = "Jenis Acara wajib dipilih.";
 
-  // --- Validasi Format ---
-  if (formData.urlWA && !/^https?:\/\/.+/.test(formData.urlWA)) {
-    errors.urlWA = "URL tidak valid (harus diawali http:// atau https://).";
+  if (!formData.mdl_pendaftaran_mulai)
+    errors.mdl_pendaftaran_mulai = "Tanggal mulai pendaftaran wajib diisi.";
+  if (!formData.mdl_pendaftaran_selesai)
+    errors.mdl_pendaftaran_selesai = "Tanggal akhir pendaftaran wajib diisi.";
+
+  if (!formData.mdl_acara_mulai_date)
+    errors.mdl_acara_mulai_date = "Tanggal Acara wajib diisi.";
+  if (!formData.mdl_acara_mulai_time)
+    errors.mdl_acara_mulai_time = "Jam Mulai wajib diisi.";
+  if (!formData.mdl_acara_selesai_time)
+    errors.mdl_acara_selesai_time = "Jam Selesai wajib diisi.";
+
+  if (!formData.mdl_link_wa)
+    errors.mdl_link_wa = "URL Grup WhatsApp wajib diisi.";
+
+  // --- Validasi Format URL ---
+  if (formData.mdl_link_wa && !/^https?:\/\/.+/.test(formData.mdl_link_wa)) {
+    errors.mdl_link_wa = "URL tidak valid (harus diawali http:// atau https://).";
   }
 
-  // --- Validasi Logika Tanggal ---
-  if (formData.regStartDate && formData.regEndDate) {
-    const start = new Date(formData.regStartDate);
-    const end = new Date(formData.regEndDate);
+  // --- Validasi Logika Tanggal Pendaftaran ---
+  if (formData.mdl_pendaftaran_mulai && formData.mdl_pendaftaran_selesai) {
+    const start = new Date(formData.mdl_pendaftaran_mulai);
+    const end = new Date(formData.mdl_pendaftaran_selesai);
     if (start > end) {
-      errors.regEndDate = "Tanggal akhir harus setelah atau sama dengan tanggal mulai.";
+      errors.mdl_pendaftaran_selesai =
+        "Tanggal akhir harus setelah atau sama dengan tanggal mulai.";
     }
   }
 
-  if (formData.regEndDate && formData.tanggalAcara) {
-    const regEnd = new Date(formData.regEndDate);
-    const eventDate = new Date(formData.tanggalAcara);
+  // --- Validasi Logika antara pendaftaran & acara ---
+  if (formData.mdl_pendaftaran_selesai && formData.mdl_acara_mulai_date) {
+    const regEnd = new Date(formData.mdl_pendaftaran_selesai);
+    const eventDate = new Date(formData.mdl_acara_mulai_date);
     if (eventDate < regEnd) {
-      errors.tanggalAcara = "Tanggal acara harus setelah pendaftaran ditutup.";
+      errors.mdl_acara_mulai_date =
+        "Tanggal acara harus setelah pendaftaran ditutup.";
     }
   }
 
-  // --- Validasi Logika Waktu ---
-  if (formData.jamMulai && formData.jamSelesai && formData.jamMulai >= formData.jamSelesai) {
-    errors.jamSelesai = "Jam selesai harus setelah jam mulai.";
+  // --- Validasi Logika Jam Acara ---
+  if (
+    formData.mdl_acara_mulai_time &&
+    formData.mdl_acara_selesai_time &&
+    formData.mdl_acara_mulai_time >= formData.mdl_acara_selesai_time
+  ) {
+    errors.mdl_acara_selesai_time = "Jam selesai harus setelah jam mulai.";
   }
 
   return errors;
