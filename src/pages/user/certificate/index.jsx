@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image as PdfImage,
 } from "@react-pdf/renderer";
-import Loading from "../../../components/Loading";
+import Loading from "../../../components/loading";
 
 const styles = StyleSheet.create({
   body: {
