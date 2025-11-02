@@ -275,7 +275,7 @@ const EventDetail = () => {
       <section className="relative mt-20 overflow-hidden py-10 md:py-20 bg-gray-800">
         <div
           className="absolute inset-0 bg-cover bg-center scale-105"
-          style={{ backgroundImage: `url(${event.banner || defaultImage})` }}
+          style={{ backgroundImage: `url(${event.banner || "/no-image.jpg"})` }}
         />
         <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
         <div className="relative max-w-6xl mx-auto px-6 lg:px-0 md:px-12 z-10 flex items-center">
