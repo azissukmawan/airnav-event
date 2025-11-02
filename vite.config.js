@@ -5,7 +5,10 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-
+  assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.svg'],
+  build: {
+    assetsInlineLimit: 0, // Semua asset jadi file terpisah
+  },
   define: {
     // API backend
     API_BASE_URL: JSON.stringify(
