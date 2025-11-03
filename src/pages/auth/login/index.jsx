@@ -52,9 +52,6 @@ export default function Login() {
         const userData = response.data.data.user;
         const token = response.data.data.access_token;
 
-        console.log("User data:", userData);
-        console.log("Token received:", token);
-
         if (!token) {
           setError("Login berhasil tapi token tidak ditemukan. Hubungi admin.");
           setLoading(false);
@@ -64,23 +61,23 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
 
+        // 🆕 Tambahan penting: simpan role
+        const role = userData.role?.toLowerCase() || "user";
+        localStorage.setItem("role", role);
+
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
 
-        // 🔁 Tambahan untuk redirect otomatis
+        // 🔁 Jika ada redirect setelah login
         const redirectTo = localStorage.getItem("redirectAfterLogin");
         localStorage.removeItem("redirectAfterLogin");
 
-        const role = userData.role?.toLowerCase();
-
         if (redirectTo) {
           navigate(redirectTo);
-        } else if (role === "superadmin") {
-          console.log("Redirecting to /admin...");
+        } else if (role === "superadmin" || role === "admin") {
           navigate("/admin");
         } else {
-          console.log("Redirecting to /user...");
           navigate("/user");
         }
       } else {

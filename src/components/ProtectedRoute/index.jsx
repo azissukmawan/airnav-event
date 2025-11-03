@@ -1,19 +1,26 @@
 import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children, role }) {
-  const token = localStorage.getItem("token"); // atau sesuaikan dengan cara kamu menyimpan auth
-  const userRole = localStorage.getItem("role"); // jika ada role admin/user
+  const token = localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
 
   if (!token) {
-    // kalau belum login
     return <Navigate to="/login" replace />;
   }
 
-  // jika role dibutuhkan, bisa ditambahkan pengecekan:
+  // Kalau admin login dan bukan di halaman admin → ke /admin
+  if (userRole === "superadmin" && role !== "superadmin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  // Kalau user login dan bukan di halaman user → ke /user
+  if (userRole === "user" && role !== "user") {
+    return <Navigate to="/user" replace />;
+  }
+
   if (role && userRole !== role) {
     return <Navigate to="/" replace />;
   }
 
-  // kalau sudah login dan role sesuai
   return children;
 }
