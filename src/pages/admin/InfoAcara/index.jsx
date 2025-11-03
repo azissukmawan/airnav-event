@@ -354,7 +354,7 @@ const InfoAcara = () => {
     { label: "Tanggal Selesai Acara", name: "mdl_acara_selesai", type: "datetime-local" },
     { label: "Tipe Acara", name: "mdl_tipe", type: "select" },
     { label: "Jenis Acara", name: "mdl_kategori", type: "select" },
-    { label: "Doorprize", name: "mdl_doorprize_aktif", type: "select" },
+    // { label: "Doorprize", name: "mdl_doorprize_aktif", type: "select" },
     { label: "Modul Acara", name: "mdl_file_acara", type: "file" },
     { label: "Susunan Acara", name: "mdl_file_rundown", type: "file" },
     { label: "Template Sertifikat", name: "mdl_template_sertifikat", type: "file" },
