@@ -92,11 +92,11 @@ export default function CertificatePreview() {
         base64 = await loadImageAsBase64(url);
       }
       if (!base64) {
-        console.warn("⚠️ Template tidak ditemukan, coba fallback /cert.jpg");
+        console.warn("Template tidak ditemukan, coba fallback /cert.jpg");
         base64 = await loadImageAsBase64("/cert.jpg");
       }
       if (!base64) {
-        console.warn("⚠️ Gagal juga, fallback terakhir /no-image.jpg");
+        console.warn("Gagal juga, fallback terakhir /no-image.jpg");
         base64 = await loadImageAsBase64("/no-image.jpg");
       }
       return base64;

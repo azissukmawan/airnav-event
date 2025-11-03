@@ -1,6 +1,5 @@
 import { Typography } from "../typography";
 import { Calendar, MapPin, Building, Laptop, RefreshCcw } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "../button";
 
 export default function Card({
@@ -13,25 +12,21 @@ export default function Card({
   mdl_acara_mulai,
   mdl_acara_selesai,
   tipe,
-  registeredEvents = [],
-  status_karyawan, // ✅ Tambahan prop untuk status karyawan
+  mdl_kategori,
+  role,
 }) {
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
-    
     const date = new Date(dateString);
-    
     const months = [
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
       "Juli", "Agustus", "September", "Oktober", "November", "Desember"
     ];
-    
     const day = date.getDate();
     const month = months[date.getMonth()];
     const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${day} ${month} ${year}, ${hours}:${minutes} WIB`;
   };
 
@@ -39,33 +34,34 @@ export default function Card({
 
   const registrationStart = new Date(mdl_pendaftaran_mulai);
   const registrationEnd = new Date(mdl_pendaftaran_selesai);
-  const eventStart = new Date(mdl_acara_mulai);
   const eventEnd = new Date(mdl_acara_selesai);
 
-  const isRegistered = registeredEvents.some(event => event.modul_acara_id === id);
+  const isPrivateEvent = ["private", "invite-only"].includes(
+    mdl_kategori?.toLowerCase()
+  );
+  const isRestrictedForUser = isPrivateEvent && role === "peserta";
 
   let displayStatus = "";
   let statusColor = "";
 
-  // ✅ PERBAIKAN: Prioritaskan status "Karyawan" jika event khusus karyawan
-  if (status_karyawan === null) {
-    // Event khusus karyawan, user bukan karyawan
-    displayStatus = "Karyawan";
-    statusColor = "bg-orange-100 text-orange-600";
-  } else if (isRegistered) {
-    displayStatus = "Terdaftar";
-    statusColor = "bg-success-10 text-success";
+  if (isRestrictedForUser) {
+    displayStatus = "Khusus Karyawan";
+    statusColor = "bg-error-10 text-error";
   } else if (now < registrationStart) {
     displayStatus = "Segera Hadir";
     statusColor = "bg-warning-10 text-warning";
   } else if (now >= registrationStart && now <= registrationEnd) {
     displayStatus = "Bisa Daftar";
     statusColor = "bg-primary-10 text-primary";
-  } else if (now > registrationEnd) {
+  } else if (now > registrationEnd && now < eventEnd) {
     displayStatus = "Ditutup";
     statusColor = "bg-typo-white2 text-typo-secondary";
+  } else if (now >= eventEnd) {
+    displayStatus = "Selesai";
+    statusColor = "bg-gray-200 text-gray-600";
   }
 
+  // 🔹 Icon tipe
   let TypeIcon;
   if (tipe?.toLowerCase() === "offline") {
     TypeIcon = Building;
@@ -77,35 +73,21 @@ export default function Card({
     TypeIcon = Building;
   }
 
-  let showButton = true;
-  let buttonText = "";
-  let buttonVariant = "primary";
-  let to = `/user/event/${id}`;
-
-  // ✅ PERBAIKAN: Jika event khusus karyawan, tombol disabled/tidak bisa daftar
-  if (status_karyawan === null) {
-    // Event khusus karyawan, user bukan karyawan
-    buttonText = "Khusus Karyawan";
-    buttonVariant = "third";
-  } else if (now < registrationStart) {
-    buttonText = "Lihat Detail";
-  } else if (isRegistered) {
-    buttonText = "Lihat Detail";
-  } else if (now >= registrationStart && now <= registrationEnd) {
-    buttonText = "Lihat Detail";
-  } else if (now > registrationEnd && now < eventStart) {
-    buttonText = "Lihat Detail";
-  } else if (now >= eventStart && now <= eventEnd) {
-    buttonText = "Lihat Detail";
-  } else if (now > eventEnd) {
-    buttonText = "Tutup";
-    buttonVariant = "third";
-  }
+  // 🔹 Tombol
+  const isEventFinished = now >= eventEnd;
+  const isButtonDisabled = isEventFinished;
+  const buttonText = "Lihat Detail";
+  const buttonVariant = isButtonDisabled ? "third" : "primary";
+  const to = isButtonDisabled ? null : `/user/event/${id}`;
 
   const CardContent = (
     <div className="w-full bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow cursor-pointer">
       <div className="relative">
-        <img src={image || "/no-image.jpg"} alt={title} className="w-full h-56 object-cover" />
+        <img
+          src={image || "/no-image.jpg"}
+          alt={title}
+          className="w-full h-56 object-cover"
+        />
         {displayStatus && (
           <Typography
             type="caption1"
@@ -165,19 +147,23 @@ export default function Card({
           </div>
         </div>
 
-        {showButton && (
+        {/* 🔹 Tombol */}
+        {to && !isButtonDisabled ? (
           <Button variant={buttonVariant} to={to} className="w-full mt-4">
+            {buttonText}
+          </Button>
+        ) : (
+          <Button
+            variant={buttonVariant}
+            className="w-full mt-4 cursor-not-allowed opacity-70"
+            disabled
+          >
             {buttonText}
           </Button>
         )}
       </div>
     </div>
   );
-
-  // Bungkus dengan <Link> jika tidak ada button
-  if (!showButton) {
-    return <Link to={to}>{CardContent}</Link>;
-  }
 
   return CardContent;
 }

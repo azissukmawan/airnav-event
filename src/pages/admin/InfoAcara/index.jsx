@@ -29,8 +29,10 @@ const InfoAcara = () => {
     mdl_pendaftaran_selesai: "",
     mdl_acara_mulai: "",
     mdl_acara_selesai: "",
+    mdl_doorprize_aktif: "",
   });
 
+  // ✅ PERBAIKAN: Hapus referensi ke `data` yang belum ada
   const [fileNames, setFileNames] = useState({
     mdl_file_acara: "",
     mdl_file_rundown: "",
@@ -135,13 +137,11 @@ const InfoAcara = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       if (!id) {
-        console.error("❌ ID tidak ditemukan di URL params");
         showPopup("error", "Error", "ID acara tidak ditemukan");
         return;
       }
 
       try {
-        console.log("🔍 Fetching event dengan ID:", id);
         const response = await axios.get(
           `${API_BASE_URL}/admin/events/${id}`,
           {
@@ -151,8 +151,6 @@ const InfoAcara = () => {
             timeout: 15000,
           }
         );
-
-        console.log("✅ Data event berhasil dimuat:", response.data);
 
         const data = response.data.data;
         setFormData({
@@ -172,6 +170,9 @@ const InfoAcara = () => {
           mdl_pendaftaran_selesai: convertToDatetimeLocal(data.mdl_pendaftaran_selesai),
           mdl_acara_mulai: convertToDatetimeLocal(data.mdl_acara_mulai),
           mdl_acara_selesai: convertToDatetimeLocal(data.mdl_acara_selesai),
+          mdl_doorprize_aktif: data.mdl_doorprize_aktif !== null && data.mdl_doorprize_aktif !== undefined 
+            ? Number(data.mdl_doorprize_aktif) 
+            : "",
         });
 
         setFileNames({
@@ -183,11 +184,8 @@ const InfoAcara = () => {
         setPresensiAktif(data.mdl_presensi_aktif === 1);
         setSelectedOption(data.mdl_status || "active");
         
-        // ❌ HAPUS INI:
-        // showPopup("success", "Berhasil", "Data acara berhasil dimuat");
-        
       } catch (error) {
-        console.error("❌ Gagal memuat data:", error);
+        console.error(error);
         
         if (error.code === 'ECONNABORTED') {
           showPopup("error", "Timeout", "Koneksi timeout. Coba refresh halaman.");
@@ -201,8 +199,15 @@ const InfoAcara = () => {
     fetchEvent();
   }, [id]);
   
+  // ✅ PERBAIKAN: Pindahkan handleChange ke luar dan perbaiki logic
   const handleChange = (e) => {
     const { name, type, value, files } = e.target;
+    
+    if (name === "mdl_doorprize_aktif") {
+      setFormData((prev) => ({ ...prev, [name]: Number(value) }));
+      return;
+    }
+    
     if (type === "file" && files && files[0]) {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
       setFileNames((prev) => ({ ...prev, [name]: files[0].name }));
@@ -220,8 +225,6 @@ const InfoAcara = () => {
     try {
       const newStatus = !presensiAktif;
       
-      console.log("🔄 Toggle presensi untuk event ID:", id, "ke status:", newStatus);
-      
       const response = await axios.put(
         `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
         {
@@ -236,8 +239,6 @@ const InfoAcara = () => {
         }
       );
 
-      console.log("✅ Toggle presensi berhasil:", response.data);
-      
       if (response.data && response.data.data) {
         setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
       } else {
@@ -246,7 +247,7 @@ const InfoAcara = () => {
       
       showPopup("success", "Berhasil", `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`);
     } catch (error) {
-      console.error("❌ Gagal toggle presensi:", error.response?.data || error.message);
+      console.error(error.response?.data || error.message);
       
       const errorMsg = error.response?.data?.message || "Gagal mengubah status presensi";
       showPopup("error", "Error", errorMsg);
@@ -287,8 +288,6 @@ const InfoAcara = () => {
         }
       });
 
-      console.log("📤 Mengirim update untuk event ID:", id);
-
       const response = await axios.post(
         `${API_BASE_URL}/admin/events/${id}`,
         formDataToSend,
@@ -300,12 +299,10 @@ const InfoAcara = () => {
           timeout: 30000,
         }
       );
-
-      console.log("✅ Sukses update:", response.data);
       showPopup("success", "Berhasil!", "Acara berhasil diperbarui");
       
     } catch (error) {
-      console.error("❌ Gagal update:", error.response?.data || error.message);
+      console.error(error.response?.data || error.message);
       
       if (error.code === 'ECONNABORTED') {
         showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
@@ -345,6 +342,7 @@ const InfoAcara = () => {
     { label: "Tanggal Selesai Acara", name: "mdl_acara_selesai", type: "datetime-local" },
     { label: "Tipe Acara", name: "mdl_tipe", type: "select" },
     { label: "Jenis Acara", name: "mdl_kategori", type: "select" },
+    { label: "Doorprize", name: "mdl_doorprize_aktif", type: "select" },
     { label: "Modul Acara", name: "mdl_file_acara", type: "file" },
     { label: "Susunan Acara", name: "mdl_file_rundown", type: "file" },
     { label: "Template Sertifikat", name: "mdl_template_sertifikat", type: "file" },
@@ -375,7 +373,7 @@ const InfoAcara = () => {
                 disabled={isLoading}
                 className="bg-blue-900 px-6 py-3 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                Simpan Perubahan
+                {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
               </button>
             </div>
           </div>
@@ -400,7 +398,7 @@ const InfoAcara = () => {
                 name="mdl_banner_acara"
                 accept="image/*"
                 onChange={handleChange}
-                className="block w-80 text-sm text-gray-600 border border-gray-300 rounded-lg cursor-pointer bg-white focus:ring-2 focus:ring-blue-400 p-2"
+                className="block w-80 text-sm text-gray-600 rounded-lg cursor-pointer bg-typo-white2 focus:ring-2 focus:ring-blue-400 p-2"
               />
             </div>
 
@@ -418,7 +416,7 @@ const InfoAcara = () => {
                       name="mdl_nama"
                       value={formData.mdl_nama || ""}
                       onChange={handleChange}
-                      className="w-full bg-white border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
+                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
                 </div>
@@ -435,7 +433,7 @@ const InfoAcara = () => {
                       name="mdl_lokasi"
                       value={formData.mdl_lokasi || ""}
                       onChange={handleChange}
-                      className="w-full bg-white border rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
+                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
                     />
                   </div>
                 </div>
@@ -452,7 +450,7 @@ const InfoAcara = () => {
                     onChange={handleChange}
                     placeholder="Deskripsi untuk acara..."
                     rows={5}
-                    className="w-full bg-white border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                    className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
                   />
                 </div>
 
@@ -466,7 +464,7 @@ const InfoAcara = () => {
                     onChange={handleChange}
                     placeholder="Informasi tambahan untuk acara..."
                     rows={5}
-                    className="w-full bg-white border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
+                    className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
                   />
                 </div>
               </div>
@@ -484,9 +482,15 @@ const InfoAcara = () => {
                   {field.type === "select" ? (
                     <select
                       name={field.name}
-                      value={formData[field.name] || ""}
+                      value={
+                        field.name === "mdl_doorprize_aktif"
+                          ? formData.mdl_doorprize_aktif === 0
+                            ? 0
+                            : formData.mdl_doorprize_aktif
+                          : formData[field.name] || ""
+                      }
                       onChange={handleChange}
-                      className="w-full bg-white border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
+                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
                     >
                       {field.name === "mdl_tipe" && (
                         <>
@@ -501,12 +505,20 @@ const InfoAcara = () => {
                           <option value="">Pilih Kategori</option>
                           <option value="public">Public</option>
                           <option value="private">Private</option>
+                          <option value="invite-only">Invite Only</option>  
+                        </>
+                      )}
+                      {field.name === "mdl_doorprize_aktif" && (
+                        <>
+                          <option value="">Pilih Status Doorprize</option>
+                          <option value={1}>Ada</option>
+                          <option value={0}>Tidak Ada</option>
                         </>
                       )}
                     </select>
                   ) : field.type === "file" ? (
                     <label className="relative block w-full cursor-pointer">
-                      <div className="flex items-center bg-white border rounded-lg px-3 py-2 text-gray-700 hover:border-blue-400">
+                      <div className="flex items-center bg-typo-white2 rounded-lg px-3 py-2 text-gray-700 hover:border-blue-400">
                         <span className="truncate flex-1">
                           {fileNames[field.name] || "Pilih file..."}
                         </span>
@@ -526,7 +538,7 @@ const InfoAcara = () => {
                       value={formData[field.name] || ""}
                       onChange={handleChange}
                       placeholder={field.label}
-                      className="w-full bg-white border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
+                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
                     />
                   )}
                 </div>

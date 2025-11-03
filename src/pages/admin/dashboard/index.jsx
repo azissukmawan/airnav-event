@@ -37,26 +37,38 @@ export default function AdminDashboard() {
   const handleOpenAddEvent = () => setIsAddEventOpen(true);
   const handleCloseAddEvent = () => setIsAddEventOpen(false);
 
-    // 🔹 Fetch data dari API saat komponen dimuat
   useEffect(() => {
-    axios
-      .get("https://mediumpurple-swallow-757782.hostingersite.com/api/dashboard-admin/stats")
-      .then((response) => {
+    const fetchStats = async () => {
+      try {
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
+        const headers = token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined;
+
+        const response = await axios.get(
+          "https://mediumpurple-swallow-757782.hostingersite.com/api/dashboard-admin/stats",
+          { headers }
+        );
+
         if (response.data && response.data.success) {
-          const eventStats = response.data.event_stats;
+          const eventStats = response.data.event_stats || {};
           setStats({
             coming_soon: eventStats.coming_soon || 0,
             ongoing: eventStats.ongoing || 0,
             closed: eventStats.closed || 0,
           });
         } else {
-          console.error("Struktur data tidak sesuai:", response.data);
+          console.error(response.data);
         }
-      })
-      .catch((error) => {
-        console.error("Gagal ambil data stats:", error);
-      });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchStats();
   }, []);
+
   return (
     <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
       <Sidebar role="admin" />
@@ -72,7 +84,7 @@ export default function AdminDashboard() {
                 weight="bold"
                 className="text-gray-900"
               >
-                Welcome Admin !
+                Selamat Datang Admin !
               </Typography>
               <Typography type="body-small" className="text-gray-500">
                 System Administrator
@@ -97,7 +109,7 @@ export default function AdminDashboard() {
             <SummaryCard
               icon={<Calendar />}
               value={stats.coming_soon}
-              title="Event Coming Soon"
+              title="Acara Segera Hadir"
               iconBgColor="bg-blue-100"
               iconColor="text-blue-600"
             />
@@ -106,7 +118,7 @@ export default function AdminDashboard() {
             <SummaryCard
               icon={<ChevronsRight />}
               value={stats.ongoing}
-              title="Event OnGoing"
+              title="Acara Sedang Berlangsung"
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
             />
@@ -115,7 +127,7 @@ export default function AdminDashboard() {
             <SummaryCard
               icon={<XCircle />}
               value={stats.closed}
-              title="Event Closed"
+              title="Acara Berakhir"
               iconBgColor="bg-red-100"
               iconColor="text-red-600"
             />

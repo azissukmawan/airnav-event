@@ -11,9 +11,6 @@ import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/Popup/Delete";
 
-export const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);
   const [search, setSearch] = useState("");
@@ -45,11 +42,11 @@ const AdminEvent = () => {
         if (Array.isArray(events)) {
           setEventData(events);
         } else {
-          console.warn("⚠️ Data bukan array:", events);
+          console.warn("Data bukan array:", events);
           setEventData([]);
         }
       } catch (error) {
-        console.error("❌ Gagal fetch event:", error);
+        console.error("Gagal fetch event:", error);
         setError("Gagal mengambil data event");
         setEventData([]);
       } finally {
@@ -78,6 +75,24 @@ const AdminEvent = () => {
     } else {
       setSortField(field);
       setSortOrder("asc");
+    }
+  };
+
+  // === Fungsi Hitung Status Berdasarkan Tanggal ===
+  const getEventStatus = (start, end) => {
+    const now = new Date();
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    if (!start || !end)
+      return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-700" };
+
+    if (now >= startDate && now <= endDate) {
+      return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
+    } else if (now < startDate) {
+      return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
+    } else {
+      return { label: "Berakhir", color: "bg-red-100 text-red-700" };
     }
   };
 
@@ -118,7 +133,7 @@ const AdminEvent = () => {
       );
       setIsDeleteOpen(false);
     } catch (err) {
-      console.error("❌ Gagal menghapus event:", err);
+      console.error("Gagal menghapus event:", err);
       alert("Gagal menghapus event!");
     }
   };
@@ -131,7 +146,7 @@ const AdminEvent = () => {
         const index = paginatedData.indexOf(row);
         return index === -1 ? "-" : (currentPage - 1) * rowsPerPage + index + 1;
       },
-      className: "w-16 text-center",
+      className: "w-[4%] text-center",
     },
     {
       header: (
@@ -142,53 +157,62 @@ const AdminEvent = () => {
           Nama Acara <ArrowUpDown size={14} />
         </div>
       ),
-      accessor: (row) => row.mdl_nama || "-",
+      accessor: (row) => (
+        <div className="line-clamp-2 break-words max-w-[330px]">
+          {row.mdl_nama || "-"}
+        </div>
+      ),
+      className: "w-[28%] text-left",
     },
     {
-      header: "Tanggal Pendaftaran",
+      header: "Pendaftaran",
       accessor: (row) =>
         row.mdl_pendaftaran_mulai
           ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
           : "-",
+      className: "w-[10%] whitespace-nowrap text-left",
     },
-    { header: "Jenis Acara", accessor: (row) => row.mdl_kategori || "-" },
+    {
+      header: "Jenis Acara",
+      accessor: (row) => row.mdl_kategori || "-",
+      className: "w-[10%] whitespace-nowrap text-left",
+    },
     {
       header: "Tanggal Acara",
       accessor: (row) =>
         row.mdl_acara_mulai
           ? new Date(row.mdl_acara_mulai).toLocaleDateString("id-ID")
           : "-",
+      className: "w-[12%] whitespace-nowrap text-left",
     },
     {
       header: (
         <div
-          onClick={() => handleSort("mdl_status")}
+          onClick={() => handleSort("mdl_acara_mulai")}
           className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
         >
           Status <ArrowUpDown size={14} />
         </div>
       ),
       accessor: (row) => {
-        const status = row.mdl_status || "unknown";
-        const statusClass =
-          status === "berlangsung"
-            ? "bg-green-100 text-green-700"
-            : status === "draft"
-            ? "bg-yellow-100 text-yellow-700"
-            : "bg-gray-100 text-gray-700";
+        const status = getEventStatus(
+          row.mdl_acara_mulai,
+          row.mdl_acara_selesai
+        );
         return (
           <span
-            className={`${statusClass} text-xs font-semibold px-2.5 py-0.5 rounded-full`}
+            className={`${status.color} text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap`}
           >
-            {status}
+            {status.label}
           </span>
         );
       },
+      className: "w-[11%] text-left",
     },
     {
       header: "Aksi",
       accessor: (row) => (
-        <div className="flex justify-center items-center space-x-3">
+        <div className="flex items-center gap-3">
           <Link to={`/admin/event/${row.id}`}>
             <button className="text-blue-500 hover:text-blue-700" title="Lihat">
               <FiEye size={18} />
@@ -207,13 +231,14 @@ const AdminEvent = () => {
               setSelectedEventId(row.id);
               setIsDeleteOpen(true);
             }}
-            className="text-red-500 hover:text-red-700 mb-1"
+            className="text-red-500 hover:text-red-700 mb-1.5"
             title="Hapus"
           >
-            <FiTrash2 size={19} />
+            <FiTrash2 size={18} />
           </button>
         </div>
       ),
+      className: "w-[10%] text-left",
     },
   ];
 

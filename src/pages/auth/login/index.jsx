@@ -46,8 +46,6 @@ export default function Login() {
         password: formData.password,
       });
 
-      console.log("Full response:", response.data);
-
       if (response.data.success) {
         const userData = response.data.data.user;
         const token = response.data.data.access_token;
@@ -61,7 +59,7 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
 
-        // 🆕 Tambahan penting: simpan role
+        // Tambahan penting: simpan role
         const role = userData.role?.toLowerCase() || "user";
         localStorage.setItem("role", role);
 
@@ -69,7 +67,7 @@ export default function Login() {
           localStorage.setItem("rememberMe", "true");
         }
 
-        // 🔁 Jika ada redirect setelah login
+        // Jika ada redirect setelah login
         const redirectTo = localStorage.getItem("redirectAfterLogin");
         localStorage.removeItem("redirectAfterLogin");
 

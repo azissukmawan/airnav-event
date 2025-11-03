@@ -108,8 +108,6 @@ export default function Register() {
         status_karyawan: formData.status === "karyawan" ? "1" : "0",
       });
 
-      console.log("Response register:", response.data);
-
       setMessage("Registrasi berhasil! Silakan verifikasi akun Anda.");
 
       setTimeout(() => {

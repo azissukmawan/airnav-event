@@ -13,7 +13,7 @@ import Sidebar from "../../../components/sidebar";
 
 export default function EventWheel() {
   const navigate = useNavigate();
-  const { id } = useParams(); // Ambil ID dari URL
+  const { id } = useParams();
   const { width, height } = useWindowSize();
   const token = localStorage.getItem("token");
   
@@ -59,18 +59,15 @@ export default function EventWheel() {
 
     const fetchEventDetail = async () => {
       try {
-        console.log("🔍 Fetching event detail untuk ID:", id);
         const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
-        console.log("📦 Event detail:", res.data);
         
         // Sesuaikan struktur response
         const eventData = res.data?.data?.data || res.data?.data;
         setEventTitle(eventData?.mdl_nama || "Judul tidak tersedia");
       } catch (err) {
-        console.error("❌ Error fetching event detail:", err);
+        console.error(err);
         setEventTitle("Judul tidak tersedia");
       }
     };
@@ -78,7 +75,6 @@ export default function EventWheel() {
     const fetchParticipantsAndWinners = async () => {
       try {
         setLoading(true);
-        console.log("🔍 Fetching participants & winners untuk event ID:", id);
 
         const [participantsRes, winnersRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/admin/events/${id}/participants`, {
@@ -88,9 +84,6 @@ export default function EventWheel() {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
-
-        console.log("📦 Participants response:", participantsRes.data);
-        console.log("📦 Winners response:", winnersRes.data);
 
         // Parse participants - cek berbagai struktur
         let participantsData = [];
@@ -113,7 +106,6 @@ export default function EventWheel() {
           );
         });
 
-        console.log("✅ Participants yang hadir:", hadirOnly.length);
         setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
 
         // Parse winners
@@ -126,11 +118,8 @@ export default function EventWheel() {
             : [];
         }
 
-        console.log("✅ Winners:", winnersData.length);
         setWinners(winnersData.map((w) => w.name || w.nama));
       } catch (err) {
-        console.error("❌ Error fetching data:", err);
-        console.error("❌ Error response:", err.response?.data);
         
         if (err.response?.status === 403) {
           setError("Akses ditolak. Anda tidak memiliki izin untuk event ini.");
@@ -152,14 +141,12 @@ export default function EventWheel() {
     if (mustSpin || wheelData.length === 0) return;
 
     try {
-      console.log("🎲 Drawing winner untuk event ID:", id);
       const response = await axios.post(
         `${API_BASE_URL}/admin/events/${id}/draw-winner`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("📦 Winner response:", response.data);
       const winnerFromAPI = response.data.data.winner || response.data.data;
 
       // Cari index di wheelData (bukan data asli)
@@ -181,8 +168,8 @@ export default function EventWheel() {
       setMustSpin(true);
       setShowConfetti(false);
     } catch (err) {
-      console.error("❌ Error drawing winner:", err);
-      console.error("❌ Error response:", err.response?.data);
+      console.error(err);
+      console.error(err.response?.data);
       alert(err.response?.data?.message || "Gagal melakukan undian.");
     }
   };

@@ -4,7 +4,6 @@ import Card from "../../../components/card";
 import Modal from "../../../components/modal";
 import Pagination from "../../../components/pagination";
 import { useEvents } from "../../../contexts/EventContext";
-import axios from "axios";
 
 const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch, onFilterClick }) => {
   const [query, setQuery] = useState("");
@@ -56,8 +55,39 @@ const FilterContent = ({ activeFilters, onFilterChange }) => {
     { value: "hybrid", label: "Hybrid" },
   ];
 
+  const statusOptions = [
+    { value: "all", label: "Semua Status" },
+    { value: "bisa-daftar", label: "Bisa Daftar" },
+    { value: "segera-hadir", label: "Segera Hadir" },
+    { value: "ditutup", label: "Ditutup" },
+    { value: "selesai", label: "Selesai" },
+    { value: "khusus-karyawan", label: "Khusus Karyawan" },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Filter status */}
+      <div>
+        <label className="text-sm font-semibold text-typo-primary mb-3 block">
+          Status Event
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {statusOptions.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => onFilterChange("status", option.value)}
+              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
+                activeFilters.status === option.value
+                  ? "bg-primary text-white shadow-md"
+                  : "bg-background-secondary text-typo-secondary hover:bg-primary-20"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Filter tipe */}
       <div>
         <label className="text-sm font-semibold text-typo-primary mb-3 block">
           Tipe Event
@@ -88,63 +118,43 @@ const Event = () => {
   const [loadingRegistered, setLoadingRegistered] = useState(true);
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
+  const [role, setRole] = useState("peserta");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     tipe: "all",
+    status: "all",
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempFilters, setTempFilters] = useState({
     tipe: "all",
+    status: "all",
   });
 
+  // Ambil data user
   useEffect(() => {
-    const fetchProfile = async () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
       try {
-        const token = localStorage.getItem("token");
+        const userData = JSON.parse(storedUser);
+        setUserName(userData.name || "User");
+        setRole(userData.role || "peserta");
 
-        if (!token) return;
-
-        const response = await axios.get(`${API_BASE_URL}/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-        });
-
-        const data = response.data.data;
-        setUserName(data.name || "User");
-
-        if (data.profile_photo) {
-          setProfileImage(data.profile_photo);
+        if (userData.profile_photo) {
+          setProfileImage(userData.profile_photo);
         } else {
-          const avatarName = encodeURIComponent(data.name || "User");
+          const avatarName = encodeURIComponent(userData.name || "User");
           setProfileImage(
             `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
           );
         }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-
-        const user = localStorage.getItem("user");
-        if (user) {
-          try {
-            const parsedUser = JSON.parse(user);
-            setUserName(parsedUser.name || "User");
-            const avatarName = encodeURIComponent(parsedUser.name || "User");
-            setProfileImage(
-              `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
-            );
-          } catch (e) {
-            console.error("Error parsing user data:", e);
-          }
-        }
+      } catch (err) {
+        console.error("Error parsing user data:", err);
       }
-    };
-
-    fetchProfile();
+    }
   }, []);
 
+  // Fetch pendaftaran
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
@@ -168,40 +178,51 @@ const Event = () => {
     fetchRegisteredEvents();
   }, []);
 
+  // Filter event
   const filteredEvents = events.filter((event) => {
+    const now = new Date();
+    const registrationStart = new Date(event.mdl_pendaftaran_mulai);
+    const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
+    const eventStart = new Date(event.mdl_acara_mulai);
+    const eventEnd = new Date(event.mdl_acara_selesai);
+
+    const isRegistered = registeredEvents.some(
+      (e) => e.modul_acara_id === event.id
+    );
+    const isPrivate =
+      ["private", "invite-only"].includes(event.mdl_kategori?.toLowerCase()) &&
+      role === "peserta";
+
+    let eventStatus = "bisa-daftar";
+    if (isPrivate) eventStatus = "khusus-karyawan";
+    else if (now < registrationStart) eventStatus = "segera-hadir";
+    else if (now >= registrationStart && now <= registrationEnd)
+      eventStatus = "bisa-daftar";
+    else if (now > registrationEnd && now < eventStart)
+      eventStatus = "ditutup";
+    else if (now >= eventStart && now <= eventEnd)
+      eventStatus = "ditutup";
+    else if (now > eventEnd) eventStatus = "selesai";
+
     const matchesSearch =
       event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase());
 
-    let matchesTipe = true;
-    if (filters.tipe !== "all") {
-      matchesTipe = event.mdl_tipe?.toLowerCase() === filters.tipe.toLowerCase();
-    }
+    let matchesTipe = filters.tipe === "all" || event.mdl_tipe?.toLowerCase() === filters.tipe;
+    let matchesStatus = filters.status === "all" || eventStatus === filters.status;
 
-    return matchesSearch && matchesTipe;
+    return matchesSearch && matchesTipe && matchesStatus;
   });
 
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
-
-  const handleTempFilterChange = (filterType, value) => {
-    setTempFilters((prev) => ({
-      ...prev,
-      [filterType]: value,
-    }));
-  };
-
-  const handleResetFilters = () => {
-    setTempFilters({ tipe: "all" });
-  };
-
+  const handleSearch = (query) => setSearchQuery(query);
+  const handleTempFilterChange = (filterType, value) =>
+    setTempFilters((prev) => ({ ...prev, [filterType]: value }));
+  const handleResetFilters = () => setTempFilters({ tipe: "all", status: "all" });
   const handleApplyFilters = () => {
     setFilters(tempFilters);
     updateFilters(tempFilters);
     setIsFilterModalOpen(false);
   };
-
   const handleOpenFilterModal = () => {
     setTempFilters(filters);
     setIsFilterModalOpen(true);
@@ -211,22 +232,18 @@ const Event = () => {
     updatePage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+  const handleRowsPerPageChange = (perPage) => updatePerPage(perPage);
 
-  const handleRowsPerPageChange = (perPage) => {
-    updatePerPage(perPage);
-  };
-
-  const hasActiveFilters = filters.tipe !== "all";
+  const hasActiveFilters =
+    filters.tipe !== "all" || filters.status !== "all";
 
   if (loading || loadingRegistered) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.2s]"></div>
-            <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.4s]"></div>
-          </div>
+        <div className="flex items-center justify-center space-x-2">
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.2s]"></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.4s]"></div>
         </div>
       </div>
     );
@@ -234,6 +251,7 @@ const Event = () => {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between mb-6">
         <div>
           <h1 className="text-lg md:text-2xl text-primary font-bold mb-1">
@@ -243,17 +261,16 @@ const Event = () => {
             Lihat semua event yang tersedia untuk kamu
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          {profileImage && (
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
-            />
-          )}
-        </div>
+        {profileImage && (
+          <img
+            src={profileImage}
+            alt="Profile"
+            className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
+          />
+        )}
       </div>
 
+      {/* Search Bar */}
       <div className="mb-4">
         <SearchBar
           placeholder="Cari event berdasarkan nama atau lokasi..."
@@ -262,15 +279,16 @@ const Event = () => {
         />
       </div>
 
+      {/* Active Filters */}
       {hasActiveFilters && (
         <div className="mb-4 flex items-center gap-2 flex-wrap">
           <span className="text-sm text-typo-secondary">Filter aktif:</span>
           {filters.tipe !== "all" && (
             <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
-              Tipe: {filters.tipe.charAt(0).toUpperCase() + filters.tipe.slice(1)}
+              Tipe: {filters.tipe}
               <button
                 onClick={() => {
-                  const newFilters = { tipe: "all" };
+                  const newFilters = { ...filters, tipe: "all" };
                   setFilters(newFilters);
                   updateFilters(newFilters);
                 }}
@@ -280,25 +298,25 @@ const Event = () => {
               </button>
             </span>
           )}
-          <button
-            onClick={() => {
-              const newFilters = { tipe: "all" };
-              setFilters(newFilters);
-              updateFilters(newFilters);
-            }}
-            className="text-sm text-primary hover:text-primary-60 font-medium"
-          >
-            Reset semua
-          </button>
+          {filters.status !== "all" && (
+            <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
+              Status: {filters.status.replace("-", " ")}
+              <button
+                onClick={() => {
+                  const newFilters = { ...filters, status: "all" };
+                  setFilters(newFilters);
+                  updateFilters(newFilters);
+                }}
+                className="hover:bg-primary-40 rounded-full p-0.5"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
         </div>
       )}
 
-      <div className="mb-4 flex items-center justify-between">
-        <div className="text-sm text-typo-secondary">
-          Menampilkan <span className="font-semibold">{filteredEvents.length}</span> event pada halaman ini
-        </div>
-      </div>
-
+      {/* Grid Event */}
       <div className="grid md:grid-cols-3 gap-6">
         {filteredEvents.length > 0 ? (
           filteredEvents.map((event) => (
@@ -315,13 +333,13 @@ const Event = () => {
               mdl_acara_selesai={event.mdl_acara_selesai}
               tipe={event.mdl_tipe}
               registeredEvents={registeredEvents}
+              mdl_kategori={event.mdl_kategori}
+              role={role}
             />
           ))
         ) : (
           <div className="col-span-3 text-center py-12">
-            <div className="text-typo-icon mb-2">
-              <Filter className="w-16 h-16 mx-auto mb-4" />
-            </div>
+            <Filter className="w-16 h-16 mx-auto mb-4 text-typo-icon" />
             <p className="text-typo-secondary font-medium mb-1">
               Tidak ada event yang ditemukan
             </p>
@@ -332,6 +350,7 @@ const Event = () => {
         )}
       </div>
 
+      {/* Pagination */}
       {filteredEvents.length > 0 && (
         <div className="mt-8 flex items-center justify-between">
           <Pagination
@@ -345,6 +364,7 @@ const Event = () => {
         </div>
       )}
 
+      {/* Modal Filter */}
       <Modal
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}

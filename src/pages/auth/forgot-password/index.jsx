@@ -38,8 +38,6 @@ export default function ForgotPassword() {
         email: email,
       });
 
-      console.log("Response:", response.data);
-
       if (response.data.success || response.status === 200) {
         setSuccess(`Instruksi reset password telah dikirim ke ${email}`);
         setEmail(""); // Kosongkan input

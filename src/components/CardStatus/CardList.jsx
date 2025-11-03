@@ -3,7 +3,7 @@ import axios from "axios";
 import CardStatus from "../CardStatus/index";
 import { Users, UserCheck, Lightbulb, Laptop, User } from "lucide-react";
 
-const CardList = ({ eventId, participants = [] }) => {
+const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
   const [stats, setStats] = useState({
     jumlah_pendaftar: 0,
     jumlah_kehadiran: 0,
@@ -31,8 +31,6 @@ const CardList = ({ eventId, participants = [] }) => {
           throw new Error("Token tidak ditemukan, silakan login ulang.");
         }
 
-        console.log("🔍 Fetching stats untuk event ID:", eventId);
-
         const res = await axios.get(
           `${API_BASE_URL}/admin/events/${eventId}/stats`,
           {
@@ -42,28 +40,21 @@ const CardList = ({ eventId, participants = [] }) => {
           }
         );
 
-        console.log("📊 Stats dari API:", res.data);
-
         const statsData = res.data?.data;
         if (statsData && typeof statsData === "object") {
           setStats(statsData);
         } else {
-          console.warn("⚠️ res.data.data tidak valid, hitung dari participants", res.data);
+          console.warn(res.data);
           calculateStatsFromParticipants();
         }
       } catch (err) {
-        console.error("❌ Gagal mengambil data statistik:", err);
-        console.error("❌ Error response:", err.response);
         setError(err.response?.data?.message || err.message);
-        
-        // Fallback: hitung dari participants jika API gagal
         calculateStatsFromParticipants();
       } finally {
         setLoading(false);
       }
     };
 
-    // Function untuk menghitung stats dari participants array
     const calculateStatsFromParticipants = () => {
       if (!Array.isArray(participants) || participants.length === 0) {
         setStats({
@@ -92,14 +83,7 @@ const CardList = ({ eventId, participants = [] }) => {
         jumlah_kehadiran: jumlahKehadiran,
         online: online,
         offline: offline,
-        jumlah_doorprize: 0, // Doorprize perlu API tersendiri
-      });
-
-      console.log("📊 Stats dihitung dari participants:", {
-        jumlahPendaftar,
-        jumlahKehadiran,
-        online,
-        offline,
+        jumlah_doorprize: 0,
       });
     };
 
@@ -120,7 +104,11 @@ const CardList = ({ eventId, participants = [] }) => {
         </div>
       )}
       
-      <div className="grid md:grid-cols-5 gap-4 mb-10">
+      <div
+        className={`grid gap-4 mb-10 ${
+          doorprizeActive ? "md:grid-cols-5" : "md:grid-cols-4"
+        }`}
+      >
         <CardStatus
           icon={<Users className="text-blue-500" />}
           value={stats.jumlah_pendaftar}
@@ -145,12 +133,14 @@ const CardList = ({ eventId, participants = [] }) => {
           label="Offline"
           color="border-indigo-500"
         />
-        <CardStatus
-          icon={<Lightbulb className="text-green-500" />}
-          value={stats.jumlah_doorprize}
-          label="Status Doorprize"
-          color="border-green-500"
-        />
+        {doorprizeActive && (
+          <CardStatus
+            icon={<Lightbulb className="text-green-500" />}
+            value={stats.jumlah_doorprize}
+            label="Status Doorprize"
+            color="border-green-500"
+          />
+        )}
       </div>
     </div>
   );

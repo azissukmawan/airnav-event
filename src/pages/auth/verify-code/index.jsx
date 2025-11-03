@@ -83,8 +83,6 @@ export default function VerifyCode() {
         email: email,
       });
 
-      console.log("Response resend OTP:", response.data);
-
       if (response.data?.success || response.status === 200) {
         setTimer(179);
         setOtp(new Array(6).fill(""));
