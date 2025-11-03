@@ -10,7 +10,7 @@ export default function Header({ menuItems = [] }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // cek login
+  // cek loginn
   const token = localStorage.getItem("token");
   const [loggedIn, setLoggedIn] = useState(!!token);
 
