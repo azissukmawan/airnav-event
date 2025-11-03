@@ -600,7 +600,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                       Download Template Sertifikat
                     </a>
                     <p className="text-gray-500 text-xs mt-1">
-                      *Ukuran file: A4
+                      *Ukuran file: A4 Landscape
                     </p>
                   </div>
 

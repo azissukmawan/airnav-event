@@ -17,7 +17,8 @@ import { useEvents } from "../../../../contexts/EventContext";
 import Alert from "../../../../components/alert";
 import axios from "axios";
 
-const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const breadcrumbItems = [
   { label: "Beranda", link: "/user" },
@@ -42,23 +43,20 @@ const DetailEvent = () => {
     const fetchRegisteredEvents = async () => {
       try {
         const token = localStorage.getItem("token");
-        
+
         // ✅ PERBAIKAN 2: Validasi token dulu
         if (!token) {
           console.error("❌ Token tidak ditemukan");
           return;
         }
 
-        const response = await fetch(
-          `${API_BASE_URL}/me/pendaftaran`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Accept': 'application/json',
-            },
-          }
-        );
-        
+        const response = await fetch(`${API_BASE_URL}/me/pendaftaran`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
         const result = await response.json();
 
         if (result.success) {
@@ -123,10 +121,12 @@ const DetailEvent = () => {
     buttonVariant = "third";
   } else if (isRegistered) {
     if (now < eventStart) {
+      // Sudah daftar dan acara belum mulai → masih bisa batal
       buttonText = "Batal Daftar";
       buttonVariant = "red";
       canRegister = true;
     } else {
+      // Sudah daftar dan acara sedang berlangsung atau sudah mulai → tidak bisa batal
       buttonText = "Terdaftar";
       buttonVariant = "green";
     }
@@ -161,7 +161,7 @@ const DetailEvent = () => {
   const cancelEventRegis = async () => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // Validasi token
       if (!token) {
         setAlert({
@@ -177,9 +177,9 @@ const DetailEvent = () => {
       const response = await axios.delete(
         `${API_BASE_URL}/events/${id}/batal-daftar`,
         {
-          headers: { 
+          headers: {
             Authorization: `Bearer ${token}`,
-            'Accept': 'application/json',
+            Accept: "application/json",
           },
         }
       );
@@ -199,7 +199,7 @@ const DetailEvent = () => {
       }
     } catch (error) {
       console.error("❌ Error cancelling registration:", error);
-      
+
       if (error.response?.status === 403) {
         setAlert({
           type: "error",
@@ -221,7 +221,9 @@ const DetailEvent = () => {
       } else {
         setAlert({
           type: "error",
-          message: error.response?.data?.message || "Terjadi kesalahan saat membatalkan pendaftaran.",
+          message:
+            error.response?.data?.message ||
+            "Terjadi kesalahan saat membatalkan pendaftaran.",
         });
       }
     }
@@ -231,7 +233,7 @@ const DetailEvent = () => {
   const confirmRegis = async () => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // Validasi token
       if (!token) {
         console.error("❌ Token tidak ditemukan di localStorage");
@@ -255,8 +257,8 @@ const DetailEvent = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
           timeout: 15000,
         }
@@ -271,7 +273,7 @@ const DetailEvent = () => {
           message: "Anda berhasil mendaftar event!",
         });
         setShowConfirmModal(false);
-        
+
         // ✅ FITUR BARU: Tampilkan modal WhatsApp jika ada link WA
         if (event.mdl_link_wa) {
           setTimeout(() => {
@@ -284,7 +286,8 @@ const DetailEvent = () => {
       } else {
         setAlert({
           type: "error",
-          message: response.data?.message || "Gagal mendaftar. Silakan coba lagi.",
+          message:
+            response.data?.message || "Gagal mendaftar. Silakan coba lagi.",
         });
       }
     } catch (error) {
@@ -293,15 +296,17 @@ const DetailEvent = () => {
       console.error("❌ Error status:", error.response?.status);
       console.error("❌ Error data:", error.response?.data);
       console.error("❌ Error headers:", error.response?.headers);
-      
+
       if (error.response?.status === 403) {
         console.error("🚫 403 Forbidden - Detail:", error.response?.data);
-        const errorMsg = error.response?.data?.message || "Akses ditolak. Silakan login kembali.";
+        const errorMsg =
+          error.response?.data?.message ||
+          "Akses ditolak. Silakan login kembali.";
         setAlert({
           type: "error",
           message: errorMsg,
         });
-        
+
         // Jangan langsung redirect, biarkan user lihat error message
         setTimeout(() => {
           localStorage.removeItem("token");
@@ -317,7 +322,7 @@ const DetailEvent = () => {
           localStorage.removeItem("token");
           navigate("/login");
         }, 2000);
-      } else if (error.code === 'ECONNABORTED') {
+      } else if (error.code === "ECONNABORTED") {
         setAlert({
           type: "error",
           message: "Koneksi timeout. Silakan coba lagi.",
@@ -325,7 +330,9 @@ const DetailEvent = () => {
       } else {
         setAlert({
           type: "error",
-          message: error.response?.data?.message || "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
+          message:
+            error.response?.data?.message ||
+            "Terjadi kesalahan saat mendaftar. Silakan coba lagi.",
         });
       }
     }
@@ -775,7 +782,8 @@ const DetailEvent = () => {
                   Pendaftaran Berhasil! 🎉
                 </Typography>
                 <Typography type="body" className="text-gray-600">
-                  Bergabunglah dengan grup WhatsApp untuk mendapatkan informasi terbaru tentang event ini.
+                  Bergabunglah dengan grup WhatsApp untuk mendapatkan informasi
+                  terbaru tentang event ini.
                 </Typography>
               </div>
 

@@ -128,6 +128,11 @@ const EventDetail = () => {
       buttonText = "Batal Daftar";
       buttonVariant = "red";
       canRegister = true; // tetap aktif supaya bisa batal
+    } else if (now >= eventStart && now <= eventEnd) {
+      // Acara sedang berlangsung → tidak bisa batal
+      buttonText = "Terdaftar";
+      buttonVariant = "green";
+      canRegister = false;
     } else {
       buttonText = "Terdaftar";
       buttonVariant = "green";
@@ -314,7 +319,7 @@ const EventDetail = () => {
           <div>
             <Tabs
               items={[
-               {
+                {
                   label: "Deskripsi",
                   content: (
                     <div className="space-y-10">
@@ -330,7 +335,7 @@ const EventDetail = () => {
                         type="paragraph"
                         className="text-gray-700 leading-relaxed whitespace-pre-line"
                       >
-                         {event.deskripsi.replace(/\\n/g, "\n")}
+                        {event.deskripsi.replace(/\\n/g, "\n")}
                       </Typography>
                     </div>
                   ),
