@@ -491,12 +491,14 @@ const AdminDetail = () => {
               onSearch={handleSearchChange}
             />
           </div>
-          <Link
-            to={`/admin/event/doorprize/${id}`}
-            className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
-          >
-            Doorprize
-          </Link>
+          {eventData?.mdl_doorprize_aktif === 1 && (
+            <Link
+              to={`/admin/event/doorprize/${id}`}
+              className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+            >
+              Doorprize
+            </Link>
+          )}
         </div>
 
         {/* Card Info Acara */}
@@ -566,10 +568,14 @@ const AdminDetail = () => {
           </div>
         ) : (
           <>
-            <CardList eventId={id} participants={participants} />
+            <CardList
+              eventId={id}
+              participants={participants}
+              doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
+            />
 
             <TableParticipants
-              participants={currentTableData}
+              participants={currentTableData}s
               winners={winners}
               onPreview={handleOpenPreview}
               currentPage={currentPage}
@@ -578,6 +584,7 @@ const AdminDetail = () => {
               rowsPerPage={rowsPerPage}
               onPageChange={setCurrentPage}
               onRowsPerPageChange={handleRowsPerPageChange}
+              doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
             />
           </>
         )}

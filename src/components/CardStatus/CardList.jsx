@@ -3,7 +3,7 @@ import axios from "axios";
 import CardStatus from "../CardStatus/index";
 import { Users, UserCheck, Lightbulb, Laptop, User } from "lucide-react";
 
-const CardList = ({ eventId, participants = [] }) => {
+const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
   const [stats, setStats] = useState({
     jumlah_pendaftar: 0,
     jumlah_kehadiran: 0,
@@ -120,7 +120,11 @@ const CardList = ({ eventId, participants = [] }) => {
         </div>
       )}
       
-      <div className="grid md:grid-cols-5 gap-4 mb-10">
+      <div
+        className={`grid gap-4 mb-10 ${
+          doorprizeActive ? "md:grid-cols-5" : "md:grid-cols-4"
+        }`}
+      >
         <CardStatus
           icon={<Users className="text-blue-500" />}
           value={stats.jumlah_pendaftar}
@@ -145,12 +149,14 @@ const CardList = ({ eventId, participants = [] }) => {
           label="Offline"
           color="border-indigo-500"
         />
-        <CardStatus
-          icon={<Lightbulb className="text-green-500" />}
-          value={stats.jumlah_doorprize}
-          label="Status Doorprize"
-          color="border-green-500"
-        />
+        {doorprizeActive && (
+          <CardStatus
+            icon={<Lightbulb className="text-green-500" />}
+            value={stats.jumlah_doorprize}
+            label="Status Doorprize"
+            color="border-green-500"
+          />
+        )}
       </div>
     </div>
   );

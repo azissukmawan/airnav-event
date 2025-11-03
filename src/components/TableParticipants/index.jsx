@@ -210,7 +210,7 @@ import React, { useState, useMemo } from "react";
 import { Award, ArrowUpDown } from "lucide-react";
 import Pagination from "../pagination";
 
-const TableParticipants = ({ participants = [], winners = [], onPreview }) => {
+const TableParticipants = ({ participants = [], winners = [], onPreview, doorprizeActive = false, }) => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -311,7 +311,9 @@ const TableParticipants = ({ participants = [], winners = [], onPreview }) => {
                   Status <ArrowUpDown size={16} />
                 </div>
               </th>
-              <th className="py-5 px-3 text-left rounded-tr-2xl">Doorprize</th>
+              {doorprizeActive && (
+                <th className="py-5 px-3 text-left rounded-tr-2xl">Doorprize</th>
+              )}
             </tr>
           </thead>
 
@@ -382,17 +384,19 @@ const TableParticipants = ({ participants = [], winners = [], onPreview }) => {
                     </td>
 
                     {/* DOORPRIZE */}
-                    <td className="py-5 px-2 text-left">
-                      {isWinner ? (
-                        <Award
-                          size={20}
-                          className="text-yellow-500 mx-auto"
-                          title="Pemenang Doorprize"
-                        />
-                      ) : (
-                        <span className="text-gray-300">—</span>
-                      )}
-                    </td>
+                    {doorprizeActive && (
+                      <td className="py-5 px-2 text-left">
+                        {isWinner ? (
+                          <Award
+                            size={20}
+                            className="text-yellow-500 mx-auto"
+                            title="Pemenang Doorprize"
+                          />
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })
