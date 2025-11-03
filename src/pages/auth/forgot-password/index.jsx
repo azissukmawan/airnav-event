@@ -66,7 +66,7 @@ export default function ForgotPassword() {
         <div className="grid md:grid-cols-[4fr_5fr]">
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
-            style={{ backgroundImage: `url(${loginImage})` }}
+            style={{ backgroundImage: `url(/loginimage.png)` }}
           >
             <div className="absolute top-6 left-6 bg-white/30 backdrop-blur-md p-3 rounded-2xl shadow-md">
               <img src="/airnav-logo.png" alt="AirNav Logo" className="w-20" />
