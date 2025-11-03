@@ -31,8 +31,6 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
           throw new Error("Token tidak ditemukan, silakan login ulang.");
         }
 
-        console.log("🔍 Fetching stats untuk event ID:", eventId);
-
         const res = await axios.get(
           `${API_BASE_URL}/admin/events/${eventId}/stats`,
           {
@@ -42,28 +40,21 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
           }
         );
 
-        console.log("📊 Stats dari API:", res.data);
-
         const statsData = res.data?.data;
         if (statsData && typeof statsData === "object") {
           setStats(statsData);
         } else {
-          console.warn("⚠️ res.data.data tidak valid, hitung dari participants", res.data);
+          console.warn(res.data);
           calculateStatsFromParticipants();
         }
       } catch (err) {
-        console.error("❌ Gagal mengambil data statistik:", err);
-        console.error("❌ Error response:", err.response);
         setError(err.response?.data?.message || err.message);
-        
-        // Fallback: hitung dari participants jika API gagal
         calculateStatsFromParticipants();
       } finally {
         setLoading(false);
       }
     };
 
-    // Function untuk menghitung stats dari participants array
     const calculateStatsFromParticipants = () => {
       if (!Array.isArray(participants) || participants.length === 0) {
         setStats({
@@ -92,14 +83,7 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
         jumlah_kehadiran: jumlahKehadiran,
         online: online,
         offline: offline,
-        jumlah_doorprize: 0, // Doorprize perlu API tersendiri
-      });
-
-      console.log("📊 Stats dihitung dari participants:", {
-        jumlahPendaftar,
-        jumlahKehadiran,
-        online,
-        offline,
+        jumlah_doorprize: 0,
       });
     };
 

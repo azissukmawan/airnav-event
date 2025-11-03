@@ -60,7 +60,6 @@ export const EventProvider = ({ children }) => {
     console.error(error);
 
     if (error.response?.status === 401) {
-      console.log("Current token:", localStorage.getItem("token"));
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";

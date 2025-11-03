@@ -68,8 +68,6 @@ export default function ResetPassword() {
         }
       );
 
-      console.log("Response reset password:", response.data);
-
       setMessage(response.data.message || "Password berhasil diperbarui!");
       setLoading(false);
 

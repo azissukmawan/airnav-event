@@ -37,7 +37,6 @@ export default function AdminDashboard() {
   const handleOpenAddEvent = () => setIsAddEventOpen(true);
   const handleCloseAddEvent = () => setIsAddEventOpen(false);
 
-  // 🔹 Fetch data dari API saat komponen dimuat
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -60,10 +59,10 @@ export default function AdminDashboard() {
             closed: eventStats.closed || 0,
           });
         } else {
-          console.error("Struktur data tidak sesuai:", response.data);
+          console.error(response.data);
         }
       } catch (error) {
-        console.error("Gagal ambil data stats:", error);
+        console.error(error);
       }
     };
 

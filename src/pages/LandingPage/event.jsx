@@ -170,7 +170,7 @@ const EventDetail = () => {
     } catch (err) {
       console.error(err);
 
-      // 🔍 Cek apakah error karena belum login
+      // Cek apakah error karena belum login
       const msg = err.response?.data?.message;
       if (msg === "Unauthenticated.") {
         setAlert({

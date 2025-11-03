@@ -137,13 +137,11 @@ const InfoAcara = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       if (!id) {
-        console.error("❌ ID tidak ditemukan di URL params");
         showPopup("error", "Error", "ID acara tidak ditemukan");
         return;
       }
 
       try {
-        console.log("🔍 Fetching event dengan ID:", id);
         const response = await axios.get(
           `${API_BASE_URL}/admin/events/${id}`,
           {
@@ -153,8 +151,6 @@ const InfoAcara = () => {
             timeout: 15000,
           }
         );
-
-        console.log("✅ Data event berhasil dimuat:", response.data);
 
         const data = response.data.data;
         setFormData({
@@ -189,7 +185,7 @@ const InfoAcara = () => {
         setSelectedOption(data.mdl_status || "active");
         
       } catch (error) {
-        console.error("❌ Gagal memuat data:", error);
+        console.error(error);
         
         if (error.code === 'ECONNABORTED') {
           showPopup("error", "Timeout", "Koneksi timeout. Coba refresh halaman.");
@@ -229,8 +225,6 @@ const InfoAcara = () => {
     try {
       const newStatus = !presensiAktif;
       
-      console.log("🔄 Toggle presensi untuk event ID:", id, "ke status:", newStatus);
-      
       const response = await axios.put(
         `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
         {
@@ -245,8 +239,6 @@ const InfoAcara = () => {
         }
       );
 
-      console.log("✅ Toggle presensi berhasil:", response.data);
-      
       if (response.data && response.data.data) {
         setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
       } else {
@@ -255,7 +247,7 @@ const InfoAcara = () => {
       
       showPopup("success", "Berhasil", `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`);
     } catch (error) {
-      console.error("❌ Gagal toggle presensi:", error.response?.data || error.message);
+      console.error(error.response?.data || error.message);
       
       const errorMsg = error.response?.data?.message || "Gagal mengubah status presensi";
       showPopup("error", "Error", errorMsg);
@@ -296,8 +288,6 @@ const InfoAcara = () => {
         }
       });
 
-      console.log("📤 Mengirim update untuk event ID:", id);
-
       const response = await axios.post(
         `${API_BASE_URL}/admin/events/${id}`,
         formDataToSend,
@@ -309,12 +299,10 @@ const InfoAcara = () => {
           timeout: 30000,
         }
       );
-
-      console.log("✅ Sukses update:", response.data);
       showPopup("success", "Berhasil!", "Acara berhasil diperbarui");
       
     } catch (error) {
-      console.error("❌ Gagal update:", error.response?.data || error.message);
+      console.error(error.response?.data || error.message);
       
       if (error.code === 'ECONNABORTED') {
         showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");

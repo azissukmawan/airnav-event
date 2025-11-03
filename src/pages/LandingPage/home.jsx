@@ -48,7 +48,7 @@ export default function Home() {
   // Load More Button
   const handleLoadMore = () => {
     setLoadingMore(true);
-    setPrevVisibleCount(visibleCount); // simpan batas lama untuk fade-in
+    setPrevVisibleCount(visibleCount);
     setTimeout(() => {
       setVisibleCount((prev) => Math.min(prev + 6, events.length));
       setLoadingMore(false);
