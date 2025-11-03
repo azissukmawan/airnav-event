@@ -7,6 +7,7 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import defaultImage from "../../assets/no-image.jpg";
 
 export default function CardLanding({
   id,
@@ -132,11 +133,11 @@ export default function CardLanding({
       {/* Gambar & status */}
       <div className="relative">
         <img
-          src={image || "/no-image.jpg"}
+          src={image || defaultImage}
           alt={title}
           className="w-full h-56 object-cover transition-transform duration-300"
           onError={(e) => {
-            e.currentTarget.src = "/no-image.jpg";
+            e.currentTarget.src = defaultImage;
           }}
         />
         <span
