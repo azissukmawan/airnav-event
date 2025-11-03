@@ -17,9 +17,6 @@ import { useEvents } from "../../../../contexts/EventContext";
 import Alert from "../../../../components/alert";
 import axios from "axios";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 const breadcrumbItems = [
   { label: "Beranda", link: "/user" },
   { label: "Detail Acara" },
@@ -44,9 +41,8 @@ const DetailEvent = () => {
       try {
         const token = localStorage.getItem("token");
 
-        // ✅ PERBAIKAN 2: Validasi token dulu
         if (!token) {
-          console.error("❌ Token tidak ditemukan");
+          console.error("Token tidak ditemukan");
           return;
         }
 
@@ -112,6 +108,10 @@ const DetailEvent = () => {
     (e) => e.modul_acara_id === event.id
   );
 
+  const userRole = localStorage.getItem("role");
+  const isAdmin = userRole === "admin";
+  const isPeserta = userRole === "peserta";
+
   let buttonText = "";
   let buttonVariant = "primary";
   let canRegister = false;
@@ -121,19 +121,39 @@ const DetailEvent = () => {
     buttonVariant = "third";
   } else if (isRegistered) {
     if (now < eventStart) {
-      // Sudah daftar dan acara belum mulai → masih bisa batal
-      buttonText = "Batal Daftar";
-      buttonVariant = "red";
-      canRegister = true;
+      if (now > registrationEnd) {
+        buttonText = "Batal Daftar (Ditutup)";
+        buttonVariant = "third";
+        canRegister = false;
+      } else {
+        buttonText = "Batal Daftar";
+        buttonVariant = "red";
+        canRegister = true;
+      }
     } else {
-      // Sudah daftar dan acara sedang berlangsung atau sudah mulai → tidak bisa batal
       buttonText = "Terdaftar";
       buttonVariant = "green";
+      canRegister = false;
     }
   } else if (now >= registrationStart && now <= registrationEnd) {
-    buttonText = "Daftar Sekarang";
-    buttonVariant = "primary";
-    canRegister = true;
+    
+    // Jika event private/invite-only dan user adalah peserta biasa
+    if ((event.mdl_kategori === "private" || event.mdl_kategori === "invite-only") && isPeserta) {
+      buttonText = event.mdl_kategori === "invite-only" ? "Event Khusus (Undangan)" : "Event Private";
+      buttonVariant = "third";
+      canRegister = false;
+    } 
+    // Jika event public atau user adalah admin
+    else if (event.mdl_kategori === "public" || isAdmin) {
+      buttonText = "Daftar Sekarang";
+      buttonVariant = "primary";
+      canRegister = true;
+    }
+    else {
+      buttonText = "Event Khusus";
+      buttonVariant = "third";
+      canRegister = false;
+    }
   } else if (now < registrationStart) {
     buttonText = "Segera Hadir";
     buttonVariant = "third";
@@ -157,13 +177,12 @@ const DetailEvent = () => {
     }
   };
 
-  // ✅ PERBAIKAN 3: Perbaiki cancelEventRegis dengan error handling yang lebih baik
   const cancelEventRegis = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Validasi token
       if (!token) {
+        console.error("Token tidak tersedia");
         setAlert({
           type: "error",
           message: "Sesi Anda telah berakhir. Silakan login kembali.",
@@ -171,8 +190,6 @@ const DetailEvent = () => {
         setTimeout(() => navigate("/login"), 2000);
         return;
       }
-
-      console.log("🔄 Membatalkan pendaftaran event ID:", id);
 
       const response = await axios.delete(
         `${API_BASE_URL}/events/${id}/batal-daftar`,
@@ -198,8 +215,6 @@ const DetailEvent = () => {
         });
       }
     } catch (error) {
-      console.error("❌ Error cancelling registration:", error);
-
       if (error.response?.status === 403) {
         setAlert({
           type: "error",
@@ -229,14 +244,11 @@ const DetailEvent = () => {
     }
   };
 
-  // ✅ PERBAIKAN 4: Perbaiki confirmRegis dengan error handling yang lebih baik + Modal WA
   const confirmRegis = async () => {
     try {
       const token = localStorage.getItem("token");
 
-      // Validasi token
       if (!token) {
-        console.error("❌ Token tidak ditemukan di localStorage");
         setAlert({
           type: "error",
           message: "Sesi Anda telah berakhir. Silakan login kembali.",
@@ -244,12 +256,6 @@ const DetailEvent = () => {
         setTimeout(() => navigate("/login"), 2000);
         return;
       }
-
-      console.log("🔄 Mendaftar event ID:", id);
-      console.log("🔑 Token tersedia:", token ? "Ya" : "Tidak");
-      console.log("🔑 Token length:", token.length);
-      console.log("🔑 Token preview:", token.substring(0, 20) + "...");
-      console.log("📍 URL:", `${API_BASE_URL}/events/${id}/daftar`);
 
       const response = await axios.post(
         `${API_BASE_URL}/events/${id}/daftar`,
@@ -264,9 +270,6 @@ const DetailEvent = () => {
         }
       );
 
-      console.log("✅ Response status:", response.status);
-      console.log("✅ Response data:", response.data);
-
       if (response.data?.success) {
         setAlert({
           type: "success",
@@ -274,7 +277,6 @@ const DetailEvent = () => {
         });
         setShowConfirmModal(false);
 
-        // ✅ FITUR BARU: Tampilkan modal WhatsApp jika ada link WA
         if (event.mdl_link_wa) {
           setTimeout(() => {
             setAlert(null);
@@ -291,14 +293,8 @@ const DetailEvent = () => {
         });
       }
     } catch (error) {
-      console.error("❌ Error registering:", error);
-      console.error("❌ Error response:", error.response);
-      console.error("❌ Error status:", error.response?.status);
-      console.error("❌ Error data:", error.response?.data);
-      console.error("❌ Error headers:", error.response?.headers);
-
       if (error.response?.status === 403) {
-        console.error("🚫 403 Forbidden - Detail:", error.response?.data);
+        console.error(error.response?.data);
         const errorMsg =
           error.response?.data?.message ||
           "Akses ditolak. Silakan login kembali.";
@@ -307,13 +303,11 @@ const DetailEvent = () => {
           message: errorMsg,
         });
 
-        // Jangan langsung redirect, biarkan user lihat error message
         setTimeout(() => {
           localStorage.removeItem("token");
           navigate("/login");
         }, 3000);
       } else if (error.response?.status === 401) {
-        console.error("🔐 401 Unauthorized - Token mungkin invalid/expired");
         setAlert({
           type: "error",
           message: "Sesi Anda telah berakhir. Silakan login kembali.",
@@ -340,21 +334,6 @@ const DetailEvent = () => {
 
   const cancelRegis = () => {
     setShowConfirmModal(false);
-  };
-
-  const downloadAllModules = () => {
-    const modules = event.files?.filter((file) => file.type === "module");
-    if (modules && modules.length > 0) {
-      modules.forEach((module) => {
-        const link = document.createElement("a");
-        link.href = module.url;
-        link.download = module.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      });
-      alert(`Mendownload ${modules.length} file modul...`);
-    }
   };
 
   const shareToFacebook = () => {
@@ -477,7 +456,6 @@ const DetailEvent = () => {
       </div>
 
       <div className="mt-6 space-y-6">
-        {/* Tentang Acara */}
         <div className="grid md:grid-cols-3 gap-4 bg-white p-8 rounded-xl shadow-sm space-x-6">
           <div className="md:col-span-2">
             <Typography type="heading5" weight="semibold" className="mb-2">
@@ -489,6 +467,23 @@ const DetailEvent = () => {
           </div>
 
           <div className="flex flex-col space-y-6">
+            {/* ✅ Badge untuk Event Private */}
+            {event.is_public === 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <div>
+                  <Typography type="caption1" weight="semibold" className="text-amber-800">
+                    Event Khusus Undangan
+                  </Typography>
+                  <Typography type="caption2" className="text-amber-700">
+                    Hanya peserta yang diundang yang dapat mendaftar
+                  </Typography>
+                </div>
+              </div>
+            )}
+
             <Button
               variant={buttonVariant}
               className="w-full md:w-auto"
@@ -498,7 +493,6 @@ const DetailEvent = () => {
               {buttonText}
             </Button>
 
-            {/* Modal Konfirmasi Pendaftaran */}
             {showConfirmModal && (
               <div
                 className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -575,7 +569,6 @@ const DetailEvent = () => {
           </div>
         </div>
 
-        {/* File Pendukung */}
         {isRegistered && (
           <div className="grid md:grid-cols-2 gap-6">
             {event.media_urls?.file_rundown && (
@@ -605,7 +598,6 @@ const DetailEvent = () => {
               </a>
             )}
 
-            {/* Card Module */}
             {event.media_urls?.file_acara && (
               <a
                 href={event.media_urls.file_acara}
@@ -635,7 +627,6 @@ const DetailEvent = () => {
           </div>
         )}
 
-        {/* Info Acara */}
         <div className="bg-white p-8 rounded-xl shadow-sm">
           <Typography
             type="heading5"
@@ -645,14 +636,6 @@ const DetailEvent = () => {
             Informasi Acara
           </Typography>
           <div className="flex flex-col gap-3 text-sm">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-30 text-white p-2 rounded-full">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <Typography type="body" className="text-typo-secondary">
-                <strong>Tipe:</strong> {event.mdl_tipe}
-              </Typography>
-            </div>
             <div className="flex items-center gap-3">
               <div className="bg-primary-30 text-white p-2 rounded-full">
                 <MapPin className="w-6 h-6" />
@@ -692,7 +675,6 @@ const DetailEvent = () => {
           </div>
         </div>
 
-        {/* Info Tambahan */}
         {event.mdl_catatan && event.mdl_catatan.trim() !== "" && (
           <div className="bg-white p-8 rounded-xl shadow-sm mt-6">
             <Typography
@@ -708,7 +690,6 @@ const DetailEvent = () => {
           </div>
         )}
 
-        {/* Modal Batal Pendaftaran */}
         {showCancelModal && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -745,7 +726,6 @@ const DetailEvent = () => {
           </div>
         )}
 
-        {/* ✅ MODAL WHATSAPP GROUP - FITUR BARU */}
         {showWAModal && event.mdl_link_wa && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -758,7 +738,6 @@ const DetailEvent = () => {
               className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Tombol Close (X) di pojok kanan atas */}
               <button
                 onClick={() => {
                   setShowWAModal(false);
