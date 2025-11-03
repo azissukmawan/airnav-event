@@ -67,68 +67,11 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   };
 
   // ✅ PERBAIKAN 2: Update handleFileChange dengan logging
-  // const handleFileChange = (e) => {
-  //   const { name, files: selected } = e.target;
-  //   if (selected && selected[0]) {
-  //     console.log(`📎 File dipilih untuk ${name}:`, selected[0].name, `(${selected[0].size} bytes)`);
-  //     setFiles((prev) => ({ ...prev, [name]: selected[0] }));
-  //   }
-  // };
-
-  // ✅ PERBAIKAN 2: Update handleFileChange dengan validasi format
   const handleFileChange = (e) => {
     const { name, files: selected } = e.target;
     if (selected && selected[0]) {
-      const file = selected[0];
-      const fileName = file.name.toLowerCase();
-      let isValid = false;
-      let allowedFormats = "";
-
-      // Validasi berdasarkan nama field
-      switch (name) {
-        case "mdl_file_acara":
-          allowedFormats = "DOC, DOCX, PDF, PPT, PPTX";
-          isValid = /\.(doc|docx|pdf|ppt|pptx)$/.test(fileName);
-          break;
-        case "mdl_file_rundown":
-          allowedFormats = "DOC, DOCX, PDF, XLS, XLSX";
-          isValid = /\.(doc|docx|pdf|xls|xlsx)$/.test(fileName);
-          break;
-        case "mdl_template_sertifikat":
-          allowedFormats = "JPG, JPEG, PNG";
-          isValid = /\.(jpg|jpeg|png)$/.test(fileName);
-          break;
-        case "mdl_banner_acara":
-          allowedFormats = "JPG, JPEG, PNG";
-          isValid = /\.(jpg|jpeg|png)$/.test(fileName);
-          break;
-        default:
-          isValid = true;
-      }
-
-      if (!isValid) {
-        showPopup("error", "Format File Tidak Sesuai", `File harus berformat: ${allowedFormats}`);
-        e.target.value = ""; // Reset input
-        return;
-      }
-
-      // Validasi ukuran file (maksimal 10MB)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        showPopup("error", "Ukuran File Terlalu Besar", "Ukuran file maksimal 5MB");
-        e.target.value = ""; // Reset input
-        return;
-      }
-
-      console.log(`📎 File dipilih untuk ${name}:`, file.name, `(${file.size} bytes)`);
-      setFiles((prev) => ({ ...prev, [name]: file }));
-      
-      // Hapus error jika ada
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+      console.log(`📎 File dipilih untuk ${name}:`, selected[0].name, `(${selected[0].size} bytes)`);
+      setFiles((prev) => ({ ...prev, [name]: selected[0] }));
     }
   };
 
@@ -578,40 +521,16 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                     />
                   </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Template Sertifikat (JPG, JPEG, PNG)
-                  </label>
-                  <input
-                    name="mdl_template_sertifikat_url"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2
-      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
-      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
-      hover:file:bg-blue-100 focus:outline-none"
-                  />
-                  <div className="mt-2">
-                    <a
-                      href="/format-template-sertifikat.jpg"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 text-sm underline hover:text-blue-800"
-                    >
-                      Download Template Sertifikat
-                    </a>
-                    <p className="text-gray-500 text-xs mt-1">
-                      *Ukuran file: A4
-                    </p>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Template Sertifikat (JPG, JPEG, PNG)</label>
+                    <input 
+                      name="mdl_template_sertifikat"
+                      type="file" 
+                      accept=".pdf,.jpg,.jpeg,.png" 
+                      onChange={handleFileChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
+                    />
                   </div>
-
-                  {errors.mdl_template_sertifikat && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_template_sertifikat}
-                    </p>
-                  )}
-                </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Upload Gambar (JPG, JPEG, PNG)</label>
