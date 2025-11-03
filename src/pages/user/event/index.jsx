@@ -51,8 +51,8 @@ const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch, onFilterClick })
 const FilterContent = ({ activeFilters, onFilterChange }) => {
   const statusOptions = [
     { value: "all", label: "Semua Status" },
-    { value: "active", label: "Aktif" },
-    { value: "inactive", label: "Tidak Aktif" }
+    { value: "open", label: "Aktif" },
+    { value: "closed", label: "Tidak Aktif" }
   ];
 
   const tipeOptions = [
@@ -126,6 +126,14 @@ const Event = () => {
     tipe: 'all'
   });
 
+  const isRegistrationOpen = (event) => {
+    const now = new Date();
+    const registrationStart = new Date(event.mdl_pendaftaran_mulai);
+    const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
+    
+    return now >= registrationStart && now <= registrationEnd;
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -196,10 +204,24 @@ const Event = () => {
     fetchRegisteredEvents();
   }, []);
 
-  const filteredEvents = events.filter(event => 
-    event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase());
+
+    let matchesStatus = true;
+    if (filters.status === 'open') {
+      matchesStatus = isRegistrationOpen(event);
+    } else if (filters.status === 'closed') {
+      matchesStatus = !isRegistrationOpen(event);
+    }
+ 
+    let matchesTipe = true;
+    if (filters.tipe !== 'all') {
+      matchesTipe = event.mdl_tipe?.toLowerCase() === filters.tipe.toLowerCase();
+    }
+    
+    return matchesSearch && matchesStatus && matchesTipe;
+  });
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -287,7 +309,7 @@ const Event = () => {
           <span className="text-sm text-typo-secondary">Filter aktif:</span>
           {filters.status !== 'all' && (
             <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
-              Status: {filters.status}
+              Status: {filters.status === 'open' ? 'Aktif' : 'Tidak Aktif'}
               <button
                 onClick={() => {
                   const newFilters = { ...filters, status: 'all' };
@@ -302,7 +324,7 @@ const Event = () => {
           )}
           {filters.tipe !== 'all' && (
             <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
-              Tipe: {filters.tipe}
+              Tipe: {filters.tipe.charAt(0).toUpperCase() + filters.tipe.slice(1)}
               <button
                 onClick={() => {
                   const newFilters = { ...filters, tipe: 'all' };
