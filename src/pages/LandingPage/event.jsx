@@ -21,21 +21,30 @@ import NotFound from "../../pages/NotFound";
 const EventDetail = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [loadingRegistered, setLoadingRegistered] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [alert, setAlert] = useState(null);
-  const [fetchedRegistered, setFetchedRegistered] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  const shareUrl = window.location.href;
   const token = localStorage.getItem("token");
+  const role = localStorage.getItem("role");
+  const isAdmin = role === "admin" || role === "superadmin";
+  const shareUrl = window.location.href;
   const API_BASE_URL =
     "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
+  const menuItems = [
+    { name: "Beranda", href: "#beranda" },
+    { name: "Tentang", href: "#tentang" },
+    { name: "Acara", href: "#acara" },
+  ];
+
+  // ================= FETCH EVENT =================
   useEffect(() => {
     const stored = localStorage.getItem("registeredEvents");
     if (stored) setRegisteredEvents(JSON.parse(stored));
@@ -44,29 +53,35 @@ const EventDetail = () => {
       try {
         const res = await fetch(`${API_BASE_URL}/events/${slug}`);
         const json = await res.json();
-        if (json.success && json.data?.event) setEvent(json.data.event);
-        else setEvent(null);
+        setEvent(json.success && json.data?.event ? json.data.event : null);
       } catch (err) {
         console.error("Gagal mengambil event:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchEvent();
   }, [slug]);
 
+  // ================= FETCH REGISTERED EVENTS =================
   useEffect(() => {
+    if (!token || isAdmin) {
+      setLoadingRegistered(false); // skip fetch untuk admin
+      return;
+    }
+
     const fetchRegistered = async () => {
-      if (!token) return setLoadingRegistered(false);
       try {
         const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         if (response.data?.success) {
           const serverData = Array.isArray(response.data.data)
             ? response.data.data
             : [];
-          // hanya set state jika belum ada data lokal baru
+
           setRegisteredEvents((prev) => {
             const merged = [...prev];
             serverData.forEach((s) => {
@@ -82,20 +97,20 @@ const EventDetail = () => {
           });
         }
       } catch (err) {
-        console.error("Gagal fetch registered events", err);
+        console.error(
+          "Gagal fetch registered events",
+          err.response?.data || err
+        );
       } finally {
         setLoadingRegistered(false);
-        setFetchedRegistered(true);
       }
     };
+
     fetchRegistered();
-  }, [token]);
+  }, [token, isAdmin]);
 
   if (loading || loadingRegistered) return <Loading />;
-
-  if (!event) {
-    return <NotFound />;
-  }
+  if (!event) return <NotFound />;
 
   // ================= LOGIKA TOMBOL =================
   const now = new Date();
@@ -104,26 +119,27 @@ const EventDetail = () => {
   const eventStart = new Date(event.acara?.mulai);
   const eventEnd = new Date(event.acara?.selesai);
 
-  const isRegistered = Array.isArray(registeredEvents)
-    ? registeredEvents.some(
-        (e) => Number(e.modul_acara_id) === Number(event.id)
-      )
-    : false;
+  const isRegistered = registeredEvents.some(
+    (e) => Number(e.modul_acara_id) === Number(event.id)
+  );
 
   let buttonText = "";
   let buttonVariant = "primary";
   let canRegister = false;
 
-  if (now > eventEnd) {
+  if (isAdmin) {
+    buttonText = "Admin Tidak Bisa Mendaftar";
+    buttonVariant = "third";
+    canRegister = false;
+  } else if (now > eventEnd) {
     buttonText = "Acara Telah Selesai";
     buttonVariant = "third";
   } else if (isRegistered) {
     if (now < eventStart) {
       buttonText = "Batal Daftar";
       buttonVariant = "red";
-      canRegister = true; // tetap aktif supaya bisa batal
+      canRegister = true;
     } else if (now >= eventStart && now <= eventEnd) {
-      // Acara sedang berlangsung → tidak bisa batal
       buttonText = "Terdaftar";
       buttonVariant = "green";
       canRegister = false;
@@ -145,11 +161,8 @@ const EventDetail = () => {
 
   // ================= HANDLE REGISTER =================
   const handleRegister = () => {
-    if (isRegistered && now < eventStart) {
-      setShowCancelModal(true);
-    } else if (canRegister && !isRegistered) {
-      setShowConfirmModal(true);
-    }
+    if (isRegistered && now < eventStart) setShowCancelModal(true);
+    else if (canRegister && !isRegistered) setShowConfirmModal(true);
   };
 
   const confirmRegis = async () => {
@@ -169,28 +182,19 @@ const EventDetail = () => {
       }
     } catch (err) {
       console.error(err);
-
-      // 🔍 Cek apakah error karena belum login
       const msg = err.response?.data?.message;
+
       if (msg === "Unauthenticated.") {
         setAlert({
           type: "error",
           message: "Anda belum login. Silakan login terlebih dahulu.",
         });
-
-        // Simpan tujuan agar bisa kembali setelah login
         localStorage.setItem("redirectAfterLogin", `/user/event/${event.id}`);
-
-        // Redirect ke halaman login
         navigate("/login");
         return;
       }
 
-      // 🧾 Error lainnya
-      setAlert({
-        type: "error",
-        message: msg || "Gagal mendaftar event.",
-      });
+      setAlert({ type: "error", message: msg || "Gagal mendaftar event." });
     }
   };
 
@@ -200,6 +204,7 @@ const EventDetail = () => {
         `${API_BASE_URL}/events/${event.id}/batal-daftar`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       if (response.data?.success) {
         const updated = registeredEvents.filter(
           (e) => e.modul_acara_id !== event.id
@@ -225,6 +230,7 @@ const EventDetail = () => {
 
   const cancelRegis = () => setShowConfirmModal(false);
 
+  // ================= SHARE =================
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -242,6 +248,7 @@ const EventDetail = () => {
       )}`,
       "_blank"
     );
+
   const shareToWhatsApp = () =>
     window.open(
       `https://wa.me/?text=${encodeURIComponent(
@@ -249,6 +256,7 @@ const EventDetail = () => {
       )}`,
       "_blank"
     );
+
   const shareToX = () =>
     window.open(
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(
@@ -259,7 +267,7 @@ const EventDetail = () => {
 
   return (
     <div className="font-poppins text-gray-800">
-      <Header />
+      <Header menuItems={menuItems} />
       {alert && (
         <div className="fixed top-6 right-6 z-50">
           <Alert
@@ -277,7 +285,7 @@ const EventDetail = () => {
           style={{ backgroundImage: `url(${event.banner || "/no-image.jpg"})` }}
         />
         <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
-        <div className="relative max-w-6xl mx-auto px-6 lg:px-0 md:px-12 z-10 flex items-center">
+        <div className="relative max-w-6xl mx-auto md:px-0 px-6 z-10 flex items-center">
           <div className="grid md:grid-cols-2 gap-10 items-center text-white w-full">
             <div>
               <Typography type="heading3" weight="semibold">
@@ -385,7 +393,7 @@ const EventDetail = () => {
               variant={buttonVariant}
               className="w-full md:w-auto"
               onClick={handleRegister}
-              disabled={!canRegister} // hapus canCancel
+              disabled={!canRegister}
             >
               {buttonText}
             </Button>
@@ -434,7 +442,7 @@ const EventDetail = () => {
         </div>
       </section>
 
-      {/* Confirm & Cancel Modals */}
+      {/* Confirm Modal */}
       {showConfirmModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
@@ -462,6 +470,7 @@ const EventDetail = () => {
         </div>
       )}
 
+      {/* Cancel Modal */}
       {showCancelModal && (
         <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"

@@ -9,6 +9,7 @@ export default function Header({ menuItems = [] }) {
   const [show, setShow] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+  const role = localStorage.getItem("role");
 
   // cek loginn
   const token = localStorage.getItem("token");
@@ -53,11 +54,9 @@ export default function Header({ menuItems = [] }) {
       } font-poppins`}
     >
       <div className="flex items-center gap-3">
-        <img
-          src="/airnav-logo.png"
-          alt="AirNav Logo"
-          className="h-16"
-        />
+        <Link to="/">
+          <img src="/airnav-logo.png" alt="AirNav Logo" className="h-16" />
+        </Link>
       </div>
 
       {/* Menu desktop */}
@@ -90,9 +89,15 @@ export default function Header({ menuItems = [] }) {
       {/* Tombol desktop */}
       <div className="hidden md:flex items-center gap-3">
         {loggedIn ? (
-          <Button variant="primary" to="/user/profile">
-            Profile
-          </Button>
+          role === "admin" || role === "superadmin" ? (
+            <Button variant="primary" to="/admin">
+              Dashboard
+            </Button>
+          ) : (
+            <Button variant="primary" to="/user/profile">
+              Profile
+            </Button>
+          )
         ) : (
           <>
             <Button variant="primary" to="/login">
