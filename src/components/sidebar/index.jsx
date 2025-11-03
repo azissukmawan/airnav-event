@@ -165,7 +165,96 @@ export default function Sidebar({ role = "admin" }) {
       </div>
 
       {/* Desktop */}
-      <nav className="hidden lg:flex sticky top-0 left-0 bg-white text-secondary overflow-y-auto p-4 w-52 h-screen flex-col justify-between">
+      {/* <nav className="hidden lg:flex sticky top-0 left-0 bg-white text-secondary overflow-y-auto p-4 w-52 h-screen flex-col justify-between">
+        <div>
+          <div className="w-28 mx-auto mb-4">
+            <Link to="/" className="flex items-center space-x-2">
+              <img src="/airnav-logo.png" alt="airnavlogo" />
+            </Link>
+          </div>
+
+          <hr className="border-gray-300 my-4" />
+
+          <div className="flex flex-col">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+
+              return (
+                <Link key={item.path} to={item.path}>
+                  <Typography
+                    type="body"
+                    weight="medium"
+                    className={`rounded-md p-1.5 my-1 flex items-center gap-2 transition-colors ${
+                      isActive
+                        ? "bg-primary text-white"
+                        : "hover:bg-primary hover:text-white text-gray-400"
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Typography>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-col border-t border-gray-300 pt-4">
+          {role === "user" &&
+            userExtraMenu.map((item) => {
+              const isActive = location.pathname === item.path;
+
+              if (item.isLogout) {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={() => setShowLogoutModal(true)}
+                    className={`rounded-md p-1.5 my-1 flex items-center gap-2 transition-colors ${
+                      isActive
+                        ? "bg-primary text-white"
+                        : "hover:bg-primary hover:text-white text-gray-400"
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </button>
+                );
+              }
+
+              return (
+                <Link key={item.path} to={item.path}>
+                  <Typography
+                    type="body"
+                    weight="medium"
+                    className={`rounded-md p-1.5 my-1 flex items-center gap-2 transition-colors ${
+                      isActive
+                        ? "bg-primary text-white"
+                        : "hover:bg-primary hover:text-white text-gray-400"
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Typography>
+                </Link>
+              );
+            })}
+
+          {role === "admin" && (
+            <button
+              onClick={() => setShowLogoutModal(true)}
+              className="rounded-md p-1.5 mt-1 flex items-center gap-2 text-gray-400 hover:bg-primary hover:text-white transition-colors"
+            >
+              <LogOut size={20} />
+              Logout
+            </button>
+          )}
+        </div>
+      </nav> */}
+
+      <nav
+        className={`hidden lg:flex fixed top-0 left-0 bg-white text-secondary p-4 w-52 h-screen flex-col justify-between z-40
+        ${role === "admin" ? "overflow-hidden shadow-md" : "overflow-y-auto"}`}
+      >
         <div>
           <div className="w-28 mx-auto mb-4">
             <Link to="/" className="flex items-center space-x-2">

@@ -354,7 +354,7 @@ const InfoAcara = () => {
     <>
       <NotificationPopup />
       
-      <div className="flex flex-wrap bg-gray-50 min-h-screen">
+      <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
         <Sidebar />
         <div className="flex flex-wrap flex-col flex-1 p-8">
           <Breadcrumb items={breadcrumbItems} />

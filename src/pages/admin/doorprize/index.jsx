@@ -238,7 +238,7 @@ export default function EventWheel() {
   }
 
   return (
-    <div className="min-h-screen flex relative bg-gray-50">
+    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
       <Sidebar role="admin" />
       <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
         {showConfetti &&

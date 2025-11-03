@@ -9,15 +9,15 @@ import PropTypes from "prop-types";
  */
 const Table = ({ columns, data }) => {
   return (
-    <div className="shadow-md rounded-lg overflow-x-auto mx-4 md:mx-0">
-      <table className="w-full table-auto">
+    <div className="shadow-md rounded-lg overflow-hidden mx-4 md:mx-0">
+      <table className="w-full  table-auto">
         {/* === HEADER === */}
         <thead className="bg-blue-100 text-blue-900 text-[16px] font-semibold">
           <tr>
             {columns.map((col, index) => (
               <th
                 key={index}
-                className={`px-6 py-4 text-left font-semibold ${
+                className={`px-6 py-4 text-left font-semibold break-words ${
                   col.className || ""
                 }`}
               >
@@ -38,7 +38,7 @@ const Table = ({ columns, data }) => {
                 {columns.map((col, colIndex) => (
                   <td
                     key={colIndex}
-                    className={`px-6 py-4 text-gray-800 whitespace-nowrap ${
+                    className={`px-6 py-4 text-gray-800 text-sm whitespace-normal break-words align-top ${
                       col.className || ""
                     }`}
                   >

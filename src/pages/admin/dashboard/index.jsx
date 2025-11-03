@@ -58,7 +58,7 @@ export default function AdminDashboard() {
       });
   }, []);
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
       <Sidebar role="admin" />
 
       <main className="flex-1 px-6 md:px-10 py-8 overflow-y-auto">
