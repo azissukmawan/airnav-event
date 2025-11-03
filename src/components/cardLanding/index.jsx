@@ -127,8 +127,8 @@ export default function CardLanding({
   return (
     <div
       onClick={handleClick}
-      className="w-full min-w-0 bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex flex-col h-full"
-    >
+      className="w-full min-w-0 bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex flex-col h-full"
+    >
       {/* Gambar & status */}
       <div className="relative">
         <img
