@@ -108,9 +108,9 @@ const TableParticipants = ({ participants = [], winners = [], onPreview }) => {
                     {/* FOTO */}
                     <td className="py-5 px-2 text-left">
                       <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
-                        {p.photo ? (
+                        {p.photo_profile ? (
                           <img
-                            src={p.photo}
+                            src={p.photo_profile}
                             alt="foto"
                             className="w-full h-full object-cover"
                           />
