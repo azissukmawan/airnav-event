@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Layout from "./layout";
 import { EventProvider } from "./contexts/EventContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import NotFound from "./pages/NotFound";
 
 // Auth pages
 import Login from "./pages/auth/login";
@@ -41,18 +43,49 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/verify-code" element={<VerifyCode />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        {/* ▼▼▼ TAMBAHKAN RUTE INI ▼▼▼ */}
         <Route path="/reset-password" element={<ResetPassword />} />
-        {/* ▲▲▲ SELESAI ▲▲▲ */}
 
-        {/* Admin routes */}
-        <Route path="/admin" element={<Dashboard />} />
-        <Route path="/admin/event/:id" element={<AdminDetail />} />
-        <Route path="/admin/event/edit/:id" element={<InfoAcara />} />
-        <Route path="/admin/events" element={<AdminEvent />} />
-        <Route path="/admin/event/doorprize/:id" element={<Doorprize />} />
-        <Route path="/InfoAcara" element={<InfoAcara />} />
+        {/* Admin routes (dilindungi login) */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/event/:id"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/event/edit/:id"
+          element={
+            <ProtectedRoute role="admin">
+              <InfoAcara />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/events"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminEvent />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/event/doorprize/:id"
+          element={
+            <ProtectedRoute role="admin">
+              <Doorprize />
+            </ProtectedRoute>
+          }
+        />
 
         {/* User routes */}
         <Route
@@ -60,15 +93,45 @@ function App() {
           element={
             <EventProvider>
               <Routes>
-                <Route path="" element={<Layout role="user"><Event /></Layout>} />
-                <Route path="event/:id" element={<Layout role="user"><DetailEvent /></Layout>} />
-                <Route path="activities" element={<Layout role="user"><Activity /></Layout>} />
-                <Route path="profile" element={<Layout role="user"><Profile /></Layout>} />
+                <Route
+                  path=""
+                  element={
+                    <Layout role="user">
+                      <Event />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="event/:id"
+                  element={
+                    <Layout role="user">
+                      <DetailEvent />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="activities"
+                  element={
+                    <Layout role="user">
+                      <Activity />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="profile"
+                  element={
+                    <Layout role="user">
+                      <Profile />
+                    </Layout>
+                  }
+                />
                 <Route path="/certificate" element={<CertificatePreview />} />
               </Routes>
             </EventProvider>
           }
         />
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
