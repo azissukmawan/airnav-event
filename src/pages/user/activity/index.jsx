@@ -8,9 +8,6 @@ import Scanner from "./scan";
 import Alert from "../../../components/alert";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 const Activity = () => {
   const [query, setQuery] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -81,6 +78,7 @@ const Activity = () => {
           },
         });
 
+
         const fetchedData = response.data.data.data.map((item) => {
           const acara = item.modul_acara;
 
@@ -99,14 +97,12 @@ const Activity = () => {
           const bisaDownload = sudahPresensi && sudahLewat;
 
           return {
-            id: item.id,
-            eventId: acara.id,
+            id: acara.id,
             title: acara.mdl_nama,
             date: acara.mdl_acara_mulai,
             status,
             sudahPresensi,
             isDownloaded: bisaDownload,
-            templateUrl: acara.mdl_template_sertifikat_url,
           };
         });
 
@@ -167,7 +163,7 @@ const Activity = () => {
         </div>
       </div>
     );
-  };
+  }
 
   return (
     <div>
@@ -254,15 +250,14 @@ const Activity = () => {
                       iconLeft={<Download size={18} />}
                       className="w-30"
                       onClick={async () => {
-                        console.log("Activity data:", activity);
-                        console.log("Template URL:", activity.templateUrl);
+                        console.log(activity);
                         try {
                           const token = localStorage.getItem("token");
 
                           // POST ke API untuk generate sertifikat
                           const response = await axios.post(
                             `${API_BASE_URL}/sertifikat/generate`,
-                            { id_acara: activity.eventId },
+                            { id_acara: activity.id }, // contoh id acara
                             {
                               headers: {
                                 Authorization: `Bearer ${token}`,
@@ -271,19 +266,16 @@ const Activity = () => {
                             }
                           );
 
-                          console.log("API Response:", response.data);
+                          // console log response dari API
+                          console.log(
+                            "Response POST /sertifikat/generate:",
+                            response.data.message
+                          );
 
-                          // Simpan data sertifikat + template URL dari activity
-                          const certData = {
-                            ...response.data,
-                            templateUrl: activity.templateUrl || "/cert.jpg"
-                          };
-
-                          console.log("Saving to localStorage:", certData);
-
+                          // Simpan data sertifikat
                           localStorage.setItem(
                             "cert_data",
-                            JSON.stringify(certData)
+                            JSON.stringify(response.data)
                           );
 
                           // Redirect ke halaman certificate

@@ -25,13 +25,13 @@ const styles = StyleSheet.create({
   },
   certNumber: {
     fontSize: 16,
-    color: "#8B4545",
+    color: "#000",
     fontWeight: "normal",
   },
   name: {
     fontSize: 48,
     fontWeight: "bold",
-    color: "#1a5490",
+    color: "#000",
     letterSpacing: 1,
   },
 });
