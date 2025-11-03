@@ -520,13 +520,13 @@ const InfoAcara = () => {
                           <option value="invite-only">Invite Only</option>  
                         </>
                       )}
-                      {field.name === "mdl_doorprize_aktif" && (
+                      {/* {field.name === "mdl_doorprize_aktif" && (
                         <>
                           <option value="">Pilih Status Doorprize</option>
                           <option value={1}>Ada</option>
                           <option value={0}>Tidak Ada</option>
                         </>
-                      )}
+                      )} */}
                     </select>
                   ) : field.type === "file" ? (
                     <label className="relative block w-full cursor-pointer">
