@@ -54,7 +54,7 @@ export default function Header({ menuItems = [] }) {
     >
       <div className="flex items-center gap-3">
         <img
-          src="/assets/airnav-logo.png"
+          src="/airnav-logo.png"
           alt="AirNav Logo"
           className="h-16"
         />
