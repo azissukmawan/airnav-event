@@ -176,7 +176,7 @@ export default function Home() {
           </Typography>
         </FadeInSection>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.slice(0, visibleCount).map((event, index) => {
             const isNew = index >= prevVisibleCount;
             return isNew ? (
