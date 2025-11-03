@@ -47,7 +47,7 @@ const Activity = () => {
           );
         }
       } catch (error) {
-        console.error("Error fetching profile:", error);
+        console.error(error);
 
         const user = localStorage.getItem("user");
         if (user) {
@@ -136,12 +136,11 @@ const Activity = () => {
   };
 
   const handleScanSuccess = (qrData) => {
-    console.log("QR Code scanned:", qrData);
-    console.log("Activity:", selectedActivity);
-
     setActivities((prev) =>
       prev.map((item) =>
-        item.id === selectedActivity.id ? { ...item, status: "Selesai" } : item
+        item.id === selectedActivity.id
+          ? { ...item, sudahPresensi: true }
+          : item
       )
     );
 
@@ -254,22 +253,15 @@ const Activity = () => {
                         try {
                           const token = localStorage.getItem("token");
 
-                          // POST ke API untuk generate sertifikat
                           const response = await axios.post(
                             `${API_BASE_URL}/sertifikat/generate`,
-                            { id_acara: activity.id }, // contoh id acara
+                            { id_acara: activity.id },
                             {
                               headers: {
                                 Authorization: `Bearer ${token}`,
                                 "Content-Type": "application/json",
                               },
                             }
-                          );
-
-                          // console log response dari API
-                          console.log(
-                            "Response POST /sertifikat/generate:",
-                            response.data.message
                           );
 
                           // Simpan data sertifikat
