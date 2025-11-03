@@ -219,6 +219,11 @@ const AdminDetail = () => {
                 "bg-gray-100 text-gray-700"
               }`}>{eventData.mdl_status || "-"}</span></p>
             </div>
+            <Link to={`/admin/event/edit/${id}`}>
+              <button className="px-3 py-2 rounded-xl bg-blue-900 hover:bg-blue-200 hover:text-blue-950 text-sm text-blue-50 mt-4 leading-relaxed">
+                Lihat Detail Lengkap
+              </button>
+            </Link>
           </div>
         ) : (
           <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-10 w-full">
