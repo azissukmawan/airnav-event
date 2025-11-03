@@ -8,17 +8,16 @@ export default function ProtectedRoute({ children, role }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Kalau admin login dan bukan di halaman admin → ke /admin
-  if (userRole === "superadmin" && role !== "superadmin") {
-    return <Navigate to="/admin" replace />;
+  // Jika role admin/superadmin boleh akses halaman role="admin"
+  if (
+    role === "admin" &&
+    !(userRole === "admin" || userRole === "superadmin")
+  ) {
+    return <Navigate to="/" replace />;
   }
 
-  // Kalau user login dan bukan di halaman user → ke /user
-  if (userRole === "user" && role !== "user") {
-    return <Navigate to="/user" replace />;
-  }
-
-  if (role && userRole !== role) {
+  // Jika role user tapi bukan user → lempar ke beranda
+  if (role === "user" && userRole !== "user") {
     return <Navigate to="/" replace />;
   }
 
