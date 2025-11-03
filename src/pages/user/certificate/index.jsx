@@ -67,79 +67,67 @@ export default function CertificatePreview() {
   const [bgBase64, setBgBase64] = useState(null);
 
   useEffect(() => {
-    const loadImageAsBase64 = (url) => {
-      return fetch(url)
-        .then((res) => {
-          if (!res.ok) throw new Error(`Failed to load image: ${url}`);
-          return res.blob();
-        })
-        .then(
-          (blob) =>
-            new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsDataURL(blob);
-            })
-        );
+    // Fungsi untuk ubah gambar menjadi base64
+    const loadImageAsBase64 = async (url) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Gagal load gambar: ${url}`);
+        const blob = await res.blob();
+        return await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (err) {
+        console.error("Gagal load:", url, err);
+        return null;
+      }
     };
 
-    const certData = localStorage.getItem("cert_data");
-    if (certData) {
+    const loadWithFallback = async (url) => {
+      // Urutan fallback: url → /cert.jpg → /no-image.jpg
+      let base64 = null;
+      if (url && url !== "null") {
+        base64 = await loadImageAsBase64(url);
+      }
+      if (!base64) {
+        console.warn("⚠️ Template tidak ditemukan, coba fallback /cert.jpg");
+        base64 = await loadImageAsBase64("/cert.jpg");
+      }
+      if (!base64) {
+        console.warn("⚠️ Gagal juga, fallback terakhir /no-image.jpg");
+        base64 = await loadImageAsBase64("/no-image.jpg");
+      }
+      return base64;
+    };
+
+    const init = async () => {
       try {
-        const parsed = JSON.parse(certData);
+        const certData = localStorage.getItem("cert_data");
+        let parsed = {};
+        if (certData) parsed = JSON.parse(certData);
+
         setName(parsed.data?.nama_peserta || parsed.name || "");
         setNumber(parsed.data?.no_sertifikat || parsed.number || "");
 
-        const templateUrl = parsed.templateUrl || parsed.data?.templateUrl;
+        const templateUrl =
+          parsed.data?.base_template_sertifikat || parsed.data?.templateUrl;
 
-        console.log("Template URL from DB:", templateUrl);
+        console.log("Template URL:", templateUrl);
 
-        if (templateUrl && templateUrl !== "null" && templateUrl !== null) {
-          if (templateUrl.startsWith("data:image")) {
-            setBgBase64(templateUrl);
-            setLoading(false);
-          } else {
-            loadImageAsBase64(templateUrl)
-              .then((base64) => {
-                console.log("Loaded template from DB successfully");
-                setBgBase64(base64);
-              })
-              .catch((err) => {
-                console.error("Gagal load template dari DB:", err);
-                return loadImageAsBase64("/cert.jpg");
-              })
-              .then((base64) => {
-                if (base64) setBgBase64(base64);
-              })
-              .catch((err) => {
-                console.error("Gagal load default background:", err);
-              })
-              .finally(() => setLoading(false));
-          }
-        } else {
-          console.log("No template URL, using default /cert.jpg");
-          loadImageAsBase64("/cert.jpg")
-            .then((base64) => setBgBase64(base64))
-            .catch((err) => {
-              console.error("Gagal load default background:", err);
-            })
-            .finally(() => setLoading(false));
-        }
+        const base64 = await loadWithFallback(templateUrl);
+        setBgBase64(base64);
       } catch (err) {
         console.error("Gagal parsing cert_data:", err);
-        loadImageAsBase64("/cert.jpg")
-          .then((base64) => setBgBase64(base64))
-          .catch((err) => console.error("Gagal load default background:", err))
-          .finally(() => setLoading(false));
+        const base64 = await loadWithFallback(null);
+        setBgBase64(base64);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      console.log("No cert_data found, using default /cert.jpg");
-      loadImageAsBase64("/cert.jpg")
-        .then((base64) => setBgBase64(base64))
-        .catch((err) => console.error("Gagal load default background:", err))
-        .finally(() => setLoading(false));
-    }
+    };
+
+    init();
   }, []);
 
   if (loading || !bgBase64) return <Loading />;
