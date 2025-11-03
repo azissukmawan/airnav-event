@@ -49,42 +49,15 @@ const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch, onFilterClick })
 };
 
 const FilterContent = ({ activeFilters, onFilterChange }) => {
-  const statusOptions = [
-    { value: "all", label: "Semua Status" },
-    { value: "open", label: "Aktif" },
-    { value: "closed", label: "Tidak Aktif" }
-  ];
-
   const tipeOptions = [
     { value: "all", label: "Semua Tipe" },
     { value: "online", label: "Online" },
     { value: "offline", label: "Offline" },
-    { value: "hybrid", label: "Hybrid" }
+    { value: "hybrid", label: "Hybrid" },
   ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="text-sm font-semibold text-typo-primary mb-3 block">
-          Status Event
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {statusOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => onFilterChange('status', option.value)}
-              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
-                activeFilters.status === option.value
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-background-secondary text-typo-secondary hover:bg-primary-20'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div>
         <label className="text-sm font-semibold text-typo-primary mb-3 block">
           Tipe Event
@@ -93,11 +66,11 @@ const FilterContent = ({ activeFilters, onFilterChange }) => {
           {tipeOptions.map((option) => (
             <button
               key={option.value}
-              onClick={() => onFilterChange('tipe', option.value)}
+              onClick={() => onFilterChange("tipe", option.value)}
               className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all ${
                 activeFilters.tipe === option.value
-                  ? 'bg-primary text-white shadow-md'
-                  : 'bg-background-secondary text-typo-secondary hover:bg-primary-20'
+                  ? "bg-primary text-white shadow-md"
+                  : "bg-background-secondary text-typo-secondary hover:bg-primary-20"
               }`}
             >
               {option.label}
@@ -117,38 +90,28 @@ const Event = () => {
   const [profileImage, setProfileImage] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
-    status: 'all',
-    tipe: 'all'
+    tipe: "all",
   });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [tempFilters, setTempFilters] = useState({
-    status: 'all',
-    tipe: 'all'
+    tipe: "all",
   });
-
-  const isRegistrationOpen = (event) => {
-    const now = new Date();
-    const registrationStart = new Date(event.mdl_pendaftaran_mulai);
-    const registrationEnd = new Date(event.mdl_pendaftaran_selesai);
-    
-    return now >= registrationStart && now <= registrationEnd;
-  };
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        
+
         if (!token) return;
 
         const response = await axios.get(`${API_BASE_URL}/profile`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         });
-        
+
         const data = response.data.data;
         setUserName(data.name || "User");
 
@@ -156,7 +119,9 @@ const Event = () => {
           setProfileImage(data.profile_photo);
         } else {
           const avatarName = encodeURIComponent(data.name || "User");
-          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+          setProfileImage(
+            `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
+          );
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -167,7 +132,9 @@ const Event = () => {
             const parsedUser = JSON.parse(user);
             setUserName(parsedUser.name || "User");
             const avatarName = encodeURIComponent(parsedUser.name || "User");
-            setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+            setProfileImage(
+              `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
+            );
           } catch (e) {
             console.error("Error parsing user data:", e);
           }
@@ -181,16 +148,13 @@ const Event = () => {
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/me/pendaftaran`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/me/pendaftaran`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const result = await response.json();
-        
+
         if (result.success) {
           setRegisteredEvents(result.data.data || []);
         }
@@ -204,23 +168,17 @@ const Event = () => {
     fetchRegisteredEvents();
   }, []);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.mdl_nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase());
 
-    let matchesStatus = true;
-    if (filters.status === 'open') {
-      matchesStatus = isRegistrationOpen(event);
-    } else if (filters.status === 'closed') {
-      matchesStatus = !isRegistrationOpen(event);
-    }
- 
     let matchesTipe = true;
-    if (filters.tipe !== 'all') {
+    if (filters.tipe !== "all") {
       matchesTipe = event.mdl_tipe?.toLowerCase() === filters.tipe.toLowerCase();
     }
-    
-    return matchesSearch && matchesStatus && matchesTipe;
+
+    return matchesSearch && matchesTipe;
   });
 
   const handleSearch = (query) => {
@@ -228,14 +186,14 @@ const Event = () => {
   };
 
   const handleTempFilterChange = (filterType, value) => {
-    setTempFilters(prev => ({
+    setTempFilters((prev) => ({
       ...prev,
-      [filterType]: value
+      [filterType]: value,
     }));
   };
 
   const handleResetFilters = () => {
-    setTempFilters({ status: 'all', tipe: 'all' });
+    setTempFilters({ tipe: "all" });
   };
 
   const handleApplyFilters = () => {
@@ -251,14 +209,14 @@ const Event = () => {
 
   const handlePageChange = (page) => {
     updatePage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleRowsPerPageChange = (perPage) => {
     updatePerPage(perPage);
   };
 
-  const hasActiveFilters = filters.status !== 'all' || filters.tipe !== 'all';
+  const hasActiveFilters = filters.tipe !== "all";
 
   if (loading || loadingRegistered) {
     return (
@@ -287,9 +245,9 @@ const Event = () => {
         </div>
         <div className="flex items-center gap-3">
           {profileImage && (
-            <img 
+            <img
               src={profileImage}
-              alt="Profile" 
+              alt="Profile"
               className="hidden lg:block w-14 h-14 rounded-full object-cover border-2 border-gray-200 shadow-sm"
             />
           )}
@@ -297,8 +255,8 @@ const Event = () => {
       </div>
 
       <div className="mb-4">
-        <SearchBar 
-          placeholder="Cari event berdasarkan nama atau lokasi..." 
+        <SearchBar
+          placeholder="Cari event berdasarkan nama atau lokasi..."
           onSearch={handleSearch}
           onFilterClick={handleOpenFilterModal}
         />
@@ -307,27 +265,12 @@ const Event = () => {
       {hasActiveFilters && (
         <div className="mb-4 flex items-center gap-2 flex-wrap">
           <span className="text-sm text-typo-secondary">Filter aktif:</span>
-          {filters.status !== 'all' && (
-            <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
-              Status: {filters.status === 'open' ? 'Aktif' : 'Tidak Aktif'}
-              <button
-                onClick={() => {
-                  const newFilters = { ...filters, status: 'all' };
-                  setFilters(newFilters);
-                  updateFilters(newFilters);
-                }}
-                className="hover:bg-primary-40 rounded-full p-0.5"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </span>
-          )}
-          {filters.tipe !== 'all' && (
+          {filters.tipe !== "all" && (
             <span className="px-3 py-1 bg-primary-20 text-primary rounded-full text-xs font-medium flex items-center gap-1">
               Tipe: {filters.tipe.charAt(0).toUpperCase() + filters.tipe.slice(1)}
               <button
                 onClick={() => {
-                  const newFilters = { ...filters, tipe: 'all' };
+                  const newFilters = { tipe: "all" };
                   setFilters(newFilters);
                   updateFilters(newFilters);
                 }}
@@ -339,7 +282,7 @@ const Event = () => {
           )}
           <button
             onClick={() => {
-              const newFilters = { status: 'all', tipe: 'all' };
+              const newFilters = { tipe: "all" };
               setFilters(newFilters);
               updateFilters(newFilters);
             }}
@@ -424,10 +367,7 @@ const Event = () => {
           </>
         }
       >
-        <FilterContent
-          activeFilters={tempFilters}
-          onFilterChange={handleTempFilterChange}
-        />
+        <FilterContent activeFilters={tempFilters} onFilterChange={handleTempFilterChange} />
       </Modal>
     </div>
   );
