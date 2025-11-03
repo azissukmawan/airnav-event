@@ -16,6 +16,7 @@ import { Typography } from "../../components/typography";
 import Loading from "../../components/loading";
 import axios from "axios";
 import Alert from "../../components/alert";
+import NotFound from "../../pages/NotFound";
 
 const EventDetail = () => {
   const { slug } = useParams();
@@ -93,14 +94,7 @@ const EventDetail = () => {
   if (loading || loadingRegistered) return <Loading />;
 
   if (!event) {
-    return (
-      <div className="text-center py-20">
-        <Typography type="heading4">Event tidak ditemukan</Typography>
-        <Button variant="primary" onClick={() => navigate("/")}>
-          Kembali
-        </Button>
-      </div>
-    );
+    return <NotFound />;
   }
 
   // ================= LOGIKA TOMBOL =================
