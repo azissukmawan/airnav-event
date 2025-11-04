@@ -153,7 +153,7 @@ export default function Header({ menuItems = [] }) {
               {loggedIn ? (
                 <>
                   <Link
-                    to="/profile"
+                    to="/user/profile"
                     className="block w-full text-center bg-gray-100 py-2 rounded-lg"
                     onClick={() => setMenuOpen(false)}
                   >
