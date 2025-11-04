@@ -21,8 +21,9 @@ const AdminDetail = () => {
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
-  const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5); 
+
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -47,8 +48,15 @@ const AdminDetail = () => {
     }
   };
 
+  useEffect(() => {
+  if (participants.length > 0) {
+    setRowsPerPage(participants.length);
+  }
+}, [participants]);
+
   // === FETCH EVENT DETAIL ===
   useEffect(() => {
+    
     const fetchEventDetail = async () => {
       if (!id) {
         setLoadingEvent(false);
