@@ -461,7 +461,7 @@ const DetailEvent = () => {
             <Typography type="heading5" weight="semibold" className="mb-2">
               Tentang Acara
             </Typography>
-            <Typography type="body" className="text-typo-secondary">
+            <Typography type="body" className="text-typo-secondary text-justify">
               {event.mdl_deskripsi || "Tidak ada deskripsi"}
             </Typography>
           </div>
@@ -684,7 +684,7 @@ const DetailEvent = () => {
             >
               Informasi Tambahan
             </Typography>
-            <Typography type="body" className="text-typo-secondary">
+            <Typography type="body" className="text-typo-secondary text-justify">
               {event.mdl_catatan}
             </Typography>
           </div>

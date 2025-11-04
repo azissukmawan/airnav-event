@@ -335,7 +335,7 @@ const EventDetail = () => {
                       </Typography>
                       <Typography
                         type="paragraph"
-                        className="text-gray-700 leading-relaxed whitespace-pre-line"
+                        className="text-gray-700 leading-relaxed whitespace-pre-line text-justify"
                       >
                         {event.deskripsi.replace(/\\n/g, "\n")}
                       </Typography>
