@@ -21,7 +21,7 @@ const AdminDetail = () => {
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  // const [rowsPerPage, setRowsPerPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5); 
 
 
