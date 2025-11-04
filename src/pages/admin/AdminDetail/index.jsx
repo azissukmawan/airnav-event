@@ -192,7 +192,7 @@ const AdminDetail = () => {
     setSelectedParticipant(null);
   };
 
-  // === RENDER ===
+  // === RENDER DORPRIZE ===
   return (
     <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
       <Sidebar role="admin" />
