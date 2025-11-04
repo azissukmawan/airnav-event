@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Typography } from "../typography";
-import { Dropdown } from "../form/Dropdown";
 
 const baseClasses =
   "w-full h-11 px-4 flex items-center justify-between rounded-md transition-all duration-150";
