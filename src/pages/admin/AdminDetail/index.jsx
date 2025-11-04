@@ -213,25 +213,20 @@ const AdminDetail = () => {
             </span>
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-2 w-full mb-10 md:grid-cols-[1fr_auto] md:gap-4">
-          {/* Input pencarian */}
-          <div className="w-full">
+        <div className="flex flex-row md:flex-col md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
+          <div className="flex-1 w-full">
             <Search
               placeholder="Cari nama peserta..."
               onSearch={handleSearchChange}
             />
           </div>
-
-          {/* Tombol Doorprize */}
           {eventData?.mdl_doorprize_aktif === 1 && (
-            <div className="">
-              <Link
-                to={`/admin/event/doorprize/${id}`}
-                className="inline-block px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
-              >
-                Doorprize
-              </Link>
-            </div>
+            <Link
+              to={`/admin/event/doorprize/${id}`}
+              className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+            >
+              Doorprize
+            </Link>
           )}
         </div>
 
