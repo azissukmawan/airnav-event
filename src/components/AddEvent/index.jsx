@@ -10,7 +10,7 @@
 // export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [errors, setErrors] = useState({});
-  
+
 //   // Notification state
 //   const [showNotification, setShowNotification] = useState(false);
 //   const [notificationConfig, setNotificationConfig] = useState({
@@ -117,7 +117,7 @@
 //         formatDateTime(formData.mdl_acara_mulai_date, formData.mdl_acara_selesai_time)
 //       );
 //       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
-      
+
 //       if (formData.mdl_catatan) {
 //         formDataToSend.append("mdl_catatan", formData.mdl_catatan);
 //       }
@@ -156,7 +156,7 @@
 
 //       console.log("✅ Response sukses:", res.data);
 //       showPopup("success", "Berhasil!", "Acara berhasil ditambahkan");
-      
+
 //       // Tunggu sebentar untuk popup muncul, baru close
 //       setTimeout(() => {
 //         onClose();
@@ -501,10 +501,10 @@
 //                   {/* Upload Files */}
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-1">Modul Acara (DOC, DOCX, PDF, PPT, PPTX)</label>
-//                     <input 
+//                     <input
 //                       name="mdl_file_acara"
-//                       type="file" 
-//                       accept=".pdf,.docx,.jpg,.jpeg,.png" 
+//                       type="file"
+//                       accept=".pdf,.docx,.jpg,.jpeg,.png"
 //                       onChange={handleFileChange}
 //                       className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
 //                     />
@@ -512,10 +512,10 @@
 
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-1">Susunan Acara (DOC, DOCX, PDF, XLS, XLSX)</label>
-//                     <input 
+//                     <input
 //                       name="mdl_file_rundown"
-//                       type="file" 
-//                       accept=".pdf,.docx,.jpg,.jpeg,.png" 
+//                       type="file"
+//                       accept=".pdf,.docx,.jpg,.jpeg,.png"
 //                       onChange={handleFileChange}
 //                       className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
 //                     />
@@ -523,10 +523,10 @@
 
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-1">Template Sertifikat (JPG, JPEG, PNG)</label>
-//                     <input 
+//                     <input
 //                       name="mdl_template_sertifikat"
-//                       type="file" 
-//                       accept=".pdf,.jpg,.jpeg,.png" 
+//                       type="file"
+//                       accept=".pdf,.jpg,.jpeg,.png"
 //                       onChange={handleFileChange}
 //                       className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
 //                     />
@@ -534,10 +534,10 @@
 
 //                   <div>
 //                     <label className="block text-sm font-medium text-gray-700 mb-1">Upload Gambar (JPG, JPEG, PNG)</label>
-//                     <input 
+//                     <input
 //                       name="mdl_banner_acara"
-//                       type="file" 
-//                       accept=".jpg,.jpeg,.png" 
+//                       type="file"
+//                       accept=".jpg,.jpeg,.png"
 //                       onChange={handleFileChange}
 //                       className="w-full border border-gray-300 rounded-lg px-3 py-2 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
 //                     />
@@ -579,7 +579,7 @@
 //           </motion.div>
 //         </>
 //       )}
-      
+
 //       <style jsx>{`
 //         @keyframes slide-in {
 //           from {
@@ -614,7 +614,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
     title: "",
-    message: ""
+    message: "",
   });
 
   const [formData, setFormData] = useState({
@@ -667,11 +667,14 @@ export default function AddEvent({ isOpen, onClose, token }) {
   const handleFileChange = (e) => {
     const { name, files: selected } = e.target;
     if (selected && selected[0]) {
-      console.log(`📎 File dipilih untuk ${name}:`, selected[0].name, `(${selected[0].size} bytes)`);
+      console.log(
+        `📎 File dipilih untuk ${name}:`,
+        selected[0].name,
+        `(${selected[0].size} bytes)`
+      );
       setFiles((prev) => ({ ...prev, [name]: selected[0] }));
     }
   };
-
 
   // const handleSubmit = async (e) => {
   //   e.preventDefault();
@@ -798,13 +801,17 @@ export default function AddEvent({ isOpen, onClose, token }) {
       mdl_banner_acara: files.mdl_banner_acara,
       mdl_banner_acara_url: "blob:http://...",
     };
-    
+
     const validationErrors = AddValidate(payloadForValidation);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       // ✅ GANTI alert dengan popup
-      showPopup("error", "Validasi Gagal", "Mohon lengkapi semua field yang wajib diisi");
+      showPopup(
+        "error",
+        "Validasi Gagal",
+        "Mohon lengkapi semua field yang wajib diisi"
+      );
       console.error("Validasi gagal:", validationErrors);
       return;
     }
@@ -824,18 +831,30 @@ export default function AddEvent({ isOpen, onClose, token }) {
       formDataToSend.append("mdl_tipe", formData.mdl_tipe);
       formDataToSend.append("mdl_kategori", formData.mdl_kategori);
       formDataToSend.append("mdl_lokasi", formData.mdl_lokasi);
-      formDataToSend.append("mdl_pendaftaran_mulai", formData.mdl_pendaftaran_mulai);
-      formDataToSend.append("mdl_pendaftaran_selesai", formData.mdl_pendaftaran_selesai);
+      formDataToSend.append(
+        "mdl_pendaftaran_mulai",
+        formData.mdl_pendaftaran_mulai
+      );
+      formDataToSend.append(
+        "mdl_pendaftaran_selesai",
+        formData.mdl_pendaftaran_selesai
+      );
       formDataToSend.append(
         "mdl_acara_mulai",
-        formatDateTime(formData.mdl_acara_mulai_date, formData.mdl_acara_mulai_time)
+        formatDateTime(
+          formData.mdl_acara_mulai_date,
+          formData.mdl_acara_mulai_time
+        )
       );
       formDataToSend.append(
         "mdl_acara_selesai",
-        formatDateTime(formData.mdl_acara_mulai_date, formData.mdl_acara_selesai_time)
+        formatDateTime(
+          formData.mdl_acara_mulai_date,
+          formData.mdl_acara_selesai_time
+        )
       );
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
-      
+
       if (formData.mdl_catatan) {
         formDataToSend.append("mdl_catatan", formData.mdl_catatan);
       }
@@ -861,21 +880,20 @@ export default function AddEvent({ isOpen, onClose, token }) {
       );
 
       console.log("✅ Response sukses:", res.data);
-      
+
       // ✅ GANTI alert dengan popup
       showPopup("success", "Berhasil!", "Acara berhasil ditambahkan");
-      
+
       // Tunggu popup muncul dulu
       setTimeout(() => {
         onClose();
         if (onSuccess) onSuccess();
       }, 1500);
-
     } catch (err) {
       console.error("❌ Gagal menambahkan acara:", err);
 
       // ✅ GANTI semua alert dengan popup
-      if (err.code === 'ECONNABORTED') {
+      if (err.code === "ECONNABORTED") {
         showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
       } else if (err.response) {
         console.error("Detail Error dari Server:", err.response.data);
@@ -896,7 +914,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
       setLoading(false);
     }
   };
-  
+
   const [isLoading, setIsLoading] = useState(false);
 
   // Helper function untuk generate slug dari nama
@@ -932,18 +950,18 @@ export default function AddEvent({ isOpen, onClose, token }) {
       success: {
         bg: "bg-green-50 border-green-500",
         text: "text-green-800",
-        icon: "text-green-600"
+        icon: "text-green-600",
       },
       error: {
         bg: "bg-red-50 border-red-500",
         text: "text-red-800",
-        icon: "text-red-600"
+        icon: "text-red-600",
       },
       warning: {
         bg: "bg-yellow-50 border-yellow-500",
         text: "text-yellow-800",
-        icon: "text-yellow-600"
-      }
+        icon: "text-yellow-600",
+      },
     };
 
     const style = styles[notificationConfig.type];
@@ -954,23 +972,60 @@ export default function AddEvent({ isOpen, onClose, token }) {
           <div className="flex items-start gap-3">
             <div className={style.icon}>
               {notificationConfig.type === "success" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
               {notificationConfig.type === "error" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
             </div>
             <div className="flex-1">
-              <h3 className={`font-semibold ${style.text}`}>{notificationConfig.title}</h3>
-              <p className={`text-sm mt-1 ${style.text}`}>{notificationConfig.message}</p>
+              <h3 className={`font-semibold ${style.text}`}>
+                {notificationConfig.title}
+              </h3>
+              <p className={`text-sm mt-1 ${style.text}`}>
+                {notificationConfig.message}
+              </p>
             </div>
-            <button onClick={() => setShowNotification(false)} className={`${style.text} hover:opacity-70`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <button
+              onClick={() => setShowNotification(false)}
+              className={`${style.text} hover:opacity-70`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -1034,182 +1089,281 @@ export default function AddEvent({ isOpen, onClose, token }) {
     <AnimatePresence>
       {isOpen && (
         <>
-        <NotificationPopup />
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.25 }}
-        >
-          <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Tambah Acara"
-            footer={footerButtons}
-            size="lg"
+          <NotificationPopup />
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.25 }}
           >
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-2 ">
-                {/* Nama Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Acara<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    placeholder="Masukkan nama acara"
-                    type="text"
-                    name="mdl_nama"
-                    value={formData.mdl_nama}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                      errors.mdl_nama ? "border-2 border-red-500" : "border-0"
-                    }`}
-                  />
-                  {errors.mdl_nama && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_nama}
-                    </p>
-                  )}
-                </div>
+            <Modal
+              isOpen={isOpen}
+              onClose={onClose}
+              title="Tambah Acara"
+              footer={footerButtons}
+              size="lg"
+            >
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto px-2 ">
+                  {/* Nama Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nama Acara<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      placeholder="Masukkan nama acara"
+                      type="text"
+                      name="mdl_nama"
+                      value={formData.mdl_nama}
+                      onChange={handleChange}
+                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                        errors.mdl_nama ? "border-2 border-red-500" : "border-0"
+                      }`}
+                    />
+                    {errors.mdl_nama && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_nama}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Deskripsi Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Deskripsi Acara<span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    placeholder="Deskripsi acara"
-                    value={formData.mdl_deskripsi}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        mdl_deskripsi: e.target.value,
-                      })
-                    }
-                    className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                      errors.mdl_deskripsi
-                        ? "border-2 border-red-500"
-                        : "border-0"
-                    } focus:outline-none`}
-                    rows="3"
-                  />
-                  {errors.mdl_deskripsi && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_deskripsi}
-                    </p>
-                  )}
-                </div>
+                  {/* Deskripsi Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Deskripsi Acara<span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      placeholder="Deskripsi acara"
+                      value={formData.mdl_deskripsi}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          mdl_deskripsi: e.target.value,
+                        })
+                      }
+                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                        errors.mdl_deskripsi
+                          ? "border-2 border-red-500"
+                          : "border-0"
+                      } focus:outline-none`}
+                      rows="3"
+                    />
+                    {errors.mdl_deskripsi && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_deskripsi}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Tipe Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipe Acara<span className="text-red-500">*</span>
-                  </label>
-                  <Dropdown
-                    label="Pilih Tipe Acara"
-                    options={tipeAcaraOptions}
-                    variant="white"
-                    value={formData.mdl_tipe} // ✅ supaya sinkron dua arah
-                    onSelect={(value) =>
-                      setFormData({ ...formData, mdl_tipe: value })
-                    }
-                    className={errors.mdl_tipe ? "border-2 border-red-500" : ""}
-                  />
-                  {errors.mdl_tipe && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_tipe}
-                    </p>
-                  )}
-                </div>
+                  {/* Tipe Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipe Acara<span className="text-red-500">*</span>
+                    </label>
+                    <Dropdown
+                      label="Pilih Tipe Acara"
+                      options={tipeAcaraOptions}
+                      variant="white"
+                      value={formData.mdl_tipe} // ✅ supaya sinkron dua arah
+                      onSelect={(value) =>
+                        setFormData({ ...formData, mdl_tipe: value })
+                      }
+                      className={
+                        errors.mdl_tipe ? "border-2 border-red-500" : ""
+                      }
+                    />
+                    {errors.mdl_tipe && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_tipe}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Lokasi */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lokasi<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Lokasi Acara"
-                    value={formData.mdl_lokasi}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mdl_lokasi: e.target.value })
-                    }
-                    className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                      errors.mdl_lokasi ? "border-2 border-red-500" : "border-0"
-                    } focus:outline-none`}
-                  />
-                  {errors.mdl_lokasi && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_lokasi}
-                    </p>
-                  )}
-                </div>
+                  {/* Lokasi */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Lokasi<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Lokasi Acara"
+                      value={formData.mdl_lokasi}
+                      onChange={(e) =>
+                        setFormData({ ...formData, mdl_lokasi: e.target.value })
+                      }
+                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                        errors.mdl_lokasi
+                          ? "border-2 border-red-500"
+                          : "border-0"
+                      } focus:outline-none`}
+                    />
+                    {errors.mdl_lokasi && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_lokasi}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Jenis Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Jenis Acara<span className="text-red-500">*</span>
-                  </label>
-                  <Dropdown
-                    label="Pilih Jenis Acara"
-                    options={jenisAcaraOptions}
-                    variant="white"
-                    value={formData.mdl_kategori}
-                    onSelect={(value) => {
-                      setFormData({ ...formData, mdl_kategori: value });
-                    }}
-                    className={
-                      errors.mdl_kategori ? "border-2 border-red-500" : ""
-                    }
-                  />
-                  {errors.mdl_kategori && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_kategori}
-                    </p>
-                  )}
-                </div>
+                  {/* Jenis Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Jenis Acara<span className="text-red-500">*</span>
+                    </label>
+                    <Dropdown
+                      label="Pilih Jenis Acara"
+                      options={jenisAcaraOptions}
+                      variant="white"
+                      value={formData.mdl_kategori}
+                      onSelect={(value) => {
+                        setFormData({ ...formData, mdl_kategori: value });
+                      }}
+                      className={
+                        errors.mdl_kategori ? "border-2 border-red-500" : ""
+                      }
+                    />
+                    {errors.mdl_kategori && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_kategori}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Periode Pendaftaran */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Periode Pendaftaran<span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-2">
+                  {/* Periode Pendaftaran */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Periode Pendaftaran<span className="text-red-500">*</span>
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <input
+                            type="date"
+                            value={formData.mdl_pendaftaran_mulai}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                mdl_pendaftaran_mulai: e.target.value,
+                              })
+                            }
+                            className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                              errors.mdl_pendaftaran_mulai
+                                ? "border-2 border-red-500"
+                                : "border-0"
+                            } focus:outline-none`}
+                          />
+                        </div>
+
+                        <span className="text-lg font-semibold text-gray-700 mb-1 select-none">
+                          –
+                        </span>
+
+                        <div className="flex-1">
+                          <input
+                            type="date"
+                            value={formData.mdl_pendaftaran_selesai}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                mdl_pendaftaran_selesai: e.target.value,
+                              })
+                            }
+                            className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                              errors.mdl_pendaftaran_selesai
+                                ? "border-2 border-red-500"
+                                : "border-0"
+                            } focus:outline-none`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <div className="flex-1">
+                          {errors.mdl_pendaftaran_mulai && (
+                            <p className="text-red-500 text-sm">
+                              {errors.mdl_pendaftaran_mulai}
+                            </p>
+                          )}
+                        </div>
+                        <div className="w-4"></div>
+                        <div className="flex-1">
+                          {errors.mdl_pendaftaran_selesai && (
+                            <p className="text-red-500 text-sm">
+                              {errors.mdl_pendaftaran_selesai}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tanggal Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tanggal Acara<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.mdl_acara_mulai_date}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          mdl_acara_mulai_date: e.target.value,
+                        })
+                      }
+                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                        errors.mdl_acara_mulai_date
+                          ? "border-2 border-red-500"
+                          : "border-0"
+                      } focus:outline-none`}
+                    />
+                    {errors.mdl_acara_mulai_date && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_acara_mulai_date}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Waktu Acara */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Waktu Acara<span className="text-red-500">*</span>
+                    </label>
+
                     <div className="flex items-end gap-3">
                       <div className="flex-1">
                         <input
-                          type="date"
-                          value={formData.mdl_pendaftaran_mulai}
+                          type="time"
+                          value={formData.mdl_acara_mulai_time}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              mdl_pendaftaran_mulai: e.target.value,
+                              mdl_acara_mulai_time: e.target.value,
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_pendaftaran_mulai
+                            errors.mdl_acara_mulai_time
                               ? "border-2 border-red-500"
                               : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
 
-                      <span className="text-lg font-semibold text-gray-700 mb-1 select-none">
+                      <span className="text-lg font-semibold text-gray-700 mb-1 select-none self-end">
                         –
                       </span>
 
                       <div className="flex-1">
                         <input
-                          type="date"
-                          value={formData.mdl_pendaftaran_selesai}
+                          type="time"
+                          value={formData.mdl_acara_selesai_time}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              mdl_pendaftaran_selesai: e.target.value,
+                              mdl_acara_selesai_time: e.target.value,
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_pendaftaran_selesai
+                            errors.mdl_acara_selesai_time
                               ? "border-2 border-red-500"
                               : "border-0"
                           } focus:outline-none`}
@@ -1217,250 +1371,172 @@ export default function AddEvent({ isOpen, onClose, token }) {
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-3 mt-2">
                       <div className="flex-1">
-                        {errors.mdl_pendaftaran_mulai && (
+                        {errors.mdl_acara_mulai_time && (
                           <p className="text-red-500 text-sm">
-                            {errors.mdl_pendaftaran_mulai}
+                            {errors.mdl_acara_mulai_time}
                           </p>
                         )}
                       </div>
                       <div className="w-4"></div>
                       <div className="flex-1">
-                        {errors.mdl_pendaftaran_selesai && (
+                        {errors.mdl_acara_selesai_time && (
                           <p className="text-red-500 text-sm">
-                            {errors.mdl_pendaftaran_selesai}
+                            {errors.mdl_acara_selesai_time}
                           </p>
                         )}
                       </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Tanggal Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tanggal Acara<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.mdl_acara_mulai_date}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        mdl_acara_mulai_date: e.target.value,
-                      })
-                    }
-                    className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                      errors.mdl_acara_mulai_date
-                        ? "border-2 border-red-500"
-                        : "border-0"
-                    } focus:outline-none`}
-                  />
-                  {errors.mdl_acara_mulai_date && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_acara_mulai_date}
-                    </p>
-                  )}
-                </div>
-
-                {/* Waktu Acara */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Waktu Acara<span className="text-red-500">*</span>
-                  </label>
-
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <input
-                        type="time"
-                        value={formData.mdl_acara_mulai_time}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            mdl_acara_mulai_time: e.target.value,
-                          })
-                        }
-                        className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                          errors.mdl_acara_mulai_time
-                            ? "border-2 border-red-500"
-                            : "border-0"
-                        } focus:outline-none`}
-                      />
-                    </div>
-
-                    <span className="text-lg font-semibold text-gray-700 mb-1 select-none self-end">
-                      –
-                    </span>
-
-                    <div className="flex-1">
-                      <input
-                        type="time"
-                        value={formData.mdl_acara_selesai_time}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            mdl_acara_selesai_time: e.target.value,
-                          })
-                        }
-                        className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                          errors.mdl_acara_selesai_time
-                            ? "border-2 border-red-500"
-                            : "border-0"
-                        } focus:outline-none`}
-                      />
-                    </div>
+                  {/* Upload file fields */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Modul Acara (DOC, DOCX, PDF, PPT, PPTX)
+                    </label>
+                    <input
+                      name="mdl_file_acara"
+                      type="file"
+                      accept=".doc,.docx, .pdf,.ppt,.pptx"
+                      onChange={handleFileChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2
+      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
+      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
+      hover:file:bg-blue-100 focus:outline-none"
+                    />
+                    {errors.mdl_file_acara && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_file_acara}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex gap-3 mt-2">
-                    <div className="flex-1">
-                      {errors.mdl_acara_mulai_time && (
-                        <p className="text-red-500 text-sm">
-                          {errors.mdl_acara_mulai_time}
-                        </p>
-                      )}
-                    </div>
-                    <div className="w-4"></div>
-                    <div className="flex-1">
-                      {errors.mdl_acara_selesai_time && (
-                        <p className="text-red-500 text-sm">
-                          {errors.mdl_acara_selesai_time}
-                        </p>
-                      )}
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Susunan Acara (DOC, DOCX, PDF, XLS, XLSX)
+                    </label>
+                    <input
+                      name="mdl_file_rundown"
+                      type="file"
+                      accept=".doc,.docx,.pdf,.xls,.xlsx"
+                      onChange={handleFileChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2
+      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
+      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
+      hover:file:bg-blue-100 focus:outline-none"
+                    />
+                    {errors.mdl_file_rundown && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_file_rundown}
+                      </p>
+                    )}
                   </div>
-                </div>
-
-                {/* Upload file fields */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Modul Acara (DOC, DOCX, PDF, PPT, PPTX)
-                  </label>
-                  <input
-                    name="mdl_file_acara"
-                    type="file"
-                    accept=".doc,.docx, .pdf,.ppt,.pptx"
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Template Sertifikat (JPG, JPEG, PNG)
+                    </label>
+                    <input
+                      name="mdl_template_sertifikat"
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2
       file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
       file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
       hover:file:bg-blue-100 focus:outline-none"
-                  />
-                  {errors.mdl_file_acara && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_file_acara}
-                    </p>
-                  )}
-                </div>
+                    />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Susunan Acara (DOC, DOCX, PDF, XLS, XLSX)
-                  </label>
-                  <input
-                    name="mdl_file_rundown"
-                    type="file"
-                    accept=".doc,.docx,.pdf,.xls,.xlsx"
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2
+                    <p className="text-gray-500 text-sm mt-1">
+                      <a
+                        href="/format-template-sertifikat.jpg"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Lihat template sertifikat
+                      </a>
+                    </p>
+
+                    {errors.mdl_template_sertifikat && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_template_sertifikat}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Upload Gambar (JPG, JPEG, PNG)
+                    </label>
+                    <input
+                      name="mdl_banner_acara"
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2
       file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
       file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
       hover:file:bg-blue-100 focus:outline-none"
-                  />
-                  {errors.mdl_file_rundown && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_file_rundown}
-                    </p>
-                  )}
-                </div>
+                    />
+                    {errors.mdl_banner_acara && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_banner_acara}
+                      </p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Template Sertifikat (JPG, JPEG, PNG)
-                  </label>
-                  <input
-                    name="mdl_template_sertifikat"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2
-      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
-      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
-      hover:file:bg-blue-100 focus:outline-none"
-                  />
-                  {errors.mdl_template_sertifikat && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_template_sertifikat}
-                    </p>
-                  )}
-                </div>
+                  {/* Informasi Tambahan */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Informasi Tambahan
+                    </label>
+                    <textarea
+                      placeholder="Deskripsi tambahan"
+                      value={formData.mdl_catatan}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          mdl_catatan: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 focus:ring-black-500 focus:outline-none border-0"
+                      rows="3"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload Gambar (JPG, JPEG, PNG)
-                  </label>
-                  <input
-                    name="mdl_banner_acara"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2
-      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
-      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
-      hover:file:bg-blue-100 focus:outline-none"
-                  />
-                  {errors.mdl_banner_acara && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_banner_acara}
-                    </p>
-                  )}
+                  {/* URL Grup WhatsApp */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      URL Grup WhatsApp<span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="https://chat.whatsapp.com/..."
+                      value={formData.mdl_link_wa}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          mdl_link_wa: e.target.value,
+                        })
+                      }
+                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 focus:ring-black-500 focus:outline-none ${
+                        errors.mdl_link_wa
+                          ? "border-2 border-red-500"
+                          : "border-0"
+                      }`}
+                    />
+                    {errors.mdl_link_wa && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.mdl_link_wa}
+                      </p>
+                    )}
+                  </div>
+                  <br />
                 </div>
-
-                {/* Informasi Tambahan */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Informasi Tambahan
-                  </label>
-                  <textarea
-                    placeholder="Deskripsi tambahan"
-                    value={formData.mdl_catatan}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mdl_catatan: e.target.value })
-                    }
-                    className="w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 focus:ring-black-500 focus:outline-none border-0"
-                    rows="3"
-                  />
-                </div>
-
-                {/* URL Grup WhatsApp */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    URL Grup WhatsApp<span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="https://chat.whatsapp.com/..."
-                    value={formData.mdl_link_wa}
-                    onChange={(e) =>
-                      setFormData({ ...formData, mdl_link_wa: e.target.value })
-                    }
-                    className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 focus:ring-black-500 focus:outline-none ${
-                      errors.mdl_link_wa
-                        ? "border-2 border-red-500"
-                        : "border-0"
-                    }`}
-                  />
-                  {errors.mdl_link_wa && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.mdl_link_wa}
-                    </p>
-                  )}
-                </div>
-                <br />
-              </div>
-            </form>
-          </Modal>
-        </motion.div>
+              </form>
+            </Modal>
+          </motion.div>
         </>
       )}
 
