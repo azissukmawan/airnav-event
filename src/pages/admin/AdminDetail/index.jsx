@@ -186,7 +186,7 @@ const AdminDetail = () => {
 
   // === RENDER ===
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
+    <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
       <Sidebar role="admin" />
 
       <div className="flex-1 p-6 mt-3 space-y-4">
@@ -205,32 +205,35 @@ const AdminDetail = () => {
             </span>
           </p>
         </div>
-
-        {/* Search + Doorprize Button */}
-        <div className="flex md:flex-row items-center md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
-          <div className="flex-1 w-full">
+        <div className="grid grid-cols-1 gap-2 w-full mb-10 md:grid-cols-[1fr_auto] md:gap-4">
+          {/* Input pencarian */}
+          <div className="w-full">
             <Search
               placeholder="Cari nama peserta..."
               onSearch={handleSearchChange}
             />
           </div>
+
+          {/* Tombol Doorprize */}
           {eventData?.mdl_doorprize_aktif === 1 && (
-            <Link
-              to={`/admin/event/doorprize/${id}`}
-              className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
-            >
-              Doorprize
-            </Link>
+            <div className="">
+              <Link
+                to={`/admin/event/doorprize/${id}`}
+                className="inline-block px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+              >
+                Doorprize
+              </Link>
+            </div>
           )}
         </div>
 
         {/* Card Info Acara */}
         {loadingEvent ? (
-          <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-10 w-full">
+          <div className="bg-white p-6 rounded-xl shadow-sm w-full max-w-full md:max-w-md lg:max-w-lg mb-10">
             <p className="text-gray-500">Loading event info...</p>
           </div>
         ) : eventData ? (
-          <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-10 w-full">
+          <div className="bg-white p-6 rounded-xl shadow-sm w-full max-w-full md:max-w-md lg:max-w-lg mb-10">
             <h2 className="text-xl font-semibold text-blue-900 mb-2">
               {eventData.mdl_nama}
             </h2>
@@ -297,18 +300,21 @@ const AdminDetail = () => {
               doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
             />
 
-            <TableParticipants
-              participants={currentTableData}s
-              winners={winners}
-              onPreview={handleOpenPreview}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={sortedParticipants.length}
-              rowsPerPage={rowsPerPage}
-              onPageChange={setCurrentPage}
-              onRowsPerPageChange={handleRowsPerPageChange}
-              doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
-            />
+            {/* Bungkus tabel dengan overflow-x-auto */}
+            <div className="overflow-x-auto">
+              <TableParticipants
+                participants={currentTableData}
+                winners={winners}
+                onPreview={handleOpenPreview}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={sortedParticipants.length}
+                rowsPerPage={rowsPerPage}
+                onPageChange={setCurrentPage}
+                onRowsPerPageChange={handleRowsPerPageChange}
+                doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
+              />
+            </div>
           </>
         )}
       </div>
