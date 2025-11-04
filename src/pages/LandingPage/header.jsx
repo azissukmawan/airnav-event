@@ -11,8 +11,6 @@ export default function Header({ menuItems = [] }) {
   const navigate = useNavigate();
   const role = localStorage.getItem("role");
 
-  console.log("User role:", role);
-
   // Cek Login
   const token = localStorage.getItem("token");
   const [loggedIn, setLoggedIn] = useState(!!token);
