@@ -170,11 +170,12 @@ export default function Header({ menuItems = [] }) {
                 </>
               ) : (
                 <>
-                  <Button variant="primary" onClick={() => setMenuOpen(false)}>
+                  <Button variant="primary" to="/login" onClick={() => setMenuOpen(false)}>
                     Login
                   </Button>
                   <Button
                     variant="secondary"
+                    to="/register"
                     onClick={() => setMenuOpen(false)}
                   >
                     Daftar Akun
