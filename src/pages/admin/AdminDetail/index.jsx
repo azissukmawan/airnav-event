@@ -12,7 +12,7 @@ const AdminDetail = () => {
   const { id } = useParams();
   const [openPreview, setOpenPreview] = useState(false);
   const [selectedParticipant, setSelectedParticipant] = useState(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");  
   const [participants, setParticipants] = useState([]);
   const [winners, setWinners] = useState([]);
   const [eventData, setEventData] = useState(null);
@@ -21,7 +21,7 @@ const AdminDetail = () => {
   const [error, setError] = useState(null);
 
   const token = localStorage.getItem("token");
-  // const [rowsPerPage, setRowsPerPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5); 
 
 
