@@ -505,7 +505,7 @@ const InfoAcara = () => {
                           <option value="">Pilih Kategori</option>
                           <option value="public">Public</option>
                           <option value="private">Private</option>
-                          <option value="invite-only">Invite Only</option>  
+                          {/* <option value="invite-only">Invite Only</option>   */}
                         </>
                       )}
                       {field.name === "mdl_doorprize_aktif" && (
