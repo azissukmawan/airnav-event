@@ -13,7 +13,7 @@ export default function Header({ menuItems = [] }) {
 
   console.log("User role:", role);
 
-  // cek loginn
+  // Cek Login
   const token = localStorage.getItem("token");
   const [loggedIn, setLoggedIn] = useState(!!token);
 
