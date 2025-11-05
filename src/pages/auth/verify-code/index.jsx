@@ -6,9 +6,6 @@ import Modal from "../../../components/modal";
 import Spinner from "../../../components/spinner";
 import { Lock, CheckCircle2, AlertCircle } from "lucide-react";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 export default function VerifyCode() {
   const [otp, setOtp] = useState(new Array(6).fill(""));
   const [timer, setTimer] = useState(179);

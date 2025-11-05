@@ -7,8 +7,6 @@ import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
 import { Pencil, MapPin, FilePlus } from "lucide-react";
 
-const API_BASE_URL = "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 const InfoAcara = () => {
   const { id } = useParams();
 

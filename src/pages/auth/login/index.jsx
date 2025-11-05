@@ -5,9 +5,6 @@ import { Button } from "../../../components/button";
 import Spinner from "../../../components/spinner";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 export default function Login() {
   const navigate = useNavigate();
 

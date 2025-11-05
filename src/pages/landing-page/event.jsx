@@ -35,8 +35,6 @@ const EventDetail = () => {
   const role = localStorage.getItem("role");
   const isAdmin = role === "admin" || role === "superadmin";
   const shareUrl = window.location.href;
-  const API_BASE_URL =
-    "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
   const menuItems = [
     { name: "Beranda", href: "#beranda" },

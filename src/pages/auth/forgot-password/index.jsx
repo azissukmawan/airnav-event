@@ -4,9 +4,6 @@ import { Button } from "../../../components/button";
 import Spinner from "../../../components/spinner";
 import { Lock, User, AlertTriangle } from "lucide-react";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
