@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Modal from "../modal";
+import Modal from "../../modal";
 import { X } from "lucide-react";
-import Broadcast from "../Popup/Broadcast";
+import Broadcast from "../../pop-up/Broadcast";
 
 const ParticipantPreview = ({ isOpen, onClose, data }) => {
   const [showSuccess, setShowSuccess] = useState(false);

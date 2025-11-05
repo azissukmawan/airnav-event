@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import CardStatus from "../CardStatus/index";
+import CardStatus from "../card-status";
 import { Users, UserCheck, Lightbulb, Laptop, User } from "lucide-react";
 
 const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {

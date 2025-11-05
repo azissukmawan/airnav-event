@@ -6,10 +6,10 @@ import Table from "../../../components/table";
 import Search from "../../../components/form/SearchBar";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
 import { ArrowUpDown } from "lucide-react";
-import AddEvent from "../../../components/AddEvent";
+import AddEvent from "../event-add";
 import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
-import DeletePopup from "../../../components/Popup/Delete";
+import DeletePopup from "../../../components/pop-up/Delete";
 
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);

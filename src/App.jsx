@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import Layout from "./layout";
 import { EventProvider } from "./contexts/EventContext";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/protected-route";
 import NotFound from "./pages/NotFound";
 
 // Auth pages
@@ -13,15 +13,15 @@ import ForgotPassword from "./pages/auth/forgot-password";
 import ResetPassword from "./pages/auth/reset-password";
 
 // Guest pages
-import LandingPage from "./pages/LandingPage";
-import AdminDetail from "./pages/admin/AdminDetail";
-import InfoAcara from "./pages/admin/InfoAcara";
-import EventDetail from "./pages/LandingPage/event";
+import LandingPage from "./pages/landing-page";
+import AdminDetail from "./pages/admin/event-detail";
+import InfoAcara from "./pages/admin/event-edit";
+import EventDetail from "./pages/landing-page/event";
 
 // Admin pages
 import Dashboard from "./pages/admin/dashboard";
 import AdminEvent from "./pages/admin/event";
-import Doorprize from "./pages/admin/doorprize";
+import Doorprize from "./pages/admin/event-doorprize";
 
 // User pages
 import Event from "./pages/user/event";

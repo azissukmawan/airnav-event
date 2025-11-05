@@ -1,8 +1,8 @@
 import { useState } from "react";
-import Modal from "../modal";
+import Modal from "../../../components/modal";
 import { motion, AnimatePresence } from "framer-motion";
-import Dropdown from "../form/Dropdown";
-import AddValidate from "../AddValidate";
+import Dropdown from "../../../components/form/Dropdown";
+import AddValidate from "../../../components/validate";
 import axios from "axios";
 
 export default function AddEvent({ isOpen, onClose, token }) {

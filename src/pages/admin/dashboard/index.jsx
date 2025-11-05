@@ -5,7 +5,7 @@ import axios from "axios";
 
 import { Typography } from "../../../components/typography";
 import { Calendar, ChevronsRight, XCircle } from "lucide-react";
-import AddEvent from "../../../components/AddEvent";
+import AddEvent from "../event-add";
 
 function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
   return (

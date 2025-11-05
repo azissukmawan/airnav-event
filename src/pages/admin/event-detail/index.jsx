@@ -2,11 +2,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
-import CardList from "../../../components/CardStatus/CardList";
+import CardList from "../../../components/card-status/CardList";
 import Search from "../../../components/form/SearchBar";
 import Breadcrumb from "../../../components/breadcrumb";
-import TableParticipants from "../../../components/TableParticipants";
-import ParticipantPreview from "../../../components/ParticipantPreview";
+import TableParticipants from "../../../components/admin/TableParticipants";
+import ParticipantPreview from "../../../components/admin/ParticipantPreview";
 
 const AdminDetail = () => {
   const { id } = useParams();
