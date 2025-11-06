@@ -208,6 +208,10 @@ const Event = () => {
 
   // Filter event
   const filteredEvents = events.filter((event) => {
+    if (event.mdl_status?.toLowerCase() === 'archived') {
+      return false;
+    }
+
     const now = new Date();
     const registrationStart = new Date(event.mdl_pendaftaran_mulai);
     const registrationEnd = new Date(event.mdl_pendaftaran_selesai);

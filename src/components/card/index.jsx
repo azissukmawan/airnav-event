@@ -115,7 +115,7 @@ export default function Card({
               <Typography
                 type="caption2"
                 weight="medium"
-                className="text-blue-700"
+                className="text-blue-700 capitalize"
               >
                 {tipe}
               </Typography>
