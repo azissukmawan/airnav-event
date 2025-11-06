@@ -208,7 +208,10 @@ const Event = () => {
 
   // Filter event
   const filteredEvents = events.filter((event) => {
-    if (event.mdl_status?.toLowerCase() === 'archived') {
+    if (
+      event.mdl_status?.toLowerCase() === 'draft' ||
+      event.mdl_status?.toLowerCase() === 'archived'
+    ) {
       return false;
     }
 

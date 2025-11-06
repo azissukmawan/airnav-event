@@ -240,6 +240,16 @@ const Profile = () => {
     );
   }
 
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  const isKaryawan =
+    user?.status_karyawan === 1 ||
+    user?.status_karyawan === "1" ||
+    user?.status_karyawan === true;
+
+  const status = isKaryawan ? "Karyawan" : "Non Karyawan";
+
   return (
     <div>
       <h1 className="text-lg md:text-2xl text-primary font-bold mb-1">
@@ -265,6 +275,9 @@ const Profile = () => {
                   alt="Profile" 
                   className="w-40 h-40 rounded-full object-cover border-4 border-gray-200 shadow-lg"
                 />
+                <div className="px-4 py-3 bg-primary-10 rounded-lg mt-6 text-center">
+                  <Typography type="body" weight="semibold" className="text-primary">{status}</Typography>
+                </div>
               </div>
             </div>
           </div>            

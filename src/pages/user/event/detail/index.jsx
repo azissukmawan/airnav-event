@@ -108,13 +108,17 @@ const DetailEvent = () => {
     (e) => e.modul_acara_id === event.id
   );
 
-  const userRole = localStorage.getItem("role");
-  const isAdmin = userRole === "admin";
-  const isPeserta = userRole === "peserta";
-
   let buttonText = "";
   let buttonVariant = "primary";
   let canRegister = false;
+
+  const userData = localStorage.getItem("user");
+  const user = userData ? JSON.parse(userData) : null;
+
+  const isKaryawan =
+    user?.status_karyawan === 1 ||
+    user?.status_karyawan === "1" ||
+    user?.status_karyawan === true;
 
   if (now > eventEnd) {
     buttonText = "Acara Telah Selesai";
@@ -136,24 +140,35 @@ const DetailEvent = () => {
       canRegister = false;
     }
   } else if (now >= registrationStart && now <= registrationEnd) {
-    
-    // Jika event private/invite-only dan user adalah peserta biasa
-    if ((event.mdl_kategori === "private" || event.mdl_kategori === "invite-only") && isPeserta) {
-      buttonText = event.mdl_kategori === "invite-only" ? "Event Khusus (Undangan)" : "Event Private";
-      buttonVariant = "third";
-      canRegister = false;
+
+    // Jika event private/invite-only → hanya karyawan yang boleh daftar
+    if (event.mdl_kategori === "private" || event.mdl_kategori === "invite-only") {
+      if (isKaryawan) {
+        buttonText = "Daftar Sekarang";
+        buttonVariant = "primary";
+        canRegister = true;
+      } else {
+        buttonText = event.mdl_kategori === "invite-only" 
+          ? "Event Khusus (Undangan)" 
+          : "Event Private";
+        buttonVariant = "third";
+        canRegister = false;
+      }
     } 
-    // Jika event public atau user adalah admin
-    else if (event.mdl_kategori === "public" || isAdmin) {
+
+    // Jika event public → semua boleh daftar
+    else if (event.mdl_kategori === "public") {
       buttonText = "Daftar Sekarang";
       buttonVariant = "primary";
       canRegister = true;
-    }
+    } 
+
     else {
       buttonText = "Event Khusus";
       buttonVariant = "third";
       canRegister = false;
     }
+
   } else if (now < registrationStart) {
     buttonText = "Segera Hadir";
     buttonVariant = "third";

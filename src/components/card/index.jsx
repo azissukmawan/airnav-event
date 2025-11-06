@@ -46,7 +46,7 @@ export default function Card({
 
   if (isRestrictedForUser) {
     displayStatus = "Khusus Karyawan";
-    statusColor = "bg-error-10 text-error";
+    statusColor = "bg-white text-primary";
   } else if (now < registrationStart) {
     displayStatus = "Segera Hadir";
     statusColor = "bg-warning-10 text-warning";
