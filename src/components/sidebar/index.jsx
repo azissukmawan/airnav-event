@@ -264,18 +264,18 @@ export default function Sidebar({ role = "admin" }) {
             onClick={(e) => e.stopPropagation()}
           >
             <Typography type="title" weight="semibold" className="mb-3">
-              Konfirmasi Logout
+              Konfirmasi Keluar
             </Typography>
             <Typography type="body" className="text-gray-600 mb-6">
               Apakah Anda yakin ingin keluar dari akun ini?
             </Typography>
 
             <div className="flex justify-center gap-3">
-              <Button variant="red" onClick={() => setShowLogoutModal(false)}>
+              <Button variant="red_outline" onClick={() => setShowLogoutModal(false)}>
                 Batal
               </Button>
-              <Button variant="primary" onClick={handleLogout}>
-                Logout
+              <Button variant="red" onClick={handleLogout}>
+                Iya, Keluar
               </Button>
             </div>
           </div>

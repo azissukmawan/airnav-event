@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, X } from "lucide-react";
+import axios from "axios";
 import Card from "../../../components/card";
 import Modal from "../../../components/modal";
 import Pagination from "../../../components/pagination";
@@ -133,34 +134,61 @@ const Event = () => {
 
   // Ambil data user
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const fetchProfile = async () => {
       try {
-        const userData = JSON.parse(storedUser);
-        setUserName(userData.name || "User");
-        setRole(userData.role || "peserta");
+        const token = localStorage.getItem("token");
 
-        if (userData.profile_photo) {
-          setProfileImage(userData.profile_photo);
+        if (!token) return;
+
+        const response = await axios.get(`${API_BASE_URL}/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        });
+
+        const data = response.data.data;
+        setUserName(data.name || "User");
+
+        if (data.profile_photo) {
+          setProfileImage(data.profile_photo);
         } else {
-          const avatarName = encodeURIComponent(userData.name || "User");
+          const avatarName = encodeURIComponent(data.name || "User");
           setProfileImage(
             `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
           );
         }
-      } catch (err) {
-        console.error("Error parsing user data:", err);
+      } catch (error) {
+        console.error(error);
+
+        const user = localStorage.getItem("user");
+        if (user) {
+          try {
+            const parsedUser = JSON.parse(user);
+            setUserName(parsedUser.name || "User");
+            const avatarName = encodeURIComponent(parsedUser.name || "User");
+            setProfileImage(
+              `https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`
+            );
+          } catch (e) {
+            console.error("Error parsing user data:", e);
+          }
+        }
       }
-    }
+    };
+
+    fetchProfile();
   }, []);
 
   // Fetch pendaftaran
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/me/pendaftaran`, {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         const result = await response.json();

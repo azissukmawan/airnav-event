@@ -303,10 +303,10 @@ const Profile = () => {
                 Edit Profil
               </Button>
               <Button 
-                variant="red" 
+                variant="outline" 
                 onClick={() => setIsPasswordModalOpen(true)}
               >
-                Ubah Password
+                Ubah Kata Sandi
               </Button>
             </div>
           </div>
@@ -326,7 +326,7 @@ const Profile = () => {
         footer={
           <>
             <Button 
-              variant="red" 
+              variant="red_outline" 
               onClick={() => {
                 setIsProfileModalOpen(false);
                 setErrors({});
@@ -339,7 +339,7 @@ const Profile = () => {
               variant="primary" 
               onClick={handleEditProfileSubmit}
             >
-              Simpan
+              Simpan Perubahan Data
             </Button>
           </>
         }
@@ -432,7 +432,7 @@ const Profile = () => {
         footer={
           <>
             <Button 
-              variant="red" 
+              variant="red_outline" 
               onClick={() => {
                 setIsPasswordModalOpen(false);
                 setErrors({});
@@ -446,7 +446,7 @@ const Profile = () => {
               variant="primary" 
               onClick={handlePasswordSubmit}
             >
-              Simpan
+              Simpan Kata Sandi Baru
             </Button>
           </>
         }
