@@ -225,7 +225,10 @@ const AdminUser = () => {
       accessor: (row) => {
         const status = getStatusLabel(row.detail_peserta?.status_karyawan);
         return (
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}>
+          <span
+            className={`${status.color} inline-flex items-center text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
+            style={{ minWidth: 90, justifyContent: "center" }}
+          >
             {status.label}
           </span>
         );
