@@ -10,13 +10,14 @@ import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
+import { X } from "lucide-react";
 
 export default function EventWheel() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { width, height } = useWindowSize();
   const token = localStorage.getItem("token");
-  
+
   const [data, setData] = useState([]);
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
@@ -29,13 +30,21 @@ export default function EventWheel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // console.log("Winner:", winner);
+  // console.log("Winners:", winners);
+  // console.log("New Winner:", newWinner);
+
   // Hanya peserta yang hadir tapi belum menang
-  const wheelData = data.filter(
-    (p) =>
-      !winners.some(
-        (w) => w.toLowerCase().trim() === p.option.toLowerCase().trim()
+  const wheelData = Array.isArray(data)
+    ? data.filter(
+        (p) =>
+          !winners.some(
+            (w) =>
+              (w.name || w.nama || "").toLowerCase().trim() ===
+              p.option.toLowerCase().trim()
+          )
       )
-  );
+    : [];
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -62,7 +71,7 @@ export default function EventWheel() {
         const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        
+
         // Sesuaikan struktur response
         const eventData = res.data?.data?.data || res.data?.data;
         setEventTitle(eventData?.mdl_nama || "Judul tidak tersedia");
@@ -118,9 +127,14 @@ export default function EventWheel() {
             : [];
         }
 
-        setWinners(winnersData.map((w) => w.name || w.nama));
+        console.log("Winners Data from API:", winnersData);
+        setWinners(
+          winnersData.map((w) => ({
+            id: w.id,
+            name: w.name,
+          }))
+        );
       } catch (err) {
-        
         if (err.response?.status === 403) {
           setError("Akses ditolak. Anda tidak memiliki izin untuk event ini.");
         } else if (err.response?.status === 404) {
@@ -158,13 +172,18 @@ export default function EventWheel() {
 
       if (selectedIndex === -1) {
         alert(
-          `${winnerFromAPI.name || winnerFromAPI.nama} sudah menang sebelumnya atau tidak ada di wheel.`
+          `${
+            winnerFromAPI.name || winnerFromAPI.nama
+          } sudah menang sebelumnya atau tidak ada di wheel.`
         );
         return;
       }
 
       setPrizeNumber(selectedIndex);
-      setNewWinner(winnerFromAPI.name || winnerFromAPI.nama);
+      setNewWinner({
+        id: winnerFromAPI.id,
+        name: winnerFromAPI.name || winnerFromAPI.nama,
+      });
       setMustSpin(true);
       setShowConfetti(false);
     } catch (err) {
@@ -176,16 +195,36 @@ export default function EventWheel() {
 
   const handleStopSpinning = () => {
     setMustSpin(false);
-    setWinner(newWinner);
+    setWinner(newWinner.name); // Menampilkan nama pemenang
 
-    // Tambahkan ke daftar pemenang
+    // Tambahkan pemenang ke daftar pemenang
     setWinners((prev) =>
-      newWinner && !prev.includes(newWinner) ? [...prev, newWinner] : prev
+      newWinner && !prev.some((w) => w.id === newWinner.id) // Cek apakah ID sudah ada
+        ? [...prev, newWinner]
+        : prev
     );
 
     setModalOpen(true);
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 6000);
+  };
+
+  const handleCancelWinner = async (userId) => {
+    try {
+      await axios.put(
+        `${API_BASE_URL}/admin/events/${id}/winners/${userId}`,
+        { isWinner: false },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Hapus pemenang dari daftar lokal
+      setWinners((prev) => prev.filter((w) => w.id !== userId));
+
+      alert("Pemenang berhasil dibatalkan!");
+    } catch (error) {
+      console.error(error);
+      alert("Gagal membatalkan pemenang.");
+    }
   };
 
   // Loading state
@@ -337,16 +376,29 @@ export default function EventWheel() {
               </div>
 
               {winners.length > 0 ? (
-                <ul className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                  {winners.map((name, index) => (
+                <ul className="space-y-3">
+                  {winners.map((winner, index) => (
                     <li
-                      key={index}
-                      className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
+                      key={winner.id}
+                      className="flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
                     >
-                      <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                        {index + 1}
-                      </span>
-                      <span className="text-gray-800 font-medium">{name}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                          {index + 1}
+                        </span>
+                        <span className="text-gray-800 font-medium">
+                          {winner.name}{" "}
+                          {/* Gunakan winner.name, bukan winner */}
+                        </span>
+                      </div>
+                      {/* Tombol batal */}
+                      <button
+                        onClick={() => handleCancelWinner(winner.id)}
+                        className="text-red-500 hover:text-red-700 transition-colors"
+                        title="Batalkan pemenang"
+                      >
+                        <X size={20} />
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -393,7 +445,7 @@ export default function EventWheel() {
             </Typography>
             <div className="mt-4 px-6 py-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
               <Typography type="body" className="text-yellow-800 font-semibold">
-                🏆 Pemenang Doorprize 🏆
+                Pemenang Doorprize
               </Typography>
             </div>
           </div>
