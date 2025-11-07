@@ -5,11 +5,23 @@ import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
-import { Pencil, MapPin, FilePlus } from "lucide-react";
+import {
+  Pencil,
+  MapPin,
+  FilePlus,
+  AlertTriangle,
+  X,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from "lucide-react";
+
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const InfoAcara = () => {
   const { id } = useParams();
-
+  const navigate = useParams();
   const [formData, setFormData] = useState({
     mdl_nama: "",
     mdl_deskripsi: "",
@@ -30,18 +42,15 @@ const InfoAcara = () => {
     mdl_doorprize_aktif: "",
   });
 
-  // ✅ PERBAIKAN: Hapus referensi ke `data` yang belum ada
   const [fileNames, setFileNames] = useState({
     mdl_file_acara: "",
     mdl_file_rundown: "",
     mdl_template_sertifikat: "",
   });
 
-  const [selectedOption, setSelectedOption] = useState("active");
   const [presensiAktif, setPresensiAktif] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showPublishModal, setShowPublishModal] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   // Notification state
   const [showNotification, setShowNotification] = useState(false);
@@ -56,6 +65,121 @@ const InfoAcara = () => {
     setNotificationConfig({ type, title, message });
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 4000);
+  };
+
+  // Modal Konfirmasi Publish
+  const ConfirmPublishModal = () => {
+    if (!showConfirmModal) return null;
+
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        {/* backdrop blur */}
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          onClick={() => setShowConfirmModal(false)}
+        />
+
+        {/* Modal Content */}
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden relative z-10">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              Konfirmasi Publish Acara
+            </h3>
+          </div>
+
+          {/* Content */}
+          <div className="px-6 py-6">
+            <p className="text-gray-700 mb-4">
+              Apakah Anda yakin ingin{" "}
+              <span className="font-semibold text-blue-900">
+                mempublikasikan
+              </span>{" "}
+              acara ini?
+            </p>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+              <div className="flex items-start gap-3">
+                <svg
+                  className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-yellow-800">
+                    Perhatian!
+                  </p>
+                  <p className="text-sm text-yellow-700 mt-1">
+                    Setelah acara dipublikasikan, Anda{" "}
+                    <span className="font-semibold">tidak dapat mengedit</span>{" "}
+                    kembali. Pastikan semua informasi sudah benar.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
+            <button
+              onClick={() => handleSave("draft")}
+              disabled={isLoading}
+              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Menyimpan..." : "Simpan Draft"}
+            </button>
+            <button
+              onClick={() => {
+                setShowConfirmModal(false);
+                handleSave("active");
+              }}
+              disabled={isLoading}
+              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-900 text-white hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isLoading && (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+              )}
+              {isLoading ? "Mempublikasi..." : "Ya, Publish Sekarang"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Notification Component
@@ -114,21 +238,6 @@ const InfoAcara = () => {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              )}
-              {notificationConfig.type === "warning" && (
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
               )}
@@ -197,6 +306,21 @@ const InfoAcara = () => {
         });
 
         const data = response.data.data;
+
+        if (data.mdl_status === "active") {
+          showPopup(
+            "warning",
+            "Akses Ditolak",
+            "Acara ini sudah dipublikasikan dan tidak bisa diedit."
+          );
+
+          // Redirect ke halaman daftar acara
+          setTimeout(() => {
+            window.location.href = "/admin/events";
+          }, 1500);
+          // hentikan eksekusi lebih lanjut
+        }
+
         setFormData({
           mdl_nama: data.mdl_nama || "",
           mdl_deskripsi: data.mdl_deskripsi || "",
@@ -225,8 +349,6 @@ const InfoAcara = () => {
               : "",
         });
 
-        setIsPublished(data.mdl_status === "published");
-
         setFileNames({
           mdl_file_acara: getFileNameFromUrl(data.mdl_file_acara_url) || "",
           mdl_file_rundown: getFileNameFromUrl(data.mdl_file_rundown_url) || "",
@@ -235,7 +357,6 @@ const InfoAcara = () => {
         });
 
         setPresensiAktif(data.mdl_presensi_aktif === 1);
-        setSelectedOption(data.mdl_status || "active");
       } catch (error) {
         console.error(error);
 
@@ -254,40 +375,8 @@ const InfoAcara = () => {
     };
 
     fetchEvent();
-  }, [id]);
+  }, [id, navigate]);
 
-  const handlePublish = async () => {
-    try {
-      setIsLoading(true);
-
-      // Simpan draft dulu
-      await handleSubmit();
-
-      // Panggil endpoint publish
-      const response = await axios.put(
-        `${API_BASE_URL}/admin/events/${id}/publish`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
-      );
-
-      if (response.data?.success) {
-        setIsPublished(true);
-        alert("Acara berhasil dipublish!");
-      } else {
-        alert("Gagal mem-publish acara");
-      }
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.message || "Terjadi kesalahan saat publish");
-    } finally {
-      setShowPublishModal(false);
-      setIsLoading(false);
-    }
-  };
-
-  // ✅ PERBAIKAN: Pindahkan handleChange ke luar dan perbaiki logic
   const handleChange = (e) => {
     const { name, type, value, files } = e.target;
 
@@ -315,9 +404,7 @@ const InfoAcara = () => {
 
       const response = await axios.put(
         `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
-        {
-          status_qr: newStatus,
-        },
+        { status_qr: newStatus },
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -340,27 +427,26 @@ const InfoAcara = () => {
       );
     } catch (error) {
       console.error(error.response?.data || error.message);
-
       const errorMsg =
         error.response?.data?.message || "Gagal mengubah status presensi";
       showPopup("error", "Error", errorMsg);
     }
   };
 
-  const handleSubmit = async () => {
+  // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
+  const handleSave = async (targetStatus) => {
     if (!id) {
       showPopup("error", "Error", "ID acara tidak ditemukan");
       return;
     }
 
     if (isLoading) return;
-
     setIsLoading(true);
 
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("_method", "PUT");
-      formDataToSend.append("mdl_status", selectedOption);
+      formDataToSend.append("mdl_status", targetStatus); // draft atau active
 
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "mdl_kode_qr") return;
@@ -406,7 +492,12 @@ const InfoAcara = () => {
           timeout: 30000,
         }
       );
-      showPopup("success", "Berhasil!", "Acara berhasil diperbarui");
+
+      const successMsg =
+        targetStatus === "draft"
+          ? "Draft berhasil disimpan"
+          : "Acara berhasil dipublikasikan";
+      showPopup("success", "Berhasil!", successMsg);
     } catch (error) {
       console.error(error.response?.data || error.message);
 
@@ -478,6 +569,7 @@ const InfoAcara = () => {
   return (
     <>
       <NotificationPopup />
+      <ConfirmPublishModal />
 
       <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
         <Sidebar />
@@ -491,7 +583,6 @@ const InfoAcara = () => {
                 type="heading4"
                 weight="bold"
                 className="text-blue-900 text-xl"
-                dangerouslySetInnerHTML={null}
               >
                 Detail Acara
               </Typography>
@@ -499,25 +590,44 @@ const InfoAcara = () => {
                 type="body"
                 weight="regular"
                 className="text-gray-600"
-                dangerouslySetInnerHTML={null}
               >
                 Menampilkan halaman detail acara {formData.mdl_nama}
               </Typography>
             </div>
+
+            {/* ✅ TOMBOL SIMPAN DRAFT & PUBLISH */}
             <div className="flex items-start gap-3">
               <button
-                onClick={handleSubmit}
-                disabled={isLoading || isPublished}
-                className="bg-blue-900 px-6 py-3 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                onClick={() => handleSave("draft")}
+                disabled={isLoading}
+                className="px-6 py-3 rounded-2xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Menyimpan..." : "Simpan Draft"}
               </button>
               <button
-                onClick={() => setShowPublishModal(true)}
-                disabled={isPublished}
-                className="bg-green-600 px-6 py-3 rounded-2xl text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                onClick={() => setShowConfirmModal(true)}
+                disabled={isLoading}
+                className="px-6 py-3 rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {isPublished ? "Sudah Dipublish" : "Publish"}
+                {isLoading && (
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                )}
+                {isLoading ? "Menyimpan..." : "Publish"}
               </button>
             </div>
           </div>
@@ -525,12 +635,7 @@ const InfoAcara = () => {
           {/* Banner + Nama + Lokasi */}
           <div className="flex flex-wrap flex-row justify-between mt-6 gap-6">
             <div>
-              <Typography
-                type="caption1"
-                weight="semibold"
-                className="mb-4"
-                dangerouslySetInnerHTML={null}
-              >
+              <Typography type="caption1" weight="semibold" className="mb-4">
                 Banner Acara
               </Typography>
               <img
@@ -559,12 +664,11 @@ const InfoAcara = () => {
                     type="caption1"
                     weight="semibold"
                     className="mb-4"
-                    dangerouslySetInnerHTML={null}
                   >
                     Nama Acara
                   </Typography>
                   <div className="relative">
-                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 w-4.5 h-4.5" />
+                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Nama Acara"
@@ -581,12 +685,11 @@ const InfoAcara = () => {
                     type="caption1"
                     weight="semibold"
                     className="mb-4"
-                    dangerouslySetInnerHTML={null}
                   >
                     Lokasi Acara
                   </Typography>
                   <div className="relative">
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 w-4.5 h-4.5" />
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Lokasi Acara"
@@ -605,7 +708,6 @@ const InfoAcara = () => {
                     type="caption1"
                     weight="semibold"
                     className="mb-4"
-                    dangerouslySetInnerHTML={null}
                   >
                     Deskripsi Acara
                   </Typography>
@@ -624,7 +726,6 @@ const InfoAcara = () => {
                     type="caption1"
                     weight="semibold"
                     className="mb-4"
-                    dangerouslySetInnerHTML={null}
                   >
                     Informasi Tambahan
                   </Typography>
@@ -644,13 +745,8 @@ const InfoAcara = () => {
           {/* Form Fields Grid */}
           <div className="flex flex-wrap mt-6 w-full gap-6">
             {statusField.map((field, index) => (
-              <div key={index} className="w-minimum min-w-[280px] flex-1">
-                <Typography
-                  type="caption1"
-                  weight="semibold"
-                  className="mb-2"
-                  dangerouslySetInnerHTML={null}
-                >
+              <div key={index} className="w-72">
+                <Typography type="caption1" weight="semibold" className="mb-2">
                   {field.label}
                 </Typography>
                 <div className="relative w-full">
@@ -680,7 +776,6 @@ const InfoAcara = () => {
                           <option value="">Pilih Kategori</option>
                           <option value="public">Public</option>
                           <option value="private">Private</option>
-                          {/* <option value="invite-only">Invite Only</option>   */}
                         </>
                       )}
                       {field.name === "mdl_doorprize_aktif" && (
@@ -720,104 +815,10 @@ const InfoAcara = () => {
               </div>
             ))}
           </div>
-
-          {/* QR Code + Toggle Presensi */}
-          <div className="flex flex-wrap gap-6 outline outline-2 outline-offset-2 outline-gray-300 w-fit rounded-2xl p-5 mt-6">
-            <div className="flex flex-col items-center">
-              <div className="p-6 flex flex-col rounded-xl items-center">
-                {formData.mdl_kode_qr}
-                {formData.mdl_kode_qr ? (
-                  <QRCodeCanvas
-                    value={formData.mdl_kode_qr}
-                    size={150}
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                    level="H"
-                    includeMargin={true}
-                  />
-                ) : (
-                  <div className="w-[150px] h-[150px] bg-gray-200 rounded-lg flex items-center justify-center">
-                    <p className="text-gray-500 text-sm">QR belum tersedia</p>
-                  </div>
-                )}
-              </div>
-              <div className="text-center">
-                <Typography
-                  type="body"
-                  className="text-gray-600 mb-2"
-                  dangerouslySetInnerHTML={null}
-                >
-                  Download QR Code
-                </Typography>
-                <button
-                  onClick={handleDownloadQR}
-                  disabled={!formData.mdl_kode_qr}
-                  className="bg-blue-900 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  Download
-                </button>
-              </div>
-            </div>
-
-            <div className="p-3">
-              <Typography
-                type="caption1"
-                weight="semibold"
-                className="mb-4"
-                dangerouslySetInnerHTML={null}
-              >
-                Presensi Acara
-              </Typography>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handleTogglePresensi}
-                  className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${
-                    presensiAktif ? "bg-blue-900" : "bg-gray-300"
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                      presensiAktif ? "translate-x-9" : "translate-x-1"
-                    }`}
-                  />
-                </button>
-                <span className="text-sm font-medium text-gray-700">
-                  {presensiAktif ? "ON" : "OFF"}
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {showPublishModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl text-center">
-            <h2 className="text-lg font-semibold mb-3">Konfirmasi Publish</h2>
-            <p className="text-gray-700 mb-6">
-              Apakah Anda yakin ingin <b>mem-publish</b> acara ini? <br />
-              Setelah publish, data tidak bisa diedit lagi.
-            </p>
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => setShowPublishModal(false)}
-                className="px-4 py-2 rounded-lg border border-gray-400 hover:bg-gray-100"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handlePublish}
-                disabled={isLoading}
-                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
-              >
-                {isLoading ? "Memproses..." : "Ya, Publish"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <style>{`
+      <style jsx>{`
         @keyframes slide-in {
           from {
             transform: translateX(100%);
