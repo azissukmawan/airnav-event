@@ -42,16 +42,14 @@ const Pagination = ({
   onPageChange,
   rowsPerPage,
   onRowsPerPageChange,
+  itemLabel = "Acara",
 }) => {
   const pageNumbers = getPaginationNumbers(currentPage, totalPages);
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
   const endItem = Math.min(currentPage * rowsPerPage, totalItems);
 
   return (
-    <div
-      className="w-full flex flex-row
-     md:flex-row md:justify-between md:items-center gap-3 mt-4 px-2"
-    >
+    <div className="w-full flex flex-row md:flex-row md:justify-between md:items-center gap-3 mt-4 px-2">
       {/* Kiri: Info jumlah data & dropdown */}
       <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto justify-start">
         <span className="text-gray-700">Menampilkan</span>
@@ -66,7 +64,9 @@ const Pagination = ({
             </option>
           ))}
         </select>
-        <span className="text-gray-600 text-sm">dari {totalItems} Acara</span>
+        <span className="text-gray-600 text-sm">
+          dari {totalItems} {itemLabel}
+        </span>
       </div>
 
       {/* Kanan: Tombol pagination */}

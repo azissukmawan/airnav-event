@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Modal from "../../../components/modal";
 import { motion, AnimatePresence } from "framer-motion";
 import Dropdown from "../../../components/form/Dropdown";
 import AddValidate from "../../../components/validate";
+import { Calendar } from "lucide-react";
 import axios from "axios";
 
 export default function AddEvent({ isOpen, onClose, token }) {
@@ -24,9 +25,9 @@ export default function AddEvent({ isOpen, onClose, token }) {
     mdl_kategori: "",
     mdl_pendaftaran_mulai: "",
     mdl_pendaftaran_selesai: "",
-    mdl_acara_mulai_date: "",
-    mdl_acara_mulai_time: "",
-    mdl_acara_selesai_time: "",
+    // digabung ke datetime-local
+    mdl_acara_mulai: "",
+    mdl_acara_selesai: "",
     mdl_catatan: "",
     mdl_link_wa: "",
   });
@@ -37,6 +38,12 @@ export default function AddEvent({ isOpen, onClose, token }) {
     mdl_template_sertifikat: null,
     mdl_banner_acara: null,
   });
+
+  const dateInputRef = useRef(null);
+  const acaraStartRef = useRef(null);
+  const acaraEndRef = useRef(null);
+  const pendaftaranStartRef = useRef(null);
+  const pendaftaranEndRef = useRef(null);
 
   const showPopup = (type, title, message) => {
     setNotificationConfig({ type, title, message });
@@ -75,115 +82,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
     }
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-
-  //   if (loading) return;
-
-  //   // 🔹 1. Jalankan validasi lokal (termasuk file)
-  //   // map files state ke nama field yang divalidasi oleh AddValidate
-  //   const payloadForValidation = {
-  //     ...formData,
-  //     mdl_file_acara: files.mdl_file_acara, // untuk backend
-  //     mdl_file_acara_url: "blob:http://...", // untuk preview
-  //     mdl_file_rundown: files.mdl_file_rundown,
-  //     mdl_file_rundown_url: "blob:http://...",
-  //     mdl_template_sertifikat: files.mdl_template_sertifikat,
-  //     mdl_template_sertifikat_url: "blob:http://...",
-  //     mdl_banner_acara: files.mdl_banner_acara,
-  //     mdl_banner_acara_url: "blob:http://...",
-  //   };
-  //   const validationErrors = AddValidate(payloadForValidation);
-
-  //   // 🔹 2. Kalau ada error, tampilkan & hentikan submit
-  //   if (Object.keys(validationErrors).length > 0) {
-  //     setErrors(validationErrors);
-  //     showPopup("error", "Validasi Gagal", "Mohon lengkapi semua field yang wajib diisi");
-  //     return; // stop kirim ke backend
-  //   }
-
-  //   setLoading(true);
-
-  //   try {
-  //     // 🔹 3. Generate otomatis slug dan kode sebelum dikirim
-  //     const slug = generateSlug(formData.mdl_nama);
-  //     const kode = generateKode();
-
-  //     const formDataToSend = new FormData();
-  //     formDataToSend.append("mdl_nama", formData.mdl_nama);
-  //     formDataToSend.append("mdl_kode", kode);
-  //     formDataToSend.append("mdl_slug", slug);
-  //     formDataToSend.append("mdl_deskripsi", formData.mdl_deskripsi);
-  //     formDataToSend.append("mdl_tipe", formData.mdl_tipe);
-  //     formDataToSend.append("mdl_kategori", formData.mdl_kategori);
-  //     formDataToSend.append("mdl_lokasi", formData.mdl_lokasi);
-  //     formDataToSend.append(
-  //       "mdl_pendaftaran_mulai",
-  //       formData.mdl_pendaftaran_mulai
-  //     );
-  //     formDataToSend.append(
-  //       "mdl_pendaftaran_selesai",
-  //       formData.mdl_pendaftaran_selesai
-  //     );
-  //     formDataToSend.append(
-  //       "mdl_acara_mulai",
-  //       formatDateTime(
-  //         formData.mdl_acara_mulai_date,
-  //         formData.mdl_acara_mulai_time
-  //       )
-  //     );
-  //     formDataToSend.append(
-  //       "mdl_acara_selesai",
-  //       formatDateTime(
-  //         formData.mdl_acara_mulai_date,
-  //         formData.mdl_acara_selesai_time
-  //       )
-  //     );
-  //     formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
-
-  //     // kalau ada file
-  //     Object.entries(files).forEach(([key, value]) => {
-  //       if (value instanceof File) {
-  //         formDataToSend.append(key, value);
-  //       }
-  //     });
-
-  //     // Ambil token terbaru langsung dari localStorage
-  //     const currentToken = localStorage.getItem("token");
-
-  //     const res = await axios.post(
-  //       "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
-  //       formDataToSend,
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${currentToken}`, // <-- GUNAKAN TOKEN TERBARU
-  //           "Content-Type": "multipart/form-data",
-  //         },
-  //       }
-  //     );
-
-  //     console.log("Response sukses:", res.data);
-  //     alert("Acara berhasil ditambahkan!");
-  //     onClose();
-  //   } catch (err) {
-  //     console.error("Gagal menambahkan acara:", err); // 💡 TAMBAHKAN INI UNTUK MELIHAT DETAIL ERROR 422
-
-  //     if (err.response) {
-  //       console.error("Detail Error dari Server (422):", err.response.data); // Jika backend (misal Laravel) mengirimkan object 'errors'
-
-  //       if (err.response.data && err.response.data.errors) {
-  //         console.error("Daftar error:", err.response.data.errors);
-  //         setErrors(err.response.data.errors);
-  //       } else {
-  //         // Jika errornya adalah pesan tunggal
-  //         alert(`Error: ${err.response.data.message || "Validasi gagal"}`);
-  //       }
-  //     }
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -199,6 +97,16 @@ export default function AddEvent({ isOpen, onClose, token }) {
       mdl_template_sertifikat_url: "blob:http://...",
       mdl_banner_acara: files.mdl_banner_acara,
       mdl_banner_acara_url: "blob:http://...",
+      // kompatibilitas dengan AddValidate yang masih memeriksa date/time terpisah
+      mdl_acara_mulai_date: formData.mdl_acara_mulai
+        ? formData.mdl_acara_mulai.split("T")[0]
+        : "",
+      mdl_acara_mulai_time: formData.mdl_acara_mulai
+        ? formData.mdl_acara_mulai.split("T")[1]
+        : "",
+      mdl_acara_selesai_time: formData.mdl_acara_selesai
+        ? formData.mdl_acara_selesai.split("T")[1]
+        : "",
     };
 
     const validationErrors = AddValidate(payloadForValidation);
@@ -238,20 +146,14 @@ export default function AddEvent({ isOpen, onClose, token }) {
         "mdl_pendaftaran_selesai",
         formData.mdl_pendaftaran_selesai
       );
-      formDataToSend.append(
-        "mdl_acara_mulai",
-        formatDateTime(
-          formData.mdl_acara_mulai_date,
-          formData.mdl_acara_mulai_time
-        )
-      );
-      formDataToSend.append(
-        "mdl_acara_selesai",
-        formatDateTime(
-          formData.mdl_acara_mulai_date,
-          formData.mdl_acara_selesai_time
-        )
-      );
+      // convert datetime-local "YYYY-MM-DDTHH:MM" -> "YYYY-MM-DD HH:MM:00"
+      const toBackendDateTime = (val) => {
+        if (!val) return "";
+        if (val.includes("T")) return val.replace("T", " ") + ":00";
+        return val;
+      };
+      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
+      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
 
       if (formData.mdl_catatan) {
@@ -449,17 +351,18 @@ export default function AddEvent({ isOpen, onClose, token }) {
   const footerButtons = (
     <>
       <button
-        onClick={onClose}
+        type="button"
+        onClick={handleSaveDraft}
         disabled={isLoading}
-        className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-4 py-2 rounded-lg text-blue-900 bg-blue-200 hover:bg-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Cancel
+        Simpan Draft
       </button>
       <button
         type="button"
         onClick={handleSubmit}
         disabled={isLoading}
-        className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       >
         {isLoading && (
           <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -479,10 +382,131 @@ export default function AddEvent({ isOpen, onClose, token }) {
             />
           </svg>
         )}
-        {isLoading ? "Menyimpan..." : "Simpan"}
+        {isLoading ? "Menyimpan..." : "Publish"}
+       
       </button>
     </>
   );
+
+  // Handle save as draft (kirim data dan set mdl_status = "draft")
+  async function handleSaveDraft() {
+    if (isLoading) return;
+
+    // 1) jalankan validasi sama seperti publish
+    const payloadForValidation = {
+      ...formData,
+      mdl_file_acara: files.mdl_file_acara,
+      mdl_file_acara_url: "blob:http://...",
+      mdl_file_rundown: files.mdl_file_rundown,
+      mdl_file_rundown_url: "blob:http://...",
+      mdl_template_sertifikat: files.mdl_template_sertifikat,
+      mdl_template_sertifikat_url: "blob:http://...",
+      mdl_banner_acara: files.mdl_banner_acara,
+      mdl_banner_acara_url: "blob:http://...",
+      // kompatibilitas kalau validator masih mengharapkan date/time terpisah
+      //mdl_acara_mulai_date: formData.mdl_acara_mulai
+      //  ? formData.mdl_acara_mulai.split("T")[0]
+      //  : "",
+      //mdl_acara_mulai_time: formData.mdl_acara_mulai
+      //  ? formData.mdl_acara_mulai.split("T")[1]
+      //  : "",
+      //mdl_acara_selesai_time: formData.mdl_acara_selesai
+      //  ? formData.mdl_acara_selesai.split("T")[1]
+      //  : "",
+    };
+
+    const validationErrors = AddValidate(payloadForValidation);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      showPopup(
+        "error",
+        "Validasi Gagal",
+        "Mohon lengkapi semua field yang wajib diisi"
+      );
+      console.error("Validasi gagal (draft):", validationErrors);
+      return;
+    }
+
+    // 2) lanjut kirim draft (set loading setelah validasi)
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      const kode = generateKode();
+      const slug = generateSlug(formData.mdl_nama || kode);
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("mdl_nama", formData.mdl_nama || "");
+      formDataToSend.append("mdl_kode", kode);
+      formDataToSend.append("mdl_slug", slug);
+      formDataToSend.append("mdl_deskripsi", formData.mdl_deskripsi || "");
+      formDataToSend.append("mdl_tipe", formData.mdl_tipe || "");
+      formDataToSend.append("mdl_kategori", formData.mdl_kategori || "");
+      formDataToSend.append("mdl_lokasi", formData.mdl_lokasi || "");
+      formDataToSend.append("mdl_pendaftaran_mulai", formData.mdl_pendaftaran_mulai || "");
+      formDataToSend.append("mdl_pendaftaran_selesai", formData.mdl_pendaftaran_selesai || "");
+
+      const toBackendDateTime = (val) => {
+        if (!val) return "";
+        return val.includes("T") ? val.replace("T", " ") + ":00" : val;
+      };
+      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
+      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
+      formDataToSend.append("mdl_link_wa", formData.mdl_link_wa || "");
+      formDataToSend.append("mdl_status", "draft");
+      if (formData.mdl_catatan) formDataToSend.append("mdl_catatan", formData.mdl_catatan);
+
+      Object.entries(files).forEach(([key, file]) => {
+        if (file && file instanceof File) formDataToSend.append(key, file);
+      });
+
+      const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      const res = await axios.post(
+        "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
+        formDataToSend,
+        {
+          headers: {
+            Authorization: currentToken ? `Bearer ${currentToken}` : undefined,
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 30000,
+        }
+      );
+
+      console.log("Draft tersimpan:", res.data);
+      showPopup("success", "Draft Tersimpan", "Data berhasil disimpan sebagai draft");
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+    } catch (err) {
+      console.error("Gagal simpan draft:", err);
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+        showPopup("error", "Validasi Gagal", "Periksa kembali form Anda");
+      } else {
+        showPopup("error", "Error", err.response?.data?.message || err.message || "Gagal menyimpan draft");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const openDatePicker = (ref) => {
+    if (!ref?.current) return;
+    // modern browsers (Chrome) support showPicker()
+    if (typeof ref.current.showPicker === "function") {
+      ref.current.showPicker();
+      return;
+    }
+    // fallback: focus / click to open native picker
+    try {
+      ref.current.focus();
+      ref.current.click();
+    } catch (e) {
+      ref.current.focus();
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -634,9 +658,18 @@ export default function AddEvent({ isOpen, onClose, token }) {
                     </label>
                     <div className="space-y-2">
                       <div className="flex items-end gap-3">
-                        <div className="flex-1">
+                        <div className="flex-1 relative">
+                          <button
+                            type="button"
+                            onClick={() => openDatePicker(pendaftaranStartRef)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-900 p-1.5 rounded-lg hover:bg-blue-200 transition-colors"
+                            aria-label="Buka pemilih tanggal mulai"
+                          >
+                            <Calendar size={18} />
+                          </button>
                           <input
-                            type="date"
+                            ref={pendaftaranStartRef}
+                            type="datetime-local"
                             value={formData.mdl_pendaftaran_mulai}
                             onChange={(e) =>
                               setFormData({
@@ -644,7 +677,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                                 mdl_pendaftaran_mulai: e.target.value,
                               })
                             }
-                            className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                            className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
                               errors.mdl_pendaftaran_mulai
                                 ? "border-2 border-red-500"
                                 : "border-0"
@@ -656,9 +689,18 @@ export default function AddEvent({ isOpen, onClose, token }) {
                           –
                         </span>
 
-                        <div className="flex-1">
+                        <div className="flex-1 relative">
+                          <button
+                            type="button"
+                            onClick={() => openDatePicker(pendaftaranEndRef)}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-900 p-1.5 rounded-lg hover:bg-blue-200 transition-colors"
+                            aria-label="Buka pemilih tanggal selesai"
+                          >
+                            <Calendar size={18} />
+                          </button>
                           <input
-                            type="date"
+                            ref={pendaftaranEndRef}
+                            type="datetime-local"
                             value={formData.mdl_pendaftaran_selesai}
                             onChange={(e) =>
                               setFormData({
@@ -666,7 +708,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                                 mdl_pendaftaran_selesai: e.target.value,
                               })
                             }
-                            className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                            className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
                               errors.mdl_pendaftaran_selesai
                                 ? "border-2 border-red-500"
                                 : "border-0"
@@ -695,76 +737,62 @@ export default function AddEvent({ isOpen, onClose, token }) {
                     </div>
                   </div>
 
-                  {/* Tanggal Acara */}
+                  {/* Tanggal & Waktu Acara (gabungan datetime-local) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tanggal Acara<span className="text-red-500">*</span>
+                      Periode Acara<span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="date"
-                      value={formData.mdl_acara_mulai_date}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          mdl_acara_mulai_date: e.target.value,
-                        })
-                      }
-                      className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                        errors.mdl_acara_mulai_date
-                          ? "border-2 border-red-500"
-                          : "border-0"
-                      } focus:outline-none`}
-                    />
-                    {errors.mdl_acara_mulai_date && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.mdl_acara_mulai_date}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Waktu Acara */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Waktu Acara<span className="text-red-500">*</span>
-                    </label>
-
                     <div className="flex items-end gap-3">
-                      <div className="flex-1">
+                      <div className="flex-1 relative">
+                        <button
+                          type="button"
+                          onClick={() => openDatePicker(acaraStartRef)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-900 p-1.5 rounded-lg hover:bg-blue-200 transition-colors"
+                          aria-label="Buka pemilih tanggal mulai acara"
+                        >
+                          <Calendar size={18} />
+                        </button>
                         <input
-                          type="time"
-                          value={formData.mdl_acara_mulai_time}
+                          ref={acaraStartRef}
+                          type="datetime-local"
+                          value={formData.mdl_acara_mulai}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              mdl_acara_mulai_time: e.target.value,
+                              mdl_acara_mulai: e.target.value,
                             })
                           }
-                          className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_mulai_time
-                              ? "border-2 border-red-500"
-                              : "border-0"
+                          className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                            errors.mdl_acara_mulai ? "border-2 border-red-500" : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
 
-                      <span className="text-lg font-semibold text-gray-700 mb-1 select-none self-end">
+                      <span className="text-lg font-semibold text-gray-700 mb-1 select-none">
                         –
                       </span>
 
-                      <div className="flex-1">
+                      <div className="flex-1 relative">
+                        <button
+                          type="button"
+                          onClick={() => openDatePicker(acaraEndRef)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-900 p-1.5 rounded-lg hover:bg-blue-200 transition-colors"
+                          aria-label="Buka pemilih tanggal selesai acara"
+                        >
+                          <Calendar size={18} />
+                        </button>
                         <input
-                          type="time"
-                          value={formData.mdl_acara_selesai_time}
+                          ref={acaraEndRef}
+                          type="datetime-local"
+                          value={formData.mdl_acara_selesai}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              mdl_acara_selesai_time: e.target.value,
+                              mdl_acara_selesai: e.target.value,
                             })
                           }
-                          className={`w-full rounded-lg bg-gray-100 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_selesai_time
-                              ? "border-2 border-red-500"
-                              : "border-0"
+                          className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
+                            errors.mdl_acara_selesai ? "border-2 border-red-500" : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
@@ -772,18 +800,14 @@ export default function AddEvent({ isOpen, onClose, token }) {
 
                     <div className="flex gap-3 mt-2">
                       <div className="flex-1">
-                        {errors.mdl_acara_mulai_time && (
-                          <p className="text-red-500 text-sm">
-                            {errors.mdl_acara_mulai_time}
-                          </p>
+                        {errors.mdl_acara_mulai && (
+                          <p className="text-red-500 text-sm">{errors.mdl_acara_mulai}</p>
                         )}
                       </div>
                       <div className="w-4"></div>
                       <div className="flex-1">
-                        {errors.mdl_acara_selesai_time && (
-                          <p className="text-red-500 text-sm">
-                            {errors.mdl_acara_selesai_time}
-                          </p>
+                        {errors.mdl_acara_selesai && (
+                          <p className="text-red-500 text-sm">{errors.mdl_acara_selesai}</p>
                         )}
                       </div>
                     </div>
@@ -939,20 +963,30 @@ export default function AddEvent({ isOpen, onClose, token }) {
         </>
       )}
 
-      {/* ✅ TAMBAHKAN: Style untuk animasi */}
+      {/* Hide native right-side calendar icon and remove default appearance */}
       <style jsx>{`
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
+        /* Remove native calendar/picker icon on date and datetime-local inputs (Chrome/WebKit) */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+          display: none !important;
+          -webkit-appearance: none;
+          appearance: none;
+          pointer-events: none;
+          opacity: 0;
         }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+
+        /* Remove default appearance so our custom left icon + padding aligns */
+        input[type="date"],
+        input[type="datetime-local"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background-repeat: no-repeat;
+        }
+
+        /* Optional: hide clear/spinner for some browsers */
+        input[type="datetime-local"]::-webkit-clear-button,
+        input[type="datetime-local"]::-webkit-inner-spin-button {
+          display: none;
         }
       `}</style>
     </AnimatePresence>

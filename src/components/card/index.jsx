@@ -51,14 +51,14 @@ export default function Card({
     displayStatus = "Segera Hadir";
     statusColor = "bg-warning-10 text-warning";
   } else if (now >= registrationStart && now <= registrationEnd) {
-    displayStatus = "Bisa Daftar";
+    displayStatus = "Pendaftaran Dibuka";
     statusColor = "bg-primary-10 text-primary";
   } else if (now > registrationEnd && now < eventEnd) {
-    displayStatus = "Ditutup";
+    displayStatus = "Pendaftaran Ditutup";
     statusColor = "bg-typo-white2 text-typo-secondary";
   } else if (now >= eventEnd) {
-    displayStatus = "Selesai";
-    statusColor = "bg-gray-200 text-gray-600";
+    displayStatus = "Acara Selesai";
+    statusColor = "bg-error-10 text-error";
   }
 
   // 🔹 Icon tipe

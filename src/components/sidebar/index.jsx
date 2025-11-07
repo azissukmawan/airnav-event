@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  SquareUserRound
 } from "lucide-react";
 import { Button } from "../button";
 import axios from "axios";
@@ -28,6 +29,11 @@ export default function Sidebar({ role = "admin" }) {
       label: "Acara",
       path: "/admin/events",
       icon: <CalendarBlankIcon size={20} />,
+    },
+    {
+      label: "Kelola Akun",
+      path: "/admin/users",
+      icon: <SquareUserRound size={20} />,
     }
   ];
 
@@ -271,7 +277,7 @@ export default function Sidebar({ role = "admin" }) {
             </Typography>
 
             <div className="flex justify-center gap-3">
-              <Button variant="red_outline" onClick={() => setShowLogoutModal(false)}>
+              <Button variant="gray_outline" onClick={() => setShowLogoutModal(false)}>
                 Batal
               </Button>
               <Button variant="red" onClick={handleLogout}>

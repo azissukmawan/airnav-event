@@ -8,6 +8,7 @@ const variantClasses = {
   third: 'px-4 py-2 bg-typo-light text-typo-surface items-center justify-center',
   red: 'px-4 py-2 bg-error text-white hover:bg-error-70 items-center justify-center',
   red_outline: 'px-4 py-2 bg-typo-white text-error border-2 border-error hover:bg-error hover:text-typo-white items-center justify-center',
+  gray_outline: 'px-4 py-2 bg-typo-white text-gray-700 border-2 border-typo-outline hover:bg-typo-outline hover:text-typo-white items-center justify-center',
   green: 'px-4 py-2 bg-success text-white items-center justify-center',
   white: 'px-4 py-2 bg-white text-primary hover:bg-primary hover:text-primary-10 items-center justify-center',
   outline: 'px-4 py-2 bg-typo-white text-primary border-2 border-primary hover:bg-primary hover:text-typo-white items-center justify-center',

@@ -339,7 +339,7 @@ const Profile = () => {
         footer={
           <>
             <Button 
-              variant="red_outline" 
+              variant="gray_outline" 
               onClick={() => {
                 setIsProfileModalOpen(false);
                 setErrors({});
@@ -445,7 +445,7 @@ const Profile = () => {
         footer={
           <>
             <Button 
-              variant="red_outline" 
+              variant="gray_outline" 
               onClick={() => {
                 setIsPasswordModalOpen(false);
                 setErrors({});

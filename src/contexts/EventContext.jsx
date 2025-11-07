@@ -51,10 +51,10 @@ export const EventProvider = ({ children }) => {
     const data = response.data.data;
     setEvents(data.events);
     setPagination({
-      currentPage: data.current_page || page,
-      totalPages: data.last_page || 1,
-      totalItems: data.total || 0,
-      perPage: data.per_page || perPage
+      currentPage: data.pagination.current_page || page,
+      totalPages: data.pagination.last_page || 1,
+      totalItems: data.pagination.total || 0,
+      perPage: data.pagination.per_page || perPage
     });
   } catch (error) {
     console.error(error);

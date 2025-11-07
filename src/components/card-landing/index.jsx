@@ -84,21 +84,21 @@ export default function CardLanding({
     now >= registrationStart &&
     now <= registrationEnd
   ) {
-    statusText = "Bisa Daftar";
+    statusText = "Pendaftaran Dibuka";
   } else if (registrationEnd && now > registrationEnd) {
-    statusText = "Ditutup";
+    statusText = "Pendaftaran Ditutup";
   } else {
     statusText = "-";
   }
 
   const statusColor =
-    statusText === "Bisa Daftar"
+    statusText === "Pendaftaran Dibuka"
       ? "bg-blue-100 text-blue-700"
       : statusText === "Terdaftar"
       ? "bg-green-100 text-green-700"
       : statusText === "Segera Hadir"
       ? "bg-yellow-100 text-yellow-700"
-      : statusText === "Ditutup"
+      : statusText === "Pendaftaran ditutup"
       ? "bg-gray-100 text-[#64646D]"
       : "bg-gray-100 text-gray-600";
 
@@ -127,7 +127,7 @@ export default function CardLanding({
   return (
     <div
       onClick={handleClick}
-      className="w-full min-w-0 bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex flex-col h-full"
+      className="w-full min-w-0 bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex flex-col h-full font-poppins"
     >
       {/* Gambar & status */}
       <div className="relative">
@@ -140,7 +140,7 @@ export default function CardLanding({
           }}
         />
         <span
-          className={`absolute top-3 left-3 text-xs font-semibold px-3 py-1 rounded-full shadow ${statusColor}`}
+          className={`absolute top-3 left-3 text-xs font-semibold px-3 py-1 rounded-full shadow ${statusColor} font-poppins`}
         >
           {statusText}
         </span>
@@ -157,7 +157,7 @@ export default function CardLanding({
         </Typography>
 
         {/* Info acara */}
-        <div className="flex flex-wrap gap-2 text-sm text-left">
+        <div className="flex flex-wrap gap-2 text-sm text-left font-poppins">
           {[
             {
               icon: typeStyle.icon,
@@ -190,7 +190,7 @@ export default function CardLanding({
               <Typography
                 type="caption2"
                 weight="medium"
-                className="block break-words max-w-full"
+                className="block break-words max-w-full capitalize"
               >
                 {item.text}
               </Typography>

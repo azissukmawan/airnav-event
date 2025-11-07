@@ -15,12 +15,10 @@ export default function AddValidate(formData) {
   if (!formData.mdl_pendaftaran_selesai)
     errors.mdl_pendaftaran_selesai = "Tanggal akhir pendaftaran wajib diisi.";
 
-  if (!formData.mdl_acara_mulai_date)
-    errors.mdl_acara_mulai_date = "Tanggal Acara wajib diisi.";
-  if (!formData.mdl_acara_mulai_time)
-    errors.mdl_acara_mulai_time = "Jam Mulai wajib diisi.";
-  if (!formData.mdl_acara_selesai_time)
-    errors.mdl_acara_selesai_time = "Jam Selesai wajib diisi.";
+  if (!formData.mdl_acara_mulai)
+    errors.mdl_acara_mulai = "Tanggal mulai acara wajib diisi.";
+  if (!formData.mdl_acara_selesai)
+    errors.mdl_acara_selesai = "Tanggal selesai acara wajib diisi.";
 
   if (!formData.mdl_link_wa)
     errors.mdl_link_wa = "URL Grup WhatsApp wajib diisi.";
@@ -31,14 +29,14 @@ export default function AddValidate(formData) {
   }
 
   // --- Validasi Logika Tanggal Pendaftaran ---
-  if (formData.mdl_pendaftaran_mulai && formData.mdl_pendaftaran_selesai) {
-    const start = new Date(formData.mdl_pendaftaran_mulai);
-    const end = new Date(formData.mdl_pendaftaran_selesai);
-    if (start > end) {
-      errors.mdl_pendaftaran_selesai =
-        "Tanggal akhir harus setelah atau sama dengan tanggal mulai.";
-    }
-  }
+  //if (formData.mdl_pendaftaran_mulai && formData.mdl_pendaftaran_selesai) {
+  //  const start = new Date(formData.mdl_pendaftaran_mulai);
+  //  const end = new Date(formData.mdl_pendaftaran_selesai);
+  //  if (start > end) {
+  //    errors.mdl_pendaftaran_selesai =
+  //      "Tanggal akhir harus setelah atau sama dengan tanggal mulai.";
+  //  }
+  //}
 
   // --- Validasi Logika antara pendaftaran & acara ---
   if (formData.mdl_pendaftaran_selesai && formData.mdl_acara_mulai_date) {
@@ -51,13 +49,13 @@ export default function AddValidate(formData) {
   }
 
   // --- Validasi Logika Jam Acara ---
-  if (
-    formData.mdl_acara_mulai_time &&
-    formData.mdl_acara_selesai_time &&
-    formData.mdl_acara_mulai_time >= formData.mdl_acara_selesai_time
-  ) {
-    errors.mdl_acara_selesai_time = "Jam selesai harus setelah jam mulai.";
-  }
+  //if (
+  //  formData.mdl_acara_mulai_time &&
+  //  formData.mdl_acara_selesai_time &&
+  //  formData.mdl_acara_mulai_time >= formData.mdl_acara_selesai_time
+  //) {
+  //  errors.mdl_acara_selesai_time = "Jam selesai harus setelah jam mulai.";
+  //}
 
   return errors;
 }

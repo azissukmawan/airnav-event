@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
-import { Download, ScanLine } from "lucide-react";
+import { Award, Download, ScanLine } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
 import Alert from "../../../components/alert";
@@ -89,12 +89,13 @@ const Activity = () => {
           let status = "";
           if (sekarang < mulai) status = "Belum Dimulai";
           else if (sekarang >= mulai && sekarang <= selesai)
-            status = "On Going";
-          else status = "Selesai";
+            status = "Berlangsung";
+          else status = "Acara Selesai";
 
           const sudahPresensi = item.presensi !== null;
           const sudahLewat = sekarang > selesai;
           const bisaDownload = sudahPresensi && sudahLewat;
+          const getDoorprize = item.has_doorprize == 1;
 
           return {
             id: acara.id,
@@ -102,6 +103,7 @@ const Activity = () => {
             date: acara.mdl_acara_mulai,
             status,
             sudahPresensi,
+            getDoorprize,
             isDownloaded: bisaDownload,
           };
         });
@@ -209,16 +211,16 @@ const Activity = () => {
         {filteredActivities.length > 0 ? (
           filteredActivities.map((activity) => {
             const statusColor =
-              activity.status === "On Going"
-                ? "bg-warning-10 text-warning"
+              activity.status === "Berlangsung"
+                ? "bg-success-10 text-success"
                 : activity.status === "Belum Dimulai"
                 ? "bg-blue-100 text-blue-600"
-                : "bg-success-10 text-success";
+                : "bg-error-10 text-error";
 
             return (
               <div
                 key={activity.id}
-                className="w-full bg-white p-4 rounded-xl shadow-sm space-y-4"
+                className="w-full bg-white p-4 rounded-xl shadow-sm space-y-2"
               >
                 <div className="flex justify-between p-3 bg-blue-50 text-primary rounded-xl">
                   <Typography type="body" weight="bold">
@@ -233,15 +235,23 @@ const Activity = () => {
                   </Typography>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <Typography type="caption1" className="text-gray-600">
-                    Status:{" "}
-                    <span
-                      className={`inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold ${statusColor}`}
-                    >
-                      {activity.status}
-                    </span>
-                  </Typography>
+                <div className="md:flex items-center justify-between space-y-2">
+                  <div className="md:flex">
+                    <Typography type="caption1" className="text-gray-600">
+                      Status:{" "}
+                      <span
+                        className={`inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold ${statusColor}`}
+                      >
+                        {activity.status}
+                      </span>
+                      {activity.sudahPresensi && (
+                        <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">Hadir</span>
+                      )}
+                      {activity.getDoorprize && (
+                        <span className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10"><Award size={12}/>Pemenang Doorprize</span>
+                      )}
+                    </Typography>
+                  </div>
 
                   {activity.isDownloaded ? (
                     <Button
@@ -286,7 +296,7 @@ const Activity = () => {
                       Sertifikat
                     </Button>
                   ) : activity.sudahPresensi &&
-                    activity.status !== "Selesai" ? (
+                    activity.status !== "Acara Selesai" ? (
                     <Button
                       variant="third"
                       iconLeft={<Download size={18} />}
@@ -295,7 +305,7 @@ const Activity = () => {
                     >
                       Sertifikat
                     </Button>
-                  ) : activity.status === "On Going" ? (
+                  ) : activity.status === "Berlangsung" ? (
                     <Button
                       variant="primary"
                       onClick={() => handleScanClick(activity)}
