@@ -8,6 +8,7 @@ import { ArrowUpDown } from "lucide-react";
 import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/pop-up/Delete";
+import { Button } from "../../../components/button";
 
 // Tabs
 const EventTabs = ({ tabs, activeTab, onTabChange }) => {
@@ -38,6 +39,7 @@ const AdminUser = () => {
   const [userData, setUserData] = useState([]);
   const [search, setSearch] = useState("");
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -179,7 +181,19 @@ const AdminUser = () => {
     }
   };
 
-  const columns = [
+  const handleDeleteAll = async () => {
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/users/unverified/destroy-all`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUserData([]); 
+      setIsDeleteAllOpen(false);
+    } catch (err) {
+      alert("Gagal menghapus semua user!");
+    }
+  };
+
+  const baseColumns = [
     {
       header: "No",
       accessor: (row, i) => {
@@ -198,9 +212,7 @@ const AdminUser = () => {
         </div>
       ),
       accessor: (row) => (
-        <div className="line-clamp-2 max-w-[330px]">
-          {row.name || "-"}
-        </div>
+        <div className="line-clamp-2 max-w-[330px]">{row.name || "-"}</div>
       ),
       className: "w-[25%] text-left",
     },
@@ -226,8 +238,7 @@ const AdminUser = () => {
         const status = getStatusLabel(row.detail_peserta?.status_karyawan);
         return (
           <span
-            className={`${status.color} inline-flex items-center text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
-            style={{ minWidth: 90, justifyContent: "center" }}
+            className={`px-3 py-1 rounded-full text-xs font-medium ${status.color}`}
           >
             {status.label}
           </span>
@@ -240,6 +251,10 @@ const AdminUser = () => {
       accessor: (row) => row.telp || "-",
       className: "w-[13%] whitespace-nowrap text-left",
     },
+  ];
+
+  const columns = [
+    ...baseColumns,
     {
       header: "Aksi",
       accessor: (row) => (
@@ -249,7 +264,7 @@ const AdminUser = () => {
               setSelectedUserId(row.id);
               setIsDeleteOpen(true);
             }}
-            className="text-red-500 hover:text-red-700"
+            className="text-red-500 hover:text-red-700 text-center"
             title="Hapus"
           >
             <FiTrash2 size={18} />
@@ -285,15 +300,17 @@ const AdminUser = () => {
           </div>
         </div>
 
-        <div className="mb-6">
-          <EventTabs
-            tabs={tabItems}
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              setCurrentPage(1);
-            }}
-          />
+        <div className="mb-6 flex justify-between items-center">
+          <EventTabs tabs={tabItems} activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab)} />
+          {activeTab === "Tidak Verifikasi" && filteredData.length > 0 && (
+            <Button
+              variant="red"
+              iconLeft={<FiTrash2 />}
+              onClick={() => setIsDeleteAllOpen(true)}
+            >
+              Hapus Semua
+            </Button>
+          )}
         </div>
 
         {/* Table */}
@@ -334,6 +351,12 @@ const AdminUser = () => {
           isOpen={isDeleteOpen}
           onClose={() => setIsDeleteOpen(false)}
           onConfirm={handleDelete}
+        />
+
+        <DeletePopup
+          isOpen={isDeleteAllOpen}
+          onClose={() => setIsDeleteAllOpen(false)}
+          onConfirm={handleDeleteAll}
         />
       </main>
     </div>

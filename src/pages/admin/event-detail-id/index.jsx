@@ -88,6 +88,7 @@ const DetailEventId = () => {
           items={[
             { label: "Dashboard", link: "/admin" },
             { label: "Acara", link: "/admin/events" },
+            { label: "Informasi Acara", link:`/admin/event/${id}`},
             { label: event.mdl_nama || "Detail Acara" },
           ]}
         />
@@ -105,11 +106,13 @@ const DetailEventId = () => {
               Menampilkan halaman detail acara {event.mdl_nama}
             </Typography>
           </div>
-          <Link to={`/admin/event/edit/${id}`}>
-          <button className="bg-blue-900 px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors">
-            Edit Data
-          </button>
-          </Link>
+            {event.mdl_status === "draft" && (
+                <Link to={`/admin/event/edit/${id}`}>
+                <button className="bg-blue-900 px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors">
+                    Edit Data
+                </button>
+                </Link>
+            )}
         </div>
 
         <div className="flex flex-wrap justify-between gap-8">

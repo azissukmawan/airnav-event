@@ -30,7 +30,7 @@ export const Button = ({
 
   const buttonContent = (
     <div className="flex items-center justify-center space-x-1">
-      {iconLeft && <span className="w-6 h-6">{iconLeft}</span>}
+      {iconLeft && <span className="flex items-center w-6 h-6">{iconLeft}</span>}
       <Typography type="button" font="poppins" weight="semibold">
         {children}
       </Typography>
