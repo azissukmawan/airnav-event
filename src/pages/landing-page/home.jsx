@@ -19,6 +19,7 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (data?.success && Array.isArray(data.data?.events)) {
+          console.log(data.data.events);
           const mappedEvents = data.data.events.map((event) => ({
             id: event.id,
             slug: event.mdl_slug,

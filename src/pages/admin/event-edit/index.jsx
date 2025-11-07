@@ -40,13 +40,15 @@ const InfoAcara = () => {
   const [selectedOption, setSelectedOption] = useState("active");
   const [presensiAktif, setPresensiAktif] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [isPublished, setIsPublished] = useState(false);
 
   // Notification state
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
     title: "",
-    message: ""
+    message: "",
   });
 
   // Show notification popup
@@ -64,18 +66,18 @@ const InfoAcara = () => {
       success: {
         bg: "bg-green-50 border-green-500",
         text: "text-green-800",
-        icon: "text-green-600"
+        icon: "text-green-600",
       },
       error: {
         bg: "bg-red-50 border-red-500",
         text: "text-red-800",
-        icon: "text-red-600"
+        icon: "text-red-600",
       },
       warning: {
         bg: "bg-yellow-50 border-yellow-500",
         text: "text-yellow-800",
-        icon: "text-yellow-600"
-      }
+        icon: "text-yellow-600",
+      },
     };
 
     const style = styles[notificationConfig.type];
@@ -86,28 +88,75 @@ const InfoAcara = () => {
           <div className="flex items-start gap-3">
             <div className={style.icon}>
               {notificationConfig.type === "success" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
               {notificationConfig.type === "error" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
               {notificationConfig.type === "warning" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               )}
             </div>
             <div className="flex-1">
-              <h3 className={`font-semibold ${style.text}`}>{notificationConfig.title}</h3>
-              <p className={`text-sm mt-1 ${style.text}`}>{notificationConfig.message}</p>
+              <h3 className={`font-semibold ${style.text}`}>
+                {notificationConfig.title}
+              </h3>
+              <p className={`text-sm mt-1 ${style.text}`}>
+                {notificationConfig.message}
+              </p>
             </div>
-            <button onClick={() => setShowNotification(false)} className={`${style.text} hover:opacity-70`}>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <button
+              onClick={() => setShowNotification(false)}
+              className={`${style.text} hover:opacity-70`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -140,15 +189,12 @@ const InfoAcara = () => {
       }
 
       try {
-        const response = await axios.get(
-          `${API_BASE_URL}/admin/events/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-            timeout: 15000,
-          }
-        );
+        const response = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          timeout: 15000,
+        });
 
         const data = response.data.data;
         setFormData({
@@ -164,31 +210,44 @@ const InfoAcara = () => {
           mdl_template_sertifikat: data.mdl_template_sertifikat_url || "",
           mdl_file_acara: data.mdl_file_acara_url || "",
           mdl_file_rundown: data.mdl_file_rundown_url || "",
-          mdl_pendaftaran_mulai: convertToDatetimeLocal(data.mdl_pendaftaran_mulai),
-          mdl_pendaftaran_selesai: convertToDatetimeLocal(data.mdl_pendaftaran_selesai),
+          mdl_pendaftaran_mulai: convertToDatetimeLocal(
+            data.mdl_pendaftaran_mulai
+          ),
+          mdl_pendaftaran_selesai: convertToDatetimeLocal(
+            data.mdl_pendaftaran_selesai
+          ),
           mdl_acara_mulai: convertToDatetimeLocal(data.mdl_acara_mulai),
           mdl_acara_selesai: convertToDatetimeLocal(data.mdl_acara_selesai),
-          mdl_doorprize_aktif: data.mdl_doorprize_aktif !== null && data.mdl_doorprize_aktif !== undefined 
-            ? Number(data.mdl_doorprize_aktif) 
-            : "",
+          mdl_doorprize_aktif:
+            data.mdl_doorprize_aktif !== null &&
+            data.mdl_doorprize_aktif !== undefined
+              ? Number(data.mdl_doorprize_aktif)
+              : "",
         });
+
+        setIsPublished(data.mdl_status === "published");
 
         setFileNames({
           mdl_file_acara: getFileNameFromUrl(data.mdl_file_acara_url) || "",
           mdl_file_rundown: getFileNameFromUrl(data.mdl_file_rundown_url) || "",
-          mdl_template_sertifikat: getFileNameFromUrl(data.mdl_template_sertifikat_url) || "",
+          mdl_template_sertifikat:
+            getFileNameFromUrl(data.mdl_template_sertifikat_url) || "",
         });
 
         setPresensiAktif(data.mdl_presensi_aktif === 1);
         setSelectedOption(data.mdl_status || "active");
-        
       } catch (error) {
         console.error(error);
-        
-        if (error.code === 'ECONNABORTED') {
-          showPopup("error", "Timeout", "Koneksi timeout. Coba refresh halaman.");
+
+        if (error.code === "ECONNABORTED") {
+          showPopup(
+            "error",
+            "Timeout",
+            "Koneksi timeout. Coba refresh halaman."
+          );
         } else {
-          const errorMsg = error.response?.data?.message || "Gagal memuat data acara";
+          const errorMsg =
+            error.response?.data?.message || "Gagal memuat data acara";
           showPopup("error", "Error", errorMsg);
         }
       }
@@ -196,16 +255,47 @@ const InfoAcara = () => {
 
     fetchEvent();
   }, [id]);
-  
+
+  const handlePublish = async () => {
+    try {
+      setIsLoading(true);
+
+      // Simpan draft dulu
+      await handleSubmit();
+
+      // Panggil endpoint publish
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}/publish`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      if (response.data?.success) {
+        setIsPublished(true);
+        alert("Acara berhasil dipublish!");
+      } else {
+        alert("Gagal mem-publish acara");
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Terjadi kesalahan saat publish");
+    } finally {
+      setShowPublishModal(false);
+      setIsLoading(false);
+    }
+  };
+
   // ✅ PERBAIKAN: Pindahkan handleChange ke luar dan perbaiki logic
   const handleChange = (e) => {
     const { name, type, value, files } = e.target;
-    
+
     if (name === "mdl_doorprize_aktif") {
       setFormData((prev) => ({ ...prev, [name]: Number(value) }));
       return;
     }
-    
+
     if (type === "file" && files && files[0]) {
       setFormData((prev) => ({ ...prev, [name]: files[0] }));
       setFileNames((prev) => ({ ...prev, [name]: files[0].name }));
@@ -222,11 +312,11 @@ const InfoAcara = () => {
 
     try {
       const newStatus = !presensiAktif;
-      
+
       const response = await axios.put(
         `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
         {
-          status_qr: newStatus
+          status_qr: newStatus,
         },
         {
           headers: {
@@ -242,12 +332,17 @@ const InfoAcara = () => {
       } else {
         setPresensiAktif(newStatus);
       }
-      
-      showPopup("success", "Berhasil", `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`);
+
+      showPopup(
+        "success",
+        "Berhasil",
+        `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`
+      );
     } catch (error) {
       console.error(error.response?.data || error.message);
-      
-      const errorMsg = error.response?.data?.message || "Gagal mengubah status presensi";
+
+      const errorMsg =
+        error.response?.data?.message || "Gagal mengubah status presensi";
       showPopup("error", "Error", errorMsg);
     }
   };
@@ -269,13 +364,27 @@ const InfoAcara = () => {
 
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "mdl_kode_qr") return;
-        
-        if (
-          ["mdl_file_acara", "mdl_file_rundown", "mdl_template_sertifikat", "mdl_banner_acara"].includes(key) &&
-          typeof value === "string"
-        ) return;
 
-        if (["mdl_pendaftaran_mulai", "mdl_pendaftaran_selesai", "mdl_acara_mulai", "mdl_acara_selesai"].includes(key) && value) {
+        if (
+          [
+            "mdl_file_acara",
+            "mdl_file_rundown",
+            "mdl_template_sertifikat",
+            "mdl_banner_acara",
+          ].includes(key) &&
+          typeof value === "string"
+        )
+          return;
+
+        if (
+          [
+            "mdl_pendaftaran_mulai",
+            "mdl_pendaftaran_selesai",
+            "mdl_acara_mulai",
+            "mdl_acara_selesai",
+          ].includes(key) &&
+          value
+        ) {
           const convertedValue = value.replace("T", " ") + ":00";
           formDataToSend.append(key, convertedValue);
           return;
@@ -298,14 +407,14 @@ const InfoAcara = () => {
         }
       );
       showPopup("success", "Berhasil!", "Acara berhasil diperbarui");
-      
     } catch (error) {
       console.error(error.response?.data || error.message);
-      
-      if (error.code === 'ECONNABORTED') {
+
+      if (error.code === "ECONNABORTED") {
         showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
       } else {
-        const errorMsg = error.response?.data?.message || "Gagal memperbarui acara";
+        const errorMsg =
+          error.response?.data?.message || "Gagal memperbarui acara";
         showPopup("error", "Error", errorMsg);
       }
     } finally {
@@ -334,44 +443,81 @@ const InfoAcara = () => {
   ];
 
   const statusField = [
-    { label: "Tanggal Mulai Pendaftaran", name: "mdl_pendaftaran_mulai", type: "datetime-local" },
-    { label: "Tanggal Selesai Pendaftaran", name: "mdl_pendaftaran_selesai", type: "datetime-local" },
-    { label: "Tanggal Mulai Acara", name: "mdl_acara_mulai", type: "datetime-local" },
-    { label: "Tanggal Selesai Acara", name: "mdl_acara_selesai", type: "datetime-local" },
+    {
+      label: "Tanggal Mulai Pendaftaran",
+      name: "mdl_pendaftaran_mulai",
+      type: "datetime-local",
+    },
+    {
+      label: "Tanggal Selesai Pendaftaran",
+      name: "mdl_pendaftaran_selesai",
+      type: "datetime-local",
+    },
+    {
+      label: "Tanggal Mulai Acara",
+      name: "mdl_acara_mulai",
+      type: "datetime-local",
+    },
+    {
+      label: "Tanggal Selesai Acara",
+      name: "mdl_acara_selesai",
+      type: "datetime-local",
+    },
     { label: "Tipe Acara", name: "mdl_tipe", type: "select" },
     { label: "Jenis Acara", name: "mdl_kategori", type: "select" },
     { label: "Doorprize", name: "mdl_doorprize_aktif", type: "select" },
     { label: "Modul Acara", name: "mdl_file_acara", type: "file" },
     { label: "Susunan Acara", name: "mdl_file_rundown", type: "file" },
-    { label: "Template Sertifikat", name: "mdl_template_sertifikat", type: "file" },
+    {
+      label: "Template Sertifikat",
+      name: "mdl_template_sertifikat",
+      type: "file",
+    },
   ];
 
   return (
     <>
       <NotificationPopup />
-      
+
       <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
         <Sidebar />
         <div className="flex flex-wrap flex-col flex-1 p-8">
           <Breadcrumb items={breadcrumbItems} />
-          
+
           {/* Header */}
           <div className="flex flex-wrap mt-7 mb-5 justify-between w-full max-w-full rounded-2xl">
             <div>
-              <Typography type="heading4" weight="bold" className="text-blue-900 text-xl" dangerouslySetInnerHTML={null}>
+              <Typography
+                type="heading4"
+                weight="bold"
+                className="text-blue-900 text-xl"
+                dangerouslySetInnerHTML={null}
+              >
                 Detail Acara
               </Typography>
-              <Typography type="body" weight="regular" className="text-gray-600" dangerouslySetInnerHTML={null}>
+              <Typography
+                type="body"
+                weight="regular"
+                className="text-gray-600"
+                dangerouslySetInnerHTML={null}
+              >
                 Menampilkan halaman detail acara {formData.mdl_nama}
               </Typography>
             </div>
-            <div className="flex items-start">
+            <div className="flex items-start gap-3">
               <button
                 onClick={handleSubmit}
-                disabled={isLoading}
-                className="bg-blue-900 px-6 py-3 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                disabled={isLoading || isPublished}
+                className="bg-blue-900 px-6 py-3 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
+                {isLoading ? "Menyimpan..." : "Simpan Draft"}
+              </button>
+              <button
+                onClick={() => setShowPublishModal(true)}
+                disabled={isPublished}
+                className="bg-green-600 px-6 py-3 rounded-2xl text-white font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isPublished ? "Sudah Dipublish" : "Publish"}
               </button>
             </div>
           </div>
@@ -379,14 +525,20 @@ const InfoAcara = () => {
           {/* Banner + Nama + Lokasi */}
           <div className="flex flex-wrap flex-row justify-between mt-6 gap-6">
             <div>
-              <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+              <Typography
+                type="caption1"
+                weight="semibold"
+                className="mb-4"
+                dangerouslySetInnerHTML={null}
+              >
                 Banner Acara
               </Typography>
               <img
                 src={
                   formData.mdl_banner_acara instanceof File
                     ? URL.createObjectURL(formData.mdl_banner_acara)
-                    : formData.mdl_banner_acara || "https://via.placeholder.com/300x150?text=No+Banner"
+                    : formData.mdl_banner_acara ||
+                      "https://via.placeholder.com/300x150?text=No+Banner"
                 }
                 alt="Banner Acara"
                 className="bg-gray-200 w-80 h-48 object-cover rounded-2xl mb-2"
@@ -403,11 +555,16 @@ const InfoAcara = () => {
             <div className="flex flex-wrap gap-6 flex-col flex-1">
               <div className="flex flex-wrap gap-6">
                 <div className="flex-1 min-w-[280px]">
-                  <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+                  <Typography
+                    type="caption1"
+                    weight="semibold"
+                    className="mb-4"
+                    dangerouslySetInnerHTML={null}
+                  >
                     Nama Acara
                   </Typography>
                   <div className="relative">
-                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 w-4.5 h-4.5" />
                     <input
                       type="text"
                       placeholder="Nama Acara"
@@ -420,11 +577,16 @@ const InfoAcara = () => {
                 </div>
 
                 <div className="flex-1 min-w-[280px]">
-                  <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+                  <Typography
+                    type="caption1"
+                    weight="semibold"
+                    className="mb-4"
+                    dangerouslySetInnerHTML={null}
+                  >
                     Lokasi Acara
                   </Typography>
                   <div className="relative">
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-700 w-4.5 h-4.5" />
                     <input
                       type="text"
                       placeholder="Lokasi Acara"
@@ -439,7 +601,12 @@ const InfoAcara = () => {
 
               <div className="flex gap-8">
                 <div className="flex-1">
-                  <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+                  <Typography
+                    type="caption1"
+                    weight="semibold"
+                    className="mb-4"
+                    dangerouslySetInnerHTML={null}
+                  >
                     Deskripsi Acara
                   </Typography>
                   <textarea
@@ -453,7 +620,12 @@ const InfoAcara = () => {
                 </div>
 
                 <div className="flex-1">
-                  <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+                  <Typography
+                    type="caption1"
+                    weight="semibold"
+                    className="mb-4"
+                    dangerouslySetInnerHTML={null}
+                  >
                     Informasi Tambahan
                   </Typography>
                   <textarea
@@ -472,8 +644,13 @@ const InfoAcara = () => {
           {/* Form Fields Grid */}
           <div className="flex flex-wrap mt-6 w-full gap-6">
             {statusField.map((field, index) => (
-              <div key={index} className="w-72">
-                <Typography type="caption1" weight="semibold" className="mb-2" dangerouslySetInnerHTML={null}>
+              <div key={index} className="w-minimum min-w-[280px] flex-1">
+                <Typography
+                  type="caption1"
+                  weight="semibold"
+                  className="mb-2"
+                  dangerouslySetInnerHTML={null}
+                >
                   {field.label}
                 </Typography>
                 <div className="relative w-full">
@@ -548,6 +725,7 @@ const InfoAcara = () => {
           <div className="flex flex-wrap gap-6 outline outline-2 outline-offset-2 outline-gray-300 w-fit rounded-2xl p-5 mt-6">
             <div className="flex flex-col items-center">
               <div className="p-6 flex flex-col rounded-xl items-center">
+                {formData.mdl_kode_qr}
                 {formData.mdl_kode_qr ? (
                   <QRCodeCanvas
                     value={formData.mdl_kode_qr}
@@ -564,7 +742,11 @@ const InfoAcara = () => {
                 )}
               </div>
               <div className="text-center">
-                <Typography type="body" className="text-gray-600 mb-2" dangerouslySetInnerHTML={null}>
+                <Typography
+                  type="body"
+                  className="text-gray-600 mb-2"
+                  dangerouslySetInnerHTML={null}
+                >
                   Download QR Code
                 </Typography>
                 <button
@@ -578,7 +760,12 @@ const InfoAcara = () => {
             </div>
 
             <div className="p-3">
-              <Typography type="caption1" weight="semibold" className="mb-4" dangerouslySetInnerHTML={null}>
+              <Typography
+                type="caption1"
+                weight="semibold"
+                className="mb-4"
+                dangerouslySetInnerHTML={null}
+              >
                 Presensi Acara
               </Typography>
               <div className="flex items-center gap-4">
@@ -603,7 +790,34 @@ const InfoAcara = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      {showPublishModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl text-center">
+            <h2 className="text-lg font-semibold mb-3">Konfirmasi Publish</h2>
+            <p className="text-gray-700 mb-6">
+              Apakah Anda yakin ingin <b>mem-publish</b> acara ini? <br />
+              Setelah publish, data tidak bisa diedit lagi.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setShowPublishModal(false)}
+                className="px-4 py-2 rounded-lg border border-gray-400 hover:bg-gray-100"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handlePublish}
+                disabled={isLoading}
+                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400"
+              >
+                {isLoading ? "Memproses..." : "Ya, Publish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
         @keyframes slide-in {
           from {
             transform: translateX(100%);

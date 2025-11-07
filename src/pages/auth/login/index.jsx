@@ -43,34 +43,33 @@ export default function Login() {
         password: formData.password,
       });
 
+      // Di bagian setelah login sukses
       if (response.data.success) {
         const userData = response.data.data.user;
         const token = response.data.data.access_token;
 
-        if (!token) {
-          setError("Login berhasil tapi token tidak ditemukan. Hubungi admin.");
-          setLoading(false);
-          return;
-        }
-
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
+        localStorage.setItem("role", userData.role?.toLowerCase() || "user");
 
-        // Tambahan penting: simpan role
-        const role = userData.role?.toLowerCase() || "user";
-        localStorage.setItem("role", role);
+        if (rememberMe) localStorage.setItem("rememberMe", "true");
 
-        if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
-        }
+        // Cek kode presensi pending
+        const pendingKode = localStorage.getItem("pendingPresensiKode");
+        const redirectTo = pendingKode
+          ? `/presensi/${pendingKode}`
+          : localStorage.getItem("redirectAfterLogin");
 
-        // Jika ada redirect setelah login
-        const redirectTo = localStorage.getItem("redirectAfterLogin");
+        // Hapus storage sementara
+        localStorage.removeItem("pendingPresensiKode");
         localStorage.removeItem("redirectAfterLogin");
 
         if (redirectTo) {
           navigate(redirectTo);
-        } else if (role === "superadmin" || role === "admin") {
+        } else if (
+          userData.role?.toLowerCase() === "superadmin" ||
+          userData.role?.toLowerCase() === "admin"
+        ) {
           navigate("/admin");
         } else {
           navigate("/user");
