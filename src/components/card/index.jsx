@@ -14,6 +14,7 @@ export default function Card({
   tipe,
   mdl_kategori,
   role,
+  registeredEvents = [],
 }) {
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
@@ -36,6 +37,10 @@ export default function Card({
   const registrationEnd = new Date(mdl_pendaftaran_selesai);
   const eventEnd = new Date(mdl_acara_selesai);
 
+  const isRegistered = registeredEvents.some(
+    (e) => e.modul_acara_id === id
+  );
+
   const isPrivateEvent = ["private", "invite-only"].includes(
     mdl_kategori?.toLowerCase()
   );
@@ -44,7 +49,10 @@ export default function Card({
   let displayStatus = "";
   let statusColor = "";
 
-  if (isRestrictedForUser) {
+  if (isRegistered) {
+    displayStatus = "Terdaftar";
+    statusColor = "bg-success-10 text-success-60";
+  } else if (isRestrictedForUser) {
     displayStatus = "Khusus Karyawan";
     statusColor = "bg-white text-primary";
   } else if (now < registrationStart) {
@@ -61,7 +69,6 @@ export default function Card({
     statusColor = "bg-error-10 text-error";
   }
 
-  // 🔹 Icon tipe
   let TypeIcon;
   if (tipe?.toLowerCase() === "offline") {
     TypeIcon = Building;
@@ -73,7 +80,6 @@ export default function Card({
     TypeIcon = Building;
   }
 
-  // 🔹 Tombol
   const isEventFinished = now >= eventEnd;
   const isButtonDisabled = isEventFinished;
   const buttonText = "Lihat Detail";
@@ -147,7 +153,6 @@ export default function Card({
           </div>
         </div>
 
-        {/* 🔹 Tombol */}
         {to && !isButtonDisabled ? (
           <Button variant={buttonVariant} to={to} className="w-full mt-4">
             {buttonText}

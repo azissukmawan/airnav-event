@@ -191,10 +191,8 @@ const Event = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        const result = await response.json();
-
-        if (result.success) {
-          setRegisteredEvents(result.data.data || []);
+        if (response.data.success) {
+          setRegisteredEvents(response.data.data.data || []);
         }
       } catch (error) {
         console.error("Error fetching registered events:", error);
