@@ -29,7 +29,7 @@ export default function PresensiAutoSubmit() {
   }, []);
 
   useEffect(() => {
-    if (!kode) return; // Tunggu sampai kode sudah di-set
+    if (!kode) return;
 
     const token = localStorage.getItem("token");
 
