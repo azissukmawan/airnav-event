@@ -225,7 +225,7 @@ export default function Register() {
                   <input
                     type="text"
                     name="phone"
-                    placeholder="+62 812 3456 7890"
+                    placeholder="0881234567890"
                     value={formData.phone}
                     onChange={handleChange}
                     className={`w-full p-3 pl-10 bg-gray-100 rounded-lg border-none focus:ring-2 text-sm ${

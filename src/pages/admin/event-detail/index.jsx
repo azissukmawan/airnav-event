@@ -455,7 +455,7 @@ const AdminDetail = () => {
                   </div>
                   {/* === Button === */}
                   <div className="flex flex-wrap items-center gap-3 mt-5">
-                    <Link to={`/admin/event/edit/${id}`}>
+                    <Link to={`/admin/event/detail/${id}`}>
                       <button className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
                         Lihat Detail Lengkap
                       </button>
