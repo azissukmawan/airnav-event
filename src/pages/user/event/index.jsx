@@ -58,6 +58,7 @@ const FilterContent = ({ activeFilters, onFilterChange }) => {
 
   const statusOptions = [
     { value: "all", label: "Semua Status" },
+    { value: "terdaftar", label: "Terdaftar" },
     { value: "bisa-daftar", label: "Bisa Daftar" },
     { value: "segera-hadir", label: "Segera Hadir" },
     { value: "ditutup", label: "Ditutup" },
@@ -242,7 +243,14 @@ const Event = () => {
       event.mdl_lokasi.toLowerCase().includes(searchQuery.toLowerCase());
 
     let matchesTipe = filters.tipe === "all" || event.mdl_tipe?.toLowerCase() === filters.tipe;
-    let matchesStatus = filters.status === "all" || eventStatus === filters.status;
+
+    let matchesStatus = true;
+
+    if (filters.status === "terdaftar") {
+      matchesStatus = isRegistered;
+    } else if (filters.status !== "all") {
+      matchesStatus = eventStatus === filters.status;
+    }
 
     return matchesSearch && matchesTipe && matchesStatus;
   });
