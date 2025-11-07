@@ -29,16 +29,22 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
         { kode: kode },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
         }
       );
 
-      if (response.data.success === true || response.status === 200 || response.status === 201) {
+      if (
+        response.data.success === true ||
+        response.status === 200 ||
+        response.status === 201
+      ) {
         setScanResult(kode);
-        setSuccessMessage(response.data.message || "Presensi berhasil dicatat!");
+        setSuccessMessage(
+          response.data.message || "Presensi berhasil dicatat!"
+        );
         setError("");
 
         setTimeout(() => {
@@ -58,8 +64,10 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
     } catch (err) {
       const errorMessage = err.response?.data?.message || "";
 
-      if (errorMessage.toLowerCase().includes("sudah melakukan presensi") || 
-          errorMessage.toLowerCase().includes("sudah presensi")) {
+      if (
+        errorMessage.toLowerCase().includes("sudah melakukan presensi") ||
+        errorMessage.toLowerCase().includes("sudah presensi")
+      ) {
         setError("");
         setSuccessMessage("Anda sudah melakukan presensi sebelumnya.");
         setTimeout(() => {
@@ -94,31 +102,38 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
     }
 
     let html5QrCode;
-    
+
     const startScanner = async () => {
       try {
-        const Html5QrcodeLib = await import('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/+esm');
+        const Html5QrcodeLib = await import(
+          "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/+esm"
+        );
         const Html5Qrcode = Html5QrcodeLib.Html5Qrcode;
-        
+
         html5QrCode = new Html5Qrcode("qr-reader");
-        
+
         await html5QrCode.start(
           { facingMode: "environment" },
           {
             fps: 10,
-            qrbox: { width: 250, height: 250 }
+            qrbox: { width: 250, height: 250 },
           },
           (decodedText) => {
             html5QrCode.stop().catch(console.error);
             setScanning(false);
-            submitPresensi(decodedText);
-          },
+
+            // ambil kode terakhir dari URL QR
+            const kode = decodedText.split("/").pop();
+            submitPresensi(kode);
+          }
         );
-        
+
         setScanning(true);
         setError("");
       } catch (err) {
-        setError("Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera.");
+        setError(
+          "Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera."
+        );
         console.error(err);
       }
     };
