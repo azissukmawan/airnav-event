@@ -263,17 +263,22 @@ const AdminUser = () => {
 
       <main className="flex-1 p-6 space-y-6 bg-gray-50 overflow-x-hidden">
         <Breadcrumb items={breadcrumbItems} />
-        <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-blue-900">Kelola Akun</h1>
-        </div>
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-4xl font-bold text-blue-900">Kelola Akun</h1>
+            <h4 className="text-sm text-gray-500">
+              Menampilkan Halaman Kelola Akun pada Sistem
+            </h4>
+          </div>
 
-        {/* Search */}
-        <div className="flex md:flex-row items-center md:space-x-4 mb-10">
-          <div className="flex-1">
-            <Search
-              placeholder="Cari nama atau email..."
-              onSearch={handleSearchChange}
-            />
+          {/* Search */}
+          <div className="flex items-center space-x-4">
+            <div className="w-147">
+              <Search
+                placeholder="Cari nama atau email..."
+                onSearch={handleSearchChange}
+              />
+            </div>
           </div>
         </div>
 
