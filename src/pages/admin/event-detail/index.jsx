@@ -477,7 +477,10 @@ const AdminDetail = () => {
                         <div className="flex flex-col rounded-xl items-center">
                           {eventData.mdl_kode_qr ? (
                             <QRCodeCanvas
-                              value={eventData.mdl_kode_qr}
+                              value={
+                                "https://airnav-event.vercel.app/presensi" +
+                                eventData.mdl_kode_qr
+                              }
                               size={150}
                               bgColor="#ffffff"
                               fgColor="#000000"
