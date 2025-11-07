@@ -18,7 +18,7 @@ const Table = ({ columns, data }) => {
               {columns.map((col, index) => (
                 <th
                   key={index}
-                  className={`px-5 py-3 text-left font-semibold border-b border-blue-200 ${
+                  className={`px-5 py-3 border-b border-blue-200 text-center align-middle ${
                     col.className || ""
                   }`}
                 >
@@ -39,7 +39,7 @@ const Table = ({ columns, data }) => {
                   {columns.map((col, colIndex) => (
                     <td
                       key={colIndex}
-                      className={`px-5 py-3 text-gray-800 text-sm align-top ${
+                      className={`px-5 py-3 text-gray-800 text-sm text-center align-middle ${
                         col.className || ""
                       }`}
                     >

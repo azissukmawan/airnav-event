@@ -4,20 +4,11 @@ import Sidebar from "../../../components/sidebar";
 import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
-import { QRCodeCanvas } from "qrcode.react";
 import {
   Pencil,
   MapPin,
   FilePlus,
-  AlertTriangle,
-  X,
-  CheckCircle,
-  XCircle,
-  Loader2,
 } from "lucide-react";
-
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const InfoAcara = () => {
   const { id } = useParams();
