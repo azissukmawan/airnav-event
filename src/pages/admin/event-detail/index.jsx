@@ -478,10 +478,10 @@ const AdminDetail = () => {
                           {eventData.mdl_kode_qr ? (
                             <QRCodeCanvas
                               value={
-                                "https://airnav-event.vercel.app/presensi" +
+                                "https://airnav-event.vercel.app/presensi/" +
                                 eventData.mdl_kode_qr
                               }
-                              size={150}
+                              size={150}  
                               bgColor="#ffffff"
                               fgColor="#000000"
                               level="H"
