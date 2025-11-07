@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function Loading() {
+export default function Loading({ variant, eventName }) {
   const [fadeOut, setFadeOut] = useState(false);
   const [shouldRender, setShouldRender] = useState(true);
 
@@ -14,6 +14,11 @@ export default function Loading() {
   }, []);
 
   if (!shouldRender) return null;
+
+  let text = "Memuat halaman ...";
+  if (variant === "presensi") {
+    text = `Memproses presensi ...`;
+  }
 
   return (
     <div
@@ -34,7 +39,7 @@ export default function Loading() {
 
       {/* TEKS */}
       <p className="mt-6 text-base tracking-wide font-medium text-gray-700 animate-pulse">
-        Memuat halaman ...
+        {text}
       </p>
     </div>
   );

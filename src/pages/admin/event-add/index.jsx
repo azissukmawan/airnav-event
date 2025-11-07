@@ -963,30 +963,20 @@ export default function AddEvent({ isOpen, onClose, token }) {
         </>
       )}
 
-      {/* Hide native right-side calendar icon and remove default appearance */}
+      {/* ✅ TAMBAHKAN: Style untuk animasi */}
       <style jsx>{`
-        /* Remove native calendar/picker icon on date and datetime-local inputs (Chrome/WebKit) */
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-          display: none !important;
-          -webkit-appearance: none;
-          appearance: none;
-          pointer-events: none;
-          opacity: 0;
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
         }
-
-        /* Remove default appearance so our custom left icon + padding aligns */
-        input[type="date"],
-        input[type="datetime-local"] {
-          -webkit-appearance: none;
-          appearance: none;
-          background-repeat: no-repeat;
-        }
-
-        /* Optional: hide clear/spinner for some browsers */
-        input[type="datetime-local"]::-webkit-clear-button,
-        input[type="datetime-local"]::-webkit-inner-spin-button {
-          display: none;
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
         }
       `}</style>
     </AnimatePresence>

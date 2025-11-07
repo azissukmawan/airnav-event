@@ -30,6 +30,7 @@ import DetailEvent from "./pages/user/event/detail";
 import Activity from "./pages/user/activity";
 import Profile from "./pages/user/profile";
 import CertificatePreview from "./pages/user/certificate";
+import PresensiAutoSubmit from "./pages/user/activity/scan/autoSubmit";
 
 function App() {
   return (
@@ -139,7 +140,7 @@ function App() {
             </EventProvider>
           }
         />
-
+        <Route path="/presensi/:kode" element={<PresensiAutoSubmit />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
