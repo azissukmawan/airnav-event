@@ -11,25 +11,27 @@ export default function PresensiAutoSubmit() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [loading, setLoading] = useState(true);
-
-  const [kode, setKode] = useState(() => {
-    // Ambil dari storage dulu, kalau tidak ada baru dari URL
-    return (
-      localStorage.getItem("pendingPresensiKode") ||
-      window.location.pathname.split("/").pop()
-    );
-  });
-
-  console.log("kode", kode);
+  const [kode, setKode] = useState("");
 
   useEffect(() => {
-    // ✅ tambahkan ini di paling atas useEffect
-    const token = localStorage.getItem("token");
+    // Ambil kode dari URL
+    const parts = window.location.pathname.split("/");
+    const kodeFromUrl = parts[parts.length - 1];
 
-    // Simpan kode ke storage jika belum ada
-    if (!localStorage.getItem("pendingPresensiKode")) {
-      localStorage.setItem("pendingPresensiKode", kode);
+    if (kodeFromUrl) {
+      // Simpan ke localStorage
+      localStorage.setItem("pendingPresensiKode", kodeFromUrl);
+      setKode(kodeFromUrl);
+      console.log("Kode presensi disimpan:", kodeFromUrl);
+    } else {
+      console.warn("Tidak ada kode presensi di URL.");
     }
+  }, []);
+
+  useEffect(() => {
+    if (!kode) return; // Tunggu sampai kode sudah di-set
+
+    const token = localStorage.getItem("token");
 
     // Jika belum login
     if (!token) {
@@ -37,6 +39,8 @@ export default function PresensiAutoSubmit() {
       setModalTitle("Login Diperlukan");
       setErrorMsg("Silakan login terlebih dahulu untuk melakukan presensi.");
       setIsModalOpen(true);
+
+      // Simpan tujuan redirect setelah login
       localStorage.setItem("redirectAfterLogin", `/presensi/${kode}`);
       return;
     }
@@ -46,7 +50,7 @@ export default function PresensiAutoSubmit() {
       try {
         const res = await axios.post(
           `${API_BASE_URL}/presensi`,
-          { kode },
+          { kode: kode },
           {
             headers: { Authorization: `Bearer ${token}` },
           }

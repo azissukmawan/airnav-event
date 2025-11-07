@@ -43,7 +43,6 @@ export default function Login() {
         password: formData.password,
       });
 
-      // Di bagian setelah login sukses
       if (response.data.success) {
         const userData = response.data.data.user;
         const token = response.data.data.access_token;
@@ -51,18 +50,18 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", token);
         localStorage.setItem("role", userData.role?.toLowerCase() || "user");
-
         if (rememberMe) localStorage.setItem("rememberMe", "true");
 
-        // Cek kode presensi pending
+        // 🔁 Redirect setelah login
         const pendingKode = localStorage.getItem("pendingPresensiKode");
-        const redirectTo = pendingKode
-          ? `/presensi/${pendingKode}`
-          : localStorage.getItem("redirectAfterLogin");
+        const redirectAfterLogin = localStorage.getItem("redirectAfterLogin");
 
-        // Hapus storage sementara
-        localStorage.removeItem("pendingPresensiKode");
-        localStorage.removeItem("redirectAfterLogin");
+        const redirectTo =
+          redirectAfterLogin ||
+          (pendingKode ? `/presensi/${pendingKode}` : null);
+
+        // Hapus hanya redirectAfterLogin dulu
+        if (redirectAfterLogin) localStorage.removeItem("redirectAfterLogin");
 
         if (redirectTo) {
           navigate(redirectTo);
@@ -75,11 +74,9 @@ export default function Login() {
           navigate("/user");
         }
       } else {
-        console.error("Login tidak berhasil:", response.data);
         setError(response.data.message || "Login gagal. Silakan coba lagi.");
       }
     } catch (error) {
-      console.error("Error login:", error);
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.status === 401) {
@@ -132,7 +129,6 @@ export default function Login() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username / Email */}
               <div>
                 <label
                   htmlFor="usernameOrEmail"
@@ -158,7 +154,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Password */}
               <div>
                 <label
                   htmlFor="password"
@@ -191,7 +186,6 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Remember Me */}
               <div className="flex items-center justify-between !mt-2">
                 <label className="inline-flex items-center cursor-pointer">
                   <input
@@ -213,7 +207,6 @@ export default function Login() {
                 </a>
               </div>
 
-              {/* Tombol Login */}
               <Button
                 type="submit"
                 variant="primary"
@@ -223,7 +216,6 @@ export default function Login() {
                 {loading ? <Spinner /> : "Masuk"}
               </Button>
 
-              {/* Daftar */}
               <p className="text-center text-sm !mt-4">
                 Belum punya akun?{" "}
                 <a
