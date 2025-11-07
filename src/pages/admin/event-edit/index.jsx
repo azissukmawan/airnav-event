@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
-import {
-  Pencil,
-  MapPin,
-  FilePlus,
-} from "lucide-react";
+import { Pencil, MapPin, FilePlus } from "lucide-react";
 
 const InfoAcara = () => {
   const { id } = useParams();
-  const navigate = useParams();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     mdl_nama: "",
     mdl_deskripsi: "",
@@ -133,7 +130,10 @@ const InfoAcara = () => {
           {/* Footer Buttons */}
           <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
             <button
-              onClick={() => handleSave("draft")}
+              onClick={() => {
+                setShowConfirmModal(false);
+                handleSave("draft");
+              }}
               disabled={isLoading}
               className="px-5 py-2.5 rounded-xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -309,7 +309,7 @@ const InfoAcara = () => {
           setTimeout(() => {
             window.location.href = "/admin/events";
           }, 1500);
-          // hentikan eksekusi lebih lanjut
+          return;
         }
 
         setFormData({
@@ -424,7 +424,7 @@ const InfoAcara = () => {
     }
   };
 
-  // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
+  //  UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
   const handleSave = async (targetStatus) => {
     if (!id) {
       showPopup("error", "Error", "ID acara tidak ditemukan");
@@ -437,10 +437,14 @@ const InfoAcara = () => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("_method", "PUT");
-      formDataToSend.append("mdl_status", targetStatus); // draft atau active
 
+      // ✅ Set status sesuai parameter
+      formDataToSend.append("mdl_status", targetStatus);
+
+      // sisanya tetap sama
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === "mdl_kode_qr") return;
+        // Skip field yang tidak perlu dikirim
+        if (key === "mdl_kode_qr" || key === "mdl_status") return;
 
         if (
           [
@@ -472,6 +476,12 @@ const InfoAcara = () => {
         }
       });
 
+      // Debug: lihat apa yang dikirim
+      console.log("Sending status:", targetStatus);
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0] + ": " + pair[1]);
+      }
+
       const response = await axios.post(
         `${API_BASE_URL}/admin/events/${id}`,
         formDataToSend,
@@ -480,25 +490,28 @@ const InfoAcara = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             "Content-Type": "multipart/form-data",
           },
-          timeout: 30000,
         }
       );
 
-      const successMsg =
-        targetStatus === "draft"
-          ? "Draft berhasil disimpan"
-          : "Acara berhasil dipublikasikan";
-      showPopup("success", "Berhasil!", successMsg);
-    } catch (error) {
-      console.error(error.response?.data || error.message);
+      console.log("Response:", response.data);
 
-      if (error.code === "ECONNABORTED") {
-        showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
-      } else {
-        const errorMsg =
-          error.response?.data?.message || "Gagal memperbarui acara";
-        showPopup("error", "Error", errorMsg);
-      }
+      // ✅ Tampilkan pesan sesuai status
+      const successMsg =
+        targetStatus === "active"
+          ? "Acara berhasil dipublikasikan"
+          : "Draft berhasil disimpan";
+      showPopup("success", "Berhasil!", successMsg);
+
+      // ✅ Update status di state agar UI ikut berubah
+      setFormData((prev) => ({ ...prev, mdl_status: targetStatus }));
+
+      // ✅ Tutup modal setelah berhasil
+      setShowConfirmModal(false);
+    } catch (error) {
+      console.error("Error details:", error.response?.data || error.message);
+      const errorMsg =
+        error.response?.data?.message || "Gagal memperbarui acara";
+      showPopup("error", "Error", errorMsg);
     } finally {
       setIsLoading(false);
     }
