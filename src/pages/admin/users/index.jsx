@@ -264,7 +264,7 @@ const AdminUser = () => {
               setSelectedUserId(row.id);
               setIsDeleteOpen(true);
             }}
-            className="text-red-500 hover:text-red-700 text-center"
+            className="text-red-500 hover:text-red-700"
             title="Hapus"
           >
             <FiTrash2 size={18} />
@@ -276,14 +276,14 @@ const AdminUser = () => {
   ];
 
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
+    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0 bg-gray-50 min-h-screen">
       <Sidebar role="admin" />
 
-      <main className="flex-1 p-6 space-y-6 bg-gray-50 overflow-x-hidden">
+      <main className="flex-1 p-6 space-y-6 overflow-x-hidden">
         <Breadcrumb items={breadcrumbItems} />
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-blue-900">Kelola Akun</h1>
+            <h1 className="text-4xl font-bold text-primary-70">Kelola Akun</h1>
             <h4 className="text-sm text-gray-500">
               Menampilkan Halaman Kelola Akun pada Sistem
             </h4>
@@ -291,7 +291,7 @@ const AdminUser = () => {
 
           {/* Search */}
           <div className="flex items-center space-x-4">
-            <div className="w-147">
+            <div className="w-162">
               <Search
                 placeholder="Cari nama atau email..."
                 onSearch={handleSearchChange}

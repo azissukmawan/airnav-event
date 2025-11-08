@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
-import { Pencil, MapPin, FilePlus } from "lucide-react";
+import {
+  Pencil,
+  MapPin,
+  FilePlus,
+} from "lucide-react";
 
 const InfoAcara = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-
+  const navigate = useParams();
   const [formData, setFormData] = useState({
     mdl_nama: "",
     mdl_deskripsi: "",
@@ -130,10 +133,7 @@ const InfoAcara = () => {
           {/* Footer Buttons */}
           <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3">
             <button
-              onClick={() => {
-                setShowConfirmModal(false);
-                handleSave("draft");
-              }}
+              onClick={() => handleSave("draft")}
               disabled={isLoading}
               className="px-5 py-2.5 rounded-xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -309,7 +309,7 @@ const InfoAcara = () => {
           setTimeout(() => {
             window.location.href = "/admin/events";
           }, 1500);
-          return;
+          // hentikan eksekusi lebih lanjut
         }
 
         setFormData({
@@ -424,7 +424,7 @@ const InfoAcara = () => {
     }
   };
 
-  //  UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
+  // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
   const handleSave = async (targetStatus) => {
     if (!id) {
       showPopup("error", "Error", "ID acara tidak ditemukan");
@@ -437,14 +437,10 @@ const InfoAcara = () => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("_method", "PUT");
+      formDataToSend.append("mdl_status", targetStatus); // draft atau active
 
-      // ✅ Set status sesuai parameter
-      formDataToSend.append("mdl_status", targetStatus);
-
-      // sisanya tetap sama
       Object.entries(formData).forEach(([key, value]) => {
-        // Skip field yang tidak perlu dikirim
-        if (key === "mdl_kode_qr" || key === "mdl_status") return;
+        if (key === "mdl_kode_qr") return;
 
         if (
           [
@@ -476,12 +472,6 @@ const InfoAcara = () => {
         }
       });
 
-      // Debug: lihat apa yang dikirim
-      console.log("Sending status:", targetStatus);
-      for (let pair of formDataToSend.entries()) {
-        console.log(pair[0] + ": " + pair[1]);
-      }
-
       const response = await axios.post(
         `${API_BASE_URL}/admin/events/${id}`,
         formDataToSend,
@@ -490,28 +480,25 @@ const InfoAcara = () => {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
             "Content-Type": "multipart/form-data",
           },
+          timeout: 30000,
         }
       );
 
-      console.log("Response:", response.data);
-
-      // ✅ Tampilkan pesan sesuai status
       const successMsg =
-        targetStatus === "active"
-          ? "Acara berhasil dipublikasikan"
-          : "Draft berhasil disimpan";
+        targetStatus === "draft"
+          ? "Draft berhasil disimpan"
+          : "Acara berhasil dipublikasikan";
       showPopup("success", "Berhasil!", successMsg);
-
-      // ✅ Update status di state agar UI ikut berubah
-      setFormData((prev) => ({ ...prev, mdl_status: targetStatus }));
-
-      // ✅ Tutup modal setelah berhasil
-      setShowConfirmModal(false);
     } catch (error) {
-      console.error("Error details:", error.response?.data || error.message);
-      const errorMsg =
-        error.response?.data?.message || "Gagal memperbarui acara";
-      showPopup("error", "Error", errorMsg);
+      console.error(error.response?.data || error.message);
+
+      if (error.code === "ECONNABORTED") {
+        showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
+      } else {
+        const errorMsg =
+          error.response?.data?.message || "Gagal memperbarui acara";
+        showPopup("error", "Error", errorMsg);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -534,6 +521,10 @@ const InfoAcara = () => {
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
     { label: "Acara", link: "/admin/events" },
+    {
+      label: event?.mdl_nama || "Detail Acara",
+      link: `/admin/events/detail/${id}`,
+    },
     { label: "Edit Acara" },
   ];
 
@@ -578,7 +569,16 @@ const InfoAcara = () => {
       <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
         <Sidebar />
         <div className="flex flex-wrap flex-col flex-1 p-8">
-          <Breadcrumb items={breadcrumbItems} />
+          <Breadcrumb
+            items={[
+              { label: "Dashboard", link: "/admin" },
+              { label: "Acara", link: "/admin/events" },
+              event?.mdl_nama
+                ? { label: event.mdl_nama, link: `/admin/events/${id}` }
+                : { label: "Detail Acara", link: `/admin/events/${id}` },
+              { label: "Edit Acara" },
+            ]}
+          />
 
           {/* Header */}
           <div className="flex flex-wrap mt-7 mb-5 justify-between w-full max-w-full rounded-2xl">

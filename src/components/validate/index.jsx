@@ -28,34 +28,56 @@ export default function AddValidate(formData) {
     errors.mdl_link_wa = "URL tidak valid (harus diawali http:// atau https://).";
   }
 
-  // --- Validasi Logika Tanggal Pendaftaran ---
-  //if (formData.mdl_pendaftaran_mulai && formData.mdl_pendaftaran_selesai) {
-  //  const start = new Date(formData.mdl_pendaftaran_mulai);
-  //  const end = new Date(formData.mdl_pendaftaran_selesai);
-  //  if (start > end) {
-  //    errors.mdl_pendaftaran_selesai =
-  //      "Tanggal akhir harus setelah atau sama dengan tanggal mulai.";
-  //  }
-  //}
+  // --- Validasi Logika Pendaftaran ---
+if (formData.mdl_pendaftaran_mulai && formData.mdl_pendaftaran_selesai) {
+  const daftarMulai = new Date(formData.mdl_pendaftaran_mulai).getTime();
+  const daftarSelesai = new Date(formData.mdl_pendaftaran_selesai).getTime();
 
-  // --- Validasi Logika antara pendaftaran & acara ---
-  if (formData.mdl_pendaftaran_selesai && formData.mdl_acara_mulai_date) {
-    const regEnd = new Date(formData.mdl_pendaftaran_selesai);
-    const eventDate = new Date(formData.mdl_acara_mulai_date);
-    if (eventDate < regEnd) {
-      errors.mdl_acara_mulai_date =
-        "Tanggal acara harus setelah pendaftaran ditutup.";
-    }
+  // Validasi: Selesai harus *setelah* Mulai
+  if (daftarMulai >= daftarSelesai) {
+    errors.mdl_pendaftaran_selesai =
+      "Tanggal dan waktu pendaftaran selesai harus setelah dari pendaftaran mulai (tidak boleh sama).";
   }
+}
 
-  // --- Validasi Logika Jam Acara ---
-  //if (
-  //  formData.mdl_acara_mulai_time &&
-  //  formData.mdl_acara_selesai_time &&
-  //  formData.mdl_acara_mulai_time >= formData.mdl_acara_selesai_time
-  //) {
-  //  errors.mdl_acara_selesai_time = "Jam selesai harus setelah jam mulai.";
-  //}
+// --- Validasi Logika Acara ---
+if (formData.mdl_acara_mulai && formData.mdl_acara_selesai) {
+  const acaraMulai = new Date(formData.mdl_acara_mulai).getTime();
+  const acaraSelesai = new Date(formData.mdl_acara_selesai).getTime();
 
-  return errors;
+  // Validasi: Selesai harus *setelah* Mulai
+  if (acaraMulai >= acaraSelesai) {
+    errors.mdl_acara_selesai =
+      "Tanggal dan waktu acara selesai harus setelah dari acara mulai (tidak boleh sama).";
+  }
+}
+
+// --- Validasi Hubungan antara Pendaftaran & Acara ---
+if (formData.mdl_pendaftaran_selesai && formData.mdl_acara_mulai) {
+  const daftarSelesai = new Date(formData.mdl_pendaftaran_selesai).getTime();
+  const acaraMulai = new Date(formData.mdl_acara_mulai).getTime();
+
+  // Validasi: Acara Mulai harus *setelah* Pendaftaran Selesai
+  if (daftarSelesai >= acaraMulai) {
+    errors.mdl_acara_mulai =
+      "Tanggal acara mulai harus setelah pendaftaran selesai (tidak boleh sama).";
+  }
+}
+
+// Validasi tanggal pendaftaran tidak boleh di masa lalu
+const now = new Date().getTime();
+if (formData.mdl_pendaftaran_mulai && new Date(formData.mdl_pendaftaran_mulai).getTime() < now) {
+  errors.mdl_pendaftaran_mulai = "Tanggal mulai pendaftaran tidak boleh di masa lalu.";
+}
+if (formData.mdl_pendaftaran_selesai && new Date(formData.mdl_pendaftaran_selesai).getTime() < now) {
+  errors.mdl_pendaftaran_selesai = "Tanggal akhir pendaftaran tidak boleh di masa lalu.";
+}
+if (formData.mdl_acara_mulai && new Date(formData.mdl_acara_mulai).getTime() < now) {
+  errors.mdl_acara_mulai = "Tanggal mulai acara tidak boleh di masa lalu.";
+}
+if (formData.mdl_acara_selesai && new Date(formData.mdl_acara_selesai).getTime() < now) {
+  errors.mdl_acara_selesai = "Tanggal akhir acara tidak boleh di masa lalu.";
+}
+
+return errors;
 }

@@ -8,8 +8,12 @@ import Breadcrumb from "../../../components/breadcrumb";
 import TableParticipants from "../../../components/admin/TableParticipants";
 import ParticipantPreview from "../../../components/admin/ParticipantPreview";
 import ArchiveConfirmModal from "../../../components/pop-up/ArchiveConfirmModal";
+import CreateSertif from "../../../components/pop-up/CreateSertif";
 import { QRCodeCanvas } from "qrcode.react";
 import { Typography } from "../../../components/typography";
+
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
 const AdminDetail = () => {
   const { id } = useParams();
@@ -29,6 +33,7 @@ const AdminDetail = () => {
   const token = localStorage.getItem("token");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5);
+  const [showCreateSertif, setShowCreateSertif] = useState(false);
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -36,13 +41,46 @@ const AdminDetail = () => {
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
 
-  // === NOTIFICATION STATE ===
+  // ARSIP ACARA
+  const handleArchiveEvent = async () => {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}/archive`, // BE
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Acara berhasil diarsipkan");
+
+      // Update status eventData agar tidak perlu reload manual
+      setEventData((prev) => ({
+        ...prev,
+        mdl_status: "archived",
+      }));
+
+      // Tutup popup konfirmasi
+      setShowArchiveConfirm(false);
+    } catch (error) {
+      console.error("Gagal mengarsipkan acara:", error);
+      showPopup("error", "Gagal", "Tidak dapat mengarsipkan acara");
+    }
+  };
+
+  // Notifikasi pop-up
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
     title: "",
     message: "",
   });
+
+  const showPopup = (type, title, message) => {
+    setNotificationConfig({ type, title, message });
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
 
   // === NOTIFICATION POPUP COMPONENT ===
   const NotificationPopup = () => {
@@ -149,15 +187,16 @@ const AdminDetail = () => {
         </div>
       </div>
     );
-  }; // ✅ ditutup di sini
-
-  // === FUNGSI UNTUK MENAMPILKAN POPUP ===
-  const showPopup = (type, title, message) => {
-    setNotificationConfig({ type, title, message });
-    setShowNotification(true);
-    setTimeout(() => setShowNotification(false), 4000);
   };
 
+  // === POPUP SERTIF ===
+  const handleGenerateSertif = (data) => {
+    console.log("Data sertifikat dikirim:", data);
+    showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
+    setShowCreateSertif(false);
+  };
+
+  // === FUNGSI UNTUK MENAMPILKAN POPUP PRESENSI ===
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -205,7 +244,7 @@ const AdminDetail = () => {
       );
     } catch (error) {
       console.error(error);
-      alert("Gagal mengubah status presensi");
+      showPopup("error", "Gagal", "Tidak dapat mengubah status presensi");
     }
   };
 
@@ -318,6 +357,7 @@ const AdminDetail = () => {
     fetchWinners();
   }, [id, token]);
 
+  // === SEARCH FILTER ===
   const filteredParticipants = useMemo(() => {
     if (!Array.isArray(participants)) return [];
     return participants.filter((p) =>
@@ -366,13 +406,22 @@ const AdminDetail = () => {
     setSelectedParticipant(null);
   };
 
+  // === GENERATE SERTIF ===
+  // const EventDetail = () => {
+  //   const [showCreateSertif, setShowCreateSertif] = useState(false);
+
+  //   const handleGenerateSertif = (data) => {
+  //     console.log("Data sertif dikirim:", data);
+  //     // TODO: kirim ke API
+  //   };
+  // };
   return (
     <>
       <NotificationPopup />
 
       <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
         <Sidebar role="admin" />
-        <div className="flex-1 p-6 mt-3 space-y-4">
+        <div className="flex-1 p-6 mt-2 space-y-4">
           <Breadcrumb items={breadcrumbItems} />
 
           <div className="flex flex-col mt-5">
@@ -415,17 +464,17 @@ const AdminDetail = () => {
             ) : eventData ? (
               // card data
               <div className="p-6 flex flex-column bg-white rounded-xl shadow-sm ">
-                <div className=" p-6  md:max-w-md lg:max-w-lg ">
+                <div className=" p-5  md:max-w-md lg:max-w-lg ">
                   <h2 className="text-xl font-semibold text-blue-900 mb-2">
                     {eventData.mdl_nama}
                   </h2>
                   <div className="text-sm text-gray-600 space-y-1 mt-3">
                     <p>
-                      <span className="font-medium">Kategori:</span>{" "}
+                      <span className="font-medium ">Kategori:</span>{" "}
                       {eventData.mdl_kategori || "-"}
                     </p>
                     <p>
-                      <span className="font-medium">Lokasi:</span>{" "}
+                      <span className="font-medium ">Lokasi:</span>{" "}
                       {eventData.mdl_lokasi || "-"}
                     </p>
                     <p>
@@ -436,6 +485,11 @@ const AdminDetail = () => {
                           ).toLocaleDateString("id-ID")
                         : "-"}
                     </p>
+                    <p>
+                      <span className="font-medium">Tipe:</span>{" "}
+                      {eventData.mdl_tipe_acara || "-"}
+                    </p>
+
                     <p>
                       <span className="font-medium">Status:</span>{" "}
                       {(() => {
@@ -463,7 +517,7 @@ const AdminDetail = () => {
 
                     <button
                       onClick={() => setShowArchiveConfirm(true)}
-                      className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 hover:text-white transition"
+                      className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition"
                     >
                       Arsipkan Acara
                     </button>
@@ -472,16 +526,13 @@ const AdminDetail = () => {
                 {/* === QR + PRESENSI === */}
                 <div className="flex-1">
                   {!loadingEvent && eventData && (
-                    <div className="flex flex-wrap gap-6 outline outline-2 outline-offset-2 outline-gray-200 w-fit rounded-2xl p-5 ml-30">
+                    <div className="flex flex-wrap gap-3 outline outline-2 outline-offset-2 outline-gray-200 w-fit rounded-2xl p-5 ml-50">
                       <div className="flex flex-col items-center">
                         <div className="flex flex-col rounded-xl items-center">
                           {eventData.mdl_kode_qr ? (
                             <QRCodeCanvas
-                              value={
-                                "https://airnav-event.vercel.app/presensi/" +
-                                eventData.mdl_kode_qr
-                              }
-                              size={150}  
+                              value={eventData.mdl_kode_qr}
+                              size={130}
                               bgColor="#ffffff"
                               fgColor="#000000"
                               level="H"
@@ -499,15 +550,13 @@ const AdminDetail = () => {
                           <Typography
                             type="body"
                             className="text-gray-600 mb-2"
-                          >
-                            Download QR Code
-                          </Typography>
+                          ></Typography>
                           <button
                             onClick={handleDownloadQR}
                             disabled={!eventData.mdl_kode_qr}
-                            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary-80 disabled:bg-gray-400"
+                            className="outline outline-2 outline-offset-2 outline-primary text-primary px-3 py-1 text-xs rounded-lg hover:bg-primary-80 hover:text-primary-0 disabled:bg-gray-400"
                           >
-                            Download
+                            Download QR
                           </button>
                         </div>
                       </div>
@@ -523,6 +572,21 @@ const AdminDetail = () => {
                         <div className="flex items-center gap-4">
                           <button
                             onClick={handleTogglePresensi}
+                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 ${
+                              presensiAktif ? "bg-primary" : "bg-gray-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
+                                presensiAktif
+                                  ? "translate-x-9"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+
+                          {/* <button
+                            onClick={handleTogglePresensi}
                             className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${
                               presensiAktif ? "bg-primary" : "bg-gray-300"
                             }`}
@@ -534,7 +598,7 @@ const AdminDetail = () => {
                                   : "translate-x-1"
                               }`}
                             />
-                          </button>
+                          </button> */}
                           <span className="text-sm font-medium text-gray-700">
                             {presensiAktif ? "ON" : "OFF"}
                           </span>
@@ -542,6 +606,13 @@ const AdminDetail = () => {
                       </div>
                     </div>
                   )}
+                  {/* === SERTIFIKAT === */}
+                  <button
+                    onClick={() => setShowCreateSertif(true)}
+                    className="mt-3 ml-58 px-15 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-80"
+                  >
+                    Generate Sertifikat
+                  </button>
                 </div>
               </div>
             ) : (
@@ -565,6 +636,7 @@ const AdminDetail = () => {
                 eventId={id}
                 participants={participants}
                 doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
+                eventType={eventData?.mdl_tipe}
               />
 
               <div className="overflow-x-auto">
@@ -585,6 +657,7 @@ const AdminDetail = () => {
           )}
         </div>
 
+        {/* ===== POPUP MODAL ===== */}
         {openPreview && selectedParticipant && (
           <ParticipantPreview
             isOpen={openPreview}
@@ -592,15 +665,24 @@ const AdminDetail = () => {
             data={selectedParticipant}
           />
         )}
-
+        <CreateSertif
+          isOpen={showCreateSertif}
+          onClose={() => setShowCreateSertif(false)}
+          onGenerate={handleGenerateSertif}
+        />
         <ArchiveConfirmModal
+          isOpen={showArchiveConfirm}
+          onClose={() => setShowArchiveConfirm(false)}
+          onConfirm={handleArchiveEvent}
+        />
+
+        {/* <ArchiveConfirmModal
           isOpen={showArchiveConfirm}
           onClose={() => setShowArchiveConfirm(false)}
           onConfirm={() => {
             console.log("Acara diarsipkan!");
-            // nanti di sini kamu bisa ganti dengan API atau redirect
           }}
-        />
+        /> */}
       </div>
     </>
   );

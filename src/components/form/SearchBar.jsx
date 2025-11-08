@@ -15,12 +15,12 @@ const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch }) => {
   };
 
   return (
-    <div className="flex items-center w-full bg-white rounded-full border border-typo-inline overflow-hidden focus-within:ring-2 focus-within:ring-primary-60">
+    <div className="flex items-center w-full bg-white rounded-full border-2 border-typo-outline overflow-hidden focus-within:ring-2 focus-within:ring-primary-60">
       <button
         onClick={handleSearchClick}
-        className="p-4 text-typo-icon hover:text-primary-60 transition-colors"
+        className="p-3 text-typo-icon hover:text-primary-60 transition-colors"
       >
-        <Search className="w-5 h-5" />
+        <Search size={16} />
       </button>
 
       <input

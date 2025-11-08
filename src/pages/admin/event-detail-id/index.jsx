@@ -6,6 +6,9 @@ import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
 
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
+
 const DetailEventId = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -83,40 +86,46 @@ const DetailEventId = () => {
   return (
     <div className="flex ml-48 flex-wrap bg-gray-50 min-h-screen">
       <Sidebar />
-      <div className="flex flex-col flex-1 p-8">
+      <div className="flex flex-col flex-1 p-8 ml-2">
         <Breadcrumb
           items={[
             { label: "Dashboard", link: "/admin" },
             { label: "Acara", link: "/admin/events" },
-            { label: "Informasi Acara", link:`/admin/event/${id}`},
+            { label: "Informasi Acara", link: `/admin/event/${id}` },
             { label: event.mdl_nama || "Detail Acara" },
           ]}
         />
 
-        <div className="flex justify-between mt-7 mb-5 w-full">
+        <div className="flex justify-between mt-5 mb-5 w-full">
           <div>
             <Typography
               type="heading4"
               weight="bold"
-              className="text-blue-900 text-xl"
+              className="text-blue-900 text-4xl"
             >
               Detail Acara
             </Typography>
-            <Typography type="body" className="text-gray-600">
+            <Typography type="body" className="text-gray-600 mt-1">
               Menampilkan halaman detail acara {event.mdl_nama}
             </Typography>
           </div>
-            {event.mdl_status === "draft" && (
-                <Link to={`/admin/event/edit/${id}`}>
-                <button className="bg-blue-900 px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors">
-                    Edit Data
-                </button>
-                </Link>
-            )}
+          <Link to={`/admin/event/edit/${id}`}>
+            <button className="bg-primary px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-primary-80 transition-colors">
+              Edit Data
+            </button>
+          </Link>
+
+          {event.mdl_status === "draft" && (
+            <Link to={`/admin/event/edit/${id}`}>
+              <button className="bg-blue-900 px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors">
+                Edit Data
+              </button>
+            </Link>
+          )}
         </div>
 
         <div className="flex flex-wrap justify-between gap-8">
-          <div className="flex-1 min-w-[320px]">
+          <div className="flex-1 min-w-[320px] mt-2">
             <img
               src={event.mdl_banner_acara_url}
               alt=""
@@ -242,14 +251,12 @@ const DetailEventId = () => {
                 />
                 <Typography>
                   Presensi Acara: <br />
-                  {event.mdl_presensi_aktif === 1
-                    ? "Aktif"
-                    : "Tidak Aktif"}
+                  {event.mdl_presensi_aktif === 1 ? "Aktif" : "Tidak Aktif"}
                 </Typography>
               </div>
               <button
                 onClick={handleDownloadQR}
-                className="bg-blue-900 text-white px-5 py-2 rounded-xl hover:bg-blue-700 transition"
+                className="bg-primary text-white px-5 py-2 rounded-xl hover:bg-primary-80 transition"
               >
                 Download QR Code
               </button>

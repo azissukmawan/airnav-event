@@ -3,7 +3,12 @@ import axios from "axios";
 import CardStatus from "../card-status";
 import { Users, UserCheck, Lightbulb, Laptop, User } from "lucide-react";
 
-const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
+const CardList = ({
+  eventId,
+  participants = [],
+  doorprizeActive = false,
+  eventType,
+}) => {
   const [stats, setStats] = useState({
     jumlah_pendaftar: 0,
     jumlah_kehadiran: 0,
@@ -16,7 +21,6 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
 
   useEffect(() => {
     const fetchStats = async () => {
-      // Jika tidak ada eventId, hitung dari participants
       if (!eventId) {
         calculateStatsFromParticipants();
         return;
@@ -24,19 +28,11 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
 
       try {
         setLoading(true);
-
         const token = localStorage.getItem("token");
-
-        if (!token) {
-          throw new Error("Token tidak ditemukan, silakan login ulang.");
-        }
-
         const res = await axios.get(
           `${API_BASE_URL}/admin/events/${eventId}/stats`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
@@ -44,7 +40,6 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
         if (statsData && typeof statsData === "object") {
           setStats(statsData);
         } else {
-          console.warn(res.data);
           calculateStatsFromParticipants();
         }
       } catch (err) {
@@ -103,9 +98,9 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
           </p>
         </div>
       )}
-      
+
       <div
-        className={`grid gap-4 mb-10 ${
+        className={`flex gap-4 mb-10 ${
           doorprizeActive ? "md:grid-cols-5" : "md:grid-cols-4"
         }`}
       >
@@ -118,21 +113,28 @@ const CardList = ({ eventId, participants = [], doorprizeActive = false }) => {
         <CardStatus
           icon={<UserCheck className="text-yellow-500" />}
           value={stats.jumlah_kehadiran}
-          label="Kehadiran"
+          label="Jumlah Kehadiran"
           color="border-yellow-500"
         />
-        <CardStatus
-          icon={<Laptop className="text-red-500" />}
-          value={stats.online}
-          label="Online"
-          color="border-red-500"
-        />
-        <CardStatus
-          icon={<User className="text-indigo-500" />}
-          value={stats.offline}
-          label="Offline"
-          color="border-indigo-500"
-        />
+
+        {/* tampilkan online/offline hanya jika hybrid */}
+        {eventType === "hybrid" && (
+          <>
+            <CardStatus
+              icon={<Laptop className="text-red-500" />}
+              value={stats.online}
+              label="Online"
+              color="border-red-500"
+            />
+            <CardStatus
+              icon={<User className="text-indigo-500" />}
+              value={stats.offline}
+              label="Offline"
+              color="border-indigo-500"
+            />
+          </>
+        )}
+
         {doorprizeActive && (
           <CardStatus
             icon={<Lightbulb className="text-green-500" />}

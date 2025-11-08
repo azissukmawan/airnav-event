@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "../../../components/sidebar";
-import { Link } from "react-router-dom";
 import axios from "axios";
 
 import { Typography } from "../../../components/typography";
-import { Calendar, ChevronsRight, XCircle } from "lucide-react";
+import { Button } from "../../../components/button";
+import { Calendar, ChevronsRight, XCircle, Plus } from "lucide-react";
 import AddEvent from "../event-add";
 
 function SummaryCard({ icon, title, value, iconBgColor, iconColor }) {
@@ -70,37 +70,37 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
+    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0 bg-gray-50 min-h-screen">
       <Sidebar role="admin" />
 
-      <main className="flex-1 px-6 md:px-10 py-8 overflow-y-auto">
+      <main className="flex-1 p-6 space-y-6 overflow-x-hidden">
         {/* Header */}
-        <header className="flex justify-between items-center mb-6">
+        <header className="flex justify-between items-center">
           <div className="flex items-center gap-3">
-            
             <div>
               <Typography
-                type="heading5"
+                type="heading3"
                 weight="bold"
-                className="text-gray-900"
+                className="text-primary-70"
               >
                 Selamat Datang Admin !
               </Typography>
-              <Typography type="body-small" className="text-gray-500">
+              <h4 className="text-sm text-gray-500">
                 System Administrator
-              </Typography>
+              </h4>
             </div>
           </div>
         </header>
 
         {/* Tombol Tambah */}
         <div className="flex justify-end mt-5 mb-5">
-          <Link
-            className="px-8 py-3 rounded-2xl font-semibold bg-blue-900 text-blue-50 hover:bg-blue-200 hover:text-blue-950 transition-colors"
+          <Button
+            variant="primary"
+            iconLeft={<Plus />}
             onClick={handleOpenAddEvent}
           >
             Tambah Acara
-          </Link>
+          </Button>
         </div>
 
         {/* Kartu Statistik */}

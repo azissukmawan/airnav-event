@@ -6,7 +6,6 @@ import { Award, Download, ScanLine } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
 import Alert from "../../../components/alert";
-import { useNavigate } from "react-router-dom";
 
 const Activity = () => {
   const [query, setQuery] = useState("");
@@ -17,8 +16,6 @@ const Activity = () => {
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
   const [alert, setAlert] = useState(null);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -78,13 +75,29 @@ const Activity = () => {
           },
         });
 
+        const rawData = response.data.data.data;
 
-        const fetchedData = response.data.data.data.map((item) => {
-          const acara = item.modul_acara;
+        const groupedData = rawData.reduce((acc, item) => {
+          const acaraId = item.modul_acara_id;
+          if (!acc[acaraId]) {
+            acc[acaraId] = [];
+          }
+          acc[acaraId].push(item);
+          return acc;
+        }, {});
 
+        const fetchedData = Object.values(groupedData).map((group) => {
+          const acara = group[0].modul_acara;
+          
           const mulai = new Date(acara.mdl_acara_mulai);
           const selesai = new Date(acara.mdl_acara_selesai);
           const sekarang = new Date();
+
+          // Hitung jumlah hari
+          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
+          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
+          const diffTime = selesaiDate.getTime() - mulaiDate.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
           let status = "";
           if (sekarang < mulai) status = "Belum Dimulai";
@@ -92,17 +105,31 @@ const Activity = () => {
             status = "Berlangsung";
           else status = "Acara Selesai";
 
-          const sudahPresensi = item.presensi !== null;
+          // Mapping presensi per hari
+          const presensiList = group.map((item, index) => ({
+            hari: index + 1,
+            tanggal: item.presensi?.tanggal_absen || null,
+            sudahPresensi: item.presensi !== null,
+            waktuAbsen: item.presensi?.waktu_absen || null,
+          }));
+
+          // Cek apakah semua hari sudah presensi
+          const totalHadir = presensiList.filter(p => p.sudahPresensi).length;
+          const semuaHadirAtauSatuHari = diffDays <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === diffDays;
+
           const sudahLewat = sekarang > selesai;
-          const bisaDownload = sudahPresensi && sudahLewat;
-          const getDoorprize = item.has_doorprize == 1;
+          const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
+          const getDoorprize = group[0].has_doorprize == 1;
 
           return {
             id: acara.id,
             title: acara.mdl_nama,
             date: acara.mdl_acara_mulai,
             status,
-            sudahPresensi,
+            jumlahHari: diffDays,
+            presensiList,
+            totalHadir,
+            sudahPresensi: semuaHadirAtauSatuHari,
             getDoorprize,
             isDownloaded: bisaDownload,
           };
@@ -123,24 +150,16 @@ const Activity = () => {
     activity.title.toLowerCase().includes(query.toLowerCase())
   );
 
-  const handleDownload = (id) => {
-    setActivities((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isDownloaded: true } : item
-      )
-    );
-    console.log("Download sertifikat untuk id:", id);
-  };
-
-  const handleScanClick = (activity) => {
-    setSelectedActivity(activity);
+  const handleScanClick = () => {
     setScannerOpen(true);
   };
 
   const handleScanSuccess = (qrData) => {
+    const activityId = qrData;
+
     setActivities((prev) =>
       prev.map((item) =>
-        item.id === selectedActivity.id
+        item.id === activityId
           ? { ...item, sudahPresensi: true }
           : item
       )
@@ -148,7 +167,6 @@ const Activity = () => {
 
     setTimeout(() => {
       setScannerOpen(false);
-      setSelectedActivity(null);
     }, 2000);
   };
 
@@ -168,7 +186,6 @@ const Activity = () => {
 
   return (
     <div>
-      {/* Container alert fixed di kanan atas */}
       <div className="fixed top-4 right-4 z-50">
         {alert && (
           <Alert
@@ -200,11 +217,21 @@ const Activity = () => {
         </div>
       </div>
 
-      <div className="mb-4 w-full">
-        <SearchBar
-          placeholder="Cari aktivitas..."
-          onSearch={(value) => setQuery(value)}
-        />
+      <div className="mb-4 w-full md:flex space-y-2 md:space-y-0 gap-3">
+        <div className="flex-1">
+          <SearchBar
+            placeholder="Cari aktivitas..."
+            onSearch={(value) => setQuery(value)}
+          />
+        </div>
+        <Button
+          variant="primary"
+          onClick={handleScanClick}
+          iconLeft={<ScanLine size={18} />}
+          className="whitespace-nowrap"
+        >
+          Scan QR
+        </Button>
       </div>
 
       <div className="space-y-4">
@@ -244,77 +271,96 @@ const Activity = () => {
                       >
                         {activity.status}
                       </span>
-                      {activity.sudahPresensi && (
-                        <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">Hadir</span>
+                      
+                      {activity.jumlahHari <= 1 ? (
+                        // Acara 1 hari atau kurang
+                        activity.sudahPresensi && (
+                          <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">
+                            Hadir
+                          </span>
+                        )
+                      ) : (
+                        // Acara lebih dari 1 hari
+                        activity.presensiList.map((presensi) => 
+                          presensi.sudahPresensi && (
+                            <span
+                              key={presensi.hari}
+                              className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10"
+                            >
+                              Hadir Hari {presensi.hari}
+                            </span>
+                          )
+                        )
                       )}
+                      
+                      {/* Badge doorprize */}
                       {activity.getDoorprize && (
-                        <span className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10"><Award size={12}/>Pemenang Doorprize</span>
+                        <span className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10">
+                          <Award size={12}/>Pemenang Doorprize
+                        </span>
                       )}
                     </Typography>
                   </div>
 
-                  {activity.isDownloaded ? (
-                    <Button
-                      variant="secondary"
-                      iconLeft={<Download size={18} />}
-                      className="w-30"
-                      onClick={async () => {
-                        console.log(activity);
-                        try {
-                          const token = localStorage.getItem("token");
+                  {/* Sertifikat */}
+                  {activity.totalHadir > 0 && (
+                    activity.isDownloaded ? (
+                      <Button
+                        variant="secondary"
+                        iconLeft={<Download size={18} />}
+                        className="w-30"
+                        onClick={async () => {
+                          console.log(activity);
+                          try {
+                            const token = localStorage.getItem("token");
 
-                          const response = await axios.post(
-                            `${API_BASE_URL}/sertifikat/generate`,
-                            { id_acara: activity.id },
-                            {
-                              headers: {
-                                Authorization: `Bearer ${token}`,
-                                "Content-Type": "application/json",
-                              },
-                            }
-                          );
+                            const response = await axios.get(
+                              `${API_BASE_URL}/sertifikat/acara/${activity.id}/download`,
+                              {
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                },
+                                responseType: 'blob'
+                              }
+                            );
 
-                          // Simpan data sertifikat
-                          localStorage.setItem(
-                            "cert_data",
-                            JSON.stringify(response.data)
-                          );
+                            const url = window.URL.createObjectURL(new Blob([response.data]));
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `Sertifikat-${activity.title}.pdf`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.remove();
+                            window.URL.revokeObjectURL(url);
 
-                          // Redirect ke halaman certificate
-                          window.open("/user/certificate", "_blank");
-                        } catch (error) {
-                          console.error("Gagal generate sertifikat:", error);
-                          setAlert({
-                            message:
-                              error.response?.data?.message ||
-                              "Terjadi kesalahan",
-                            type: "error",
-                          });
-                        }
-                      }}
-                    >
-                      Sertifikat
-                    </Button>
-                  ) : activity.sudahPresensi &&
-                    activity.status !== "Acara Selesai" ? (
-                    <Button
-                      variant="third"
-                      iconLeft={<Download size={18} />}
-                      className="w-30 opacity-60 cursor-not-allowed"
-                      disabled
-                    >
-                      Sertifikat
-                    </Button>
-                  ) : activity.status === "Berlangsung" ? (
-                    <Button
-                      variant="primary"
-                      onClick={() => handleScanClick(activity)}
-                      iconLeft={<ScanLine size={18} />}
-                      className="w-30"
-                    >
-                      Scan
-                    </Button>
-                  ) : null}
+                            setAlert({
+                              message: "Sertifikat berhasil diunduh",
+                              type: "success",
+                            });
+                          } catch (error) {
+                            console.error("Gagal download sertifikat:", error);
+                            setAlert({
+                              message:
+                                error.response?.data?.message ||
+                                "Terjadi kesalahan saat mengunduh sertifikat",
+                              type: "error",
+                            });
+                          }
+                        }}
+                      >
+                        Sertifikat
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="third"
+                        iconLeft={<Download size={18} />}
+                        className="w-30 opacity-60 cursor-not-allowed"
+                        disabled
+                      >
+                        Sertifikat
+                      </Button>
+                    )
+                  )}
                 </div>
               </div>
             );
@@ -333,7 +379,7 @@ const Activity = () => {
           setSelectedActivity(null);
         }}
         onScanSuccess={handleScanSuccess}
-        activityTitle={selectedActivity?.title || ""}
+        activityTitle="Scan QR untuk Presensi"
       />
     </div>
   );

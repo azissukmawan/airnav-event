@@ -1,52 +1,12 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter, X, ArrowDownWideNarrow } from "lucide-react";
 import axios from "axios";
 import Card from "../../../components/card";
 import Modal from "../../../components/modal";
 import Pagination from "../../../components/pagination";
 import { useEvents } from "../../../contexts/EventContext";
-
-const SearchBar = ({ placeholder = "Cari sesuatu...", onSearch, onFilterClick }) => {
-  const [query, setQuery] = useState("");
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (onSearch) onSearch(value);
-  };
-
-  const handleSearchClick = () => {
-    if (onSearch) onSearch(query);
-  };
-
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center flex-1 bg-white rounded-full border border-typo-inline overflow-hidden focus-within:ring-2 focus-within:ring-primary-60">
-        <button
-          onClick={handleSearchClick}
-          className="p-4 text-typo-icon hover:text-primary-60 transition-colors"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-
-        <input
-          type="text"
-          placeholder={placeholder}
-          value={query}
-          onChange={handleInputChange}
-          className="flex-1 p-2 outline-none text-typo-secondary placeholder-typo-icon"
-        />
-      </div>
-
-      <button
-        onClick={onFilterClick}
-        className="flex items-center justify-center p-4 bg-white border border-typo-inline rounded-full hover:bg-background-secondary hover:border-primary transition-all"
-      >
-        <Filter className="w-5 h-5 text-typo-icon" />
-      </button>
-    </div>
-  );
-};
+import { Button } from "../../../components/button";
+import SearchBar from "../../../components/form/SearchBar";
 
 const FilterContent = ({ activeFilters, onFilterChange }) => {
   const tipeOptions = [
@@ -311,13 +271,21 @@ const Event = () => {
         )}
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4">
-        <SearchBar
-          placeholder="Cari event berdasarkan nama atau lokasi..."
-          onSearch={handleSearch}
-          onFilterClick={handleOpenFilterModal}
-        />
+      {/* Search Bar & Filter Button */}
+      <div className="mb-4 w-full md:flex space-y-2 md:space-y-0 gap-3">
+        <div className="flex-1">
+          <SearchBar
+            placeholder="Cari acara..."
+            onSearch={handleSearch}
+          />
+        </div>
+        <Button
+          variant="gray_outline"
+          onClick={handleOpenFilterModal}
+          iconLeft={<ArrowDownWideNarrow size={18} />}
+        >
+          Filter
+        </Button>
       </div>
 
       {/* Active Filters */}

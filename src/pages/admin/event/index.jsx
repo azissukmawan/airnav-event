@@ -5,11 +5,12 @@ import Sidebar from "../../../components/sidebar";
 import Table from "../../../components/table";
 import Search from "../../../components/form/SearchBar";
 import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Plus } from "lucide-react";
 import AddEvent from "../event-add";
 import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/pop-up/Delete";
+import { Button } from "../../../components/button";
 
 // === KOMPONEN TABS BARU ===
 const EventTabs = ({ tabs, activeTab, onTabChange }) => {
@@ -167,24 +168,42 @@ const AdminEvent = () => {
       const itemStatus = (item.mdl_status || "").toString().toLowerCase();
       const tabKey = activeTab.toLowerCase();
 
-      // Logika pencocokan (disesuaikan dengan logika di kolom "Publikasi" Anda)
-      if (tabKey === "publish") {
-        // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-        return itemStatus.includes("active") || itemStatus.includes("active");
-      }
-      if (tabKey === "archive") {
-        // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-        return (
-          itemStatus.includes("archive") || itemStatus.includes("archived")
-        );
-      }
-      if (tabKey === "selesai") {
-        // Asumsi: Tab "Selesai" cocok dengan data "closed"
-        return itemStatus.includes("closed");
+      // === LOGIKA FILTER PER TAB ===
+
+      if (tabKey === "draft") {
+        return itemStatus.includes("draft");
       }
 
-      // Untuk tab lain (Draft, Active, Publish), gunakan pencocokan langsung
-      // .includes() lebih aman daripada === (misal: "active" akan cocok dengan "active")
+      if (tabKey === "publish") {
+        // cocokkan untuk event aktif / dipublish
+        return (
+          itemStatus.includes("publish") ||
+          itemStatus.includes("active") ||
+          itemStatus.includes("aktif")
+        );
+      }
+
+      if (tabKey === "selesai") {
+        // cocokkan untuk event yang selesai / ditutup
+        return (
+          itemStatus.includes("closed") ||
+          itemStatus.includes("done") ||
+          itemStatus.includes("selesai")
+        );
+      }
+
+      if (tabKey === "archive") {
+        // cocokkan semua variasi status arsip
+        return (
+          itemStatus.includes("archive") ||
+          itemStatus.includes("archived") ||
+          itemStatus.includes("arsip") ||
+          itemStatus.includes("inactive") ||
+          itemStatus === "nonaktif"
+        );
+      }
+
+      // default fallback
       return itemStatus.includes(tabKey);
     })
     // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
@@ -198,7 +217,6 @@ const AdminEvent = () => {
       const aVal = a[sortField] || "";
       const bVal = b[sortField] || "";
 
-      // Pindahkan logika sorting tanggal Anda yang lebih baik dari handleSort ke sini
       if (
         aVal &&
         bVal &&
@@ -210,7 +228,6 @@ const AdminEvent = () => {
           : new Date(bVal) - new Date(aVal);
       }
 
-      // Fallback untuk string/angka
       if (typeof aVal === "string" && typeof bVal === "string") {
         return sortOrder === "asc"
           ? aVal.localeCompare(bVal)
@@ -218,6 +235,70 @@ const AdminEvent = () => {
       }
       return 0;
     });
+
+  // const filteredData = eventData
+  //   // --- TAHAP 1: FILTER BERDASARKAN TAB ---
+  //   .filter((item) => {
+  //     // Jika tab "Semua", tampilkan semua data
+  //     if (activeTab === "Semua") {
+  //       return true;
+  //     }
+
+  //     // Ambil status publikasi dari item, ubah ke lowercase agar mudah dicocokkan
+  //     const itemStatus = (item.mdl_status || "").toString().toLowerCase();
+  //     const tabKey = activeTab.toLowerCase();
+
+  //     // Logika pencocokan (disesuaikan dengan logika di kolom "Publikasi" Anda)
+  //     if (tabKey === "publish") {
+  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
+  //       return itemStatus.includes("active") || itemStatus.includes("active");
+  //     }
+  //     if (tabKey === "archive") {
+  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
+  //       return (
+  //         itemStatus.includes("archive") || itemStatus.includes("archived")
+  //       );
+  //     }
+  //     if (tabKey === "selesai") {
+  //       // Asumsi: Tab "Selesai" cocok dengan data "closed"
+  //       return itemStatus.includes("closed");
+  //     }
+
+  //     // Untuk tab lain (Draft, Active, Publish), gunakan pencocokan langsung
+  //     // .includes() lebih aman daripada === (misal: "active" akan cocok dengan "active")
+  //     return itemStatus.includes(tabKey);
+  //   })
+  //   // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
+  //   .filter((item) =>
+  //     item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
+  //   )
+  //   // --- TAHAP 3: SORTING ---
+  //   .sort((a, b) => {
+  //     if (!sortField) return 0;
+
+  //     const aVal = a[sortField] || "";
+  //     const bVal = b[sortField] || "";
+
+  //     // Pindahkan logika sorting tanggal Anda yang lebih baik dari handleSort ke sini
+  //     if (
+  //       aVal &&
+  //       bVal &&
+  //       !isNaN(Date.parse(aVal)) &&
+  //       !isNaN(Date.parse(bVal))
+  //     ) {
+  //       return sortOrder === "asc"
+  //         ? new Date(aVal) - new Date(bVal)
+  //         : new Date(bVal) - new Date(aVal);
+  //     }
+
+  //     // Fallback untuk string/angka
+  //     if (typeof aVal === "string" && typeof bVal === "string") {
+  //       return sortOrder === "asc"
+  //         ? aVal.localeCompare(bVal)
+  //         : bVal.localeCompare(aVal);
+  //     }
+  //     return 0;
+  //   });
 
   // === PAGINATION ===
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
@@ -267,7 +348,7 @@ const AdminEvent = () => {
           {row.mdl_nama || "-"}
         </div>
       ),
-      className: "w-[25%] text-left",
+      className: "w-[21%] text-left",
     },
     // TANGGAL DAFTAR
     {
@@ -284,7 +365,7 @@ const AdminEvent = () => {
           ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
           : "-",
 
-      className: "w-[14%] text-left",
+      className: "w-[13%] text-left",
     },
 
     // {
@@ -327,14 +408,14 @@ const AdminEvent = () => {
           ? new Date(row.mdl_acara_mulai).toLocaleDateString("id-ID")
           : "-",
 
-      className: "w-[10%] text-left",
+      className: "w-[14%] text-left",
     },
     // STATUS
     {
       header: (
         <div
           onClick={() => handleSort("mdl_acara_mulai")}
-          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
+          className="flex items-center gap-2 cursor-pointer  select-none hover:text-blue-700"
         >
           Status <ArrowUpDown size={14} />
         </div>
@@ -346,7 +427,7 @@ const AdminEvent = () => {
         );
         return (
           <span
-            className={`${status.color} inline-flex items-center text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
+            className={`${status.color} inline-flex items-center text-xs  text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
             style={{ minWidth: 90, justifyContent: "center" }}
           >
             {status.label}
@@ -368,7 +449,7 @@ const AdminEvent = () => {
       accessor: (row) => {
         const raw = row.mdl_status ?? "";
         if (!raw) return "-";
-        
+
         // Map status values to display text
         let displayText = raw.toString();
         if (displayText.toLowerCase().includes("active")) {
@@ -377,20 +458,22 @@ const AdminEvent = () => {
 
         const label = displayText
           .split(" ")
-          .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+          .map((w) =>
+            w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""
+          )
           .join(" ");
 
         const key = raw.toString().toLowerCase();
         const color =
           key.includes("active") || key === "active"
-            ? "bg-blue-900 text-white"  // Keep original color for "active"/"publish"
+            ? "bg-green-600 text-xs  text-white"
             : key.includes("draft")
-            ? "bg-white-100 text-gray-700 outline-gray-700 outline"
+            ? "bg-white-100 text-gray-700 text-xs  outline-gray-700 outline"
             : key.includes("archived") || key.includes("archive")
-            ? "bg-gray-700 text-white"
+            ? "bg-gray-700 text-xs  text-white"
             : key.includes("closed")
-            ? "bg-gray-400 text-white"
-            : "bg-blue-100 text-blue-700";
+            ? "bg-gray-400 text-xs  text-white"
+            : "bg-blue-100 text-xs  text-blue-700";
 
         return (
           <span
@@ -408,20 +491,27 @@ const AdminEvent = () => {
       header: "Aksi",
       accessor: (row) => {
         // Check if publication status is "active" (shown as "Publish")
-        const isPublished = row.mdl_status?.toLowerCase().includes('active');
-        
+        const isPublished = row.mdl_status?.toLowerCase().includes("active");
+
+        const status = (row.mdl_status || "").toLowerCase();
+        const disabledKeys = ["active", "closed", "archived"];
+        // const isPublished = disabledKeys.some((k) => status.includes(k));
+
         return (
           <div className="flex items-center gap-3">
             <Link to={`/admin/event/${row.id}`}>
-              <button className="text-blue-500 hover:text-blue-700" title="Lihat">
+              <button
+                className="text-blue-500 hover:text-blue-700"
+                title="Lihat"
+              >
                 <FiEye size={18} />
               </button>
             </Link>
-            
+
             {isPublished ? (
               // Disabled edit button for published events
               <button
-                className="text-gray-400 cursor-not-allowed"
+                className="text-gray-400 cursor-not-allowed mb-1"
                 title="Tidak dapat mengedit acara yang sudah dipublish"
                 disabled
               >
@@ -457,14 +547,14 @@ const AdminEvent = () => {
   ];
 
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
+    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0 bg-gray-50 min-h-screen">
       <Sidebar role="admin" />
 
-      <main className="flex-1 p-6 space-y-6 bg-gray-50 overflow-x-hidden">
+      <main className="flex-1 p-6 space-y-6 overflow-x-hidden">
         <Breadcrumb items={breadcrumbItems} />
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-blue-900">Daftar Acara</h1>
+            <h1 className="text-4xl font-bold text-primary-70">Daftar Acara</h1>
             <h4 className="text-sm text-gray-500">
               Menampilkan Halaman Event Acara
             </h4>
@@ -472,22 +562,23 @@ const AdminEvent = () => {
 
           {/* Search + Button */}
           <div className="flex items-center space-x-4">
-            <div className="w-96">
+            <div className="w-120">
               <Search
                 placeholder="Cari nama acara..."
                 onSearch={handleSearchChange}
               />
             </div>
-            <button
-              className="px-8 py-3 rounded-2xl font-semibold bg-blue-600 text-blue-50 hover:bg-blue-900 hover:text-blue-950"
+            <Button
+              variant="primary"
+              iconLeft={<Plus />}
               onClick={() => setIsAddEventOpen(true)}
             >
               Tambah Acara
-            </button>
+            </Button>
           </div>
         </div>
         {/* === BAGIAN TABS BARU === */}
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <EventTabs
             tabs={tabItems}
             activeTab={activeTab}

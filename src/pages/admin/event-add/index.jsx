@@ -25,7 +25,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
     mdl_kategori: "",
     mdl_pendaftaran_mulai: "",
     mdl_pendaftaran_selesai: "",
-    // digabung ke datetime-local
     mdl_acara_mulai: "",
     mdl_acara_selesai: "",
     mdl_catatan: "",
@@ -97,7 +96,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
       mdl_template_sertifikat_url: "blob:http://...",
       mdl_banner_acara: files.mdl_banner_acara,
       mdl_banner_acara_url: "blob:http://...",
-      // kompatibilitas dengan AddValidate yang masih memeriksa date/time terpisah
       mdl_acara_mulai_date: formData.mdl_acara_mulai
         ? formData.mdl_acara_mulai.split("T")[0]
         : "",
@@ -113,7 +111,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      // ✅ GANTI alert dengan popup
       showPopup(
         "error",
         "Validasi Gagal",
@@ -152,8 +149,14 @@ export default function AddEvent({ isOpen, onClose, token }) {
         if (val.includes("T")) return val.replace("T", " ") + ":00";
         return val;
       };
-      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
-      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
+      formDataToSend.append(
+        "mdl_acara_mulai",
+        toBackendDateTime(formData.mdl_acara_mulai)
+      );
+      formDataToSend.append(
+        "mdl_acara_selesai",
+        toBackendDateTime(formData.mdl_acara_selesai)
+      );
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
 
       if (formData.mdl_catatan) {
@@ -182,10 +185,8 @@ export default function AddEvent({ isOpen, onClose, token }) {
 
       console.log("✅ Response sukses:", res.data);
 
-      // ✅ GANTI alert dengan popup
       showPopup("success", "Berhasil!", "Acara berhasil ditambahkan");
 
-      // Tunggu popup muncul dulu
       setTimeout(() => {
         onClose();
         if (onSuccess) onSuccess();
@@ -383,7 +384,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
           </svg>
         )}
         {isLoading ? "Menyimpan..." : "Publish"}
-       
       </button>
     </>
   );
@@ -403,16 +403,6 @@ export default function AddEvent({ isOpen, onClose, token }) {
       mdl_template_sertifikat_url: "blob:http://...",
       mdl_banner_acara: files.mdl_banner_acara,
       mdl_banner_acara_url: "blob:http://...",
-      // kompatibilitas kalau validator masih mengharapkan date/time terpisah
-      //mdl_acara_mulai_date: formData.mdl_acara_mulai
-      //  ? formData.mdl_acara_mulai.split("T")[0]
-      //  : "",
-      //mdl_acara_mulai_time: formData.mdl_acara_mulai
-      //  ? formData.mdl_acara_mulai.split("T")[1]
-      //  : "",
-      //mdl_acara_selesai_time: formData.mdl_acara_selesai
-      //  ? formData.mdl_acara_selesai.split("T")[1]
-      //  : "",
     };
 
     const validationErrors = AddValidate(payloadForValidation);
@@ -443,24 +433,38 @@ export default function AddEvent({ isOpen, onClose, token }) {
       formDataToSend.append("mdl_tipe", formData.mdl_tipe || "");
       formDataToSend.append("mdl_kategori", formData.mdl_kategori || "");
       formDataToSend.append("mdl_lokasi", formData.mdl_lokasi || "");
-      formDataToSend.append("mdl_pendaftaran_mulai", formData.mdl_pendaftaran_mulai || "");
-      formDataToSend.append("mdl_pendaftaran_selesai", formData.mdl_pendaftaran_selesai || "");
+      formDataToSend.append(
+        "mdl_pendaftaran_mulai",
+        formData.mdl_pendaftaran_mulai || ""
+      );
+      formDataToSend.append(
+        "mdl_pendaftaran_selesai",
+        formData.mdl_pendaftaran_selesai || ""
+      );
 
       const toBackendDateTime = (val) => {
         if (!val) return "";
         return val.includes("T") ? val.replace("T", " ") + ":00" : val;
       };
-      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
-      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
+      formDataToSend.append(
+        "mdl_acara_mulai",
+        toBackendDateTime(formData.mdl_acara_mulai)
+      );
+      formDataToSend.append(
+        "mdl_acara_selesai",
+        toBackendDateTime(formData.mdl_acara_selesai)
+      );
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa || "");
       formDataToSend.append("mdl_status", "draft");
-      if (formData.mdl_catatan) formDataToSend.append("mdl_catatan", formData.mdl_catatan);
+      if (formData.mdl_catatan)
+        formDataToSend.append("mdl_catatan", formData.mdl_catatan);
 
       Object.entries(files).forEach(([key, file]) => {
         if (file && file instanceof File) formDataToSend.append(key, file);
       });
 
-      const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const currentToken =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
 
       const res = await axios.post(
         "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
@@ -475,7 +479,11 @@ export default function AddEvent({ isOpen, onClose, token }) {
       );
 
       console.log("Draft tersimpan:", res.data);
-      showPopup("success", "Draft Tersimpan", "Data berhasil disimpan sebagai draft");
+      showPopup(
+        "success",
+        "Draft Tersimpan",
+        "Data berhasil disimpan sebagai draft"
+      );
       setTimeout(() => {
         onClose();
       }, 1000);
@@ -485,7 +493,11 @@ export default function AddEvent({ isOpen, onClose, token }) {
         setErrors(err.response.data.errors);
         showPopup("error", "Validasi Gagal", "Periksa kembali form Anda");
       } else {
-        showPopup("error", "Error", err.response?.data?.message || err.message || "Gagal menyimpan draft");
+        showPopup(
+          "error",
+          "Error",
+          err.response?.data?.message || err.message || "Gagal menyimpan draft"
+        );
       }
     } finally {
       setIsLoading(false);
@@ -509,17 +521,19 @@ export default function AddEvent({ isOpen, onClose, token }) {
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <NotificationPopup />
+    <>
+      <NotificationPopup key="add-event-notification" />
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
+            key="modal-backdrop"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25 }}
           >
             <Modal
+              key="add-event-modal"
               isOpen={isOpen}
               onClose={onClose}
               title="Tambah Acara"
@@ -587,7 +601,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                       label="Pilih Tipe Acara"
                       options={tipeAcaraOptions}
                       variant="white"
-                      value={formData.mdl_tipe} // ✅ supaya sinkron dua arah
+                      value={formData.mdl_tipe}
                       onSelect={(value) =>
                         setFormData({ ...formData, mdl_tipe: value })
                       }
@@ -763,7 +777,9 @@ export default function AddEvent({ isOpen, onClose, token }) {
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_mulai ? "border-2 border-red-500" : "border-0"
+                            errors.mdl_acara_mulai
+                              ? "border-2 border-red-500"
+                              : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
@@ -792,7 +808,9 @@ export default function AddEvent({ isOpen, onClose, token }) {
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_selesai ? "border-2 border-red-500" : "border-0"
+                            errors.mdl_acara_selesai
+                              ? "border-2 border-red-500"
+                              : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
@@ -801,13 +819,17 @@ export default function AddEvent({ isOpen, onClose, token }) {
                     <div className="flex gap-3 mt-2">
                       <div className="flex-1">
                         {errors.mdl_acara_mulai && (
-                          <p className="text-red-500 text-sm">{errors.mdl_acara_mulai}</p>
+                          <p className="text-red-500 text-sm">
+                            {errors.mdl_acara_mulai}
+                          </p>
                         )}
                       </div>
                       <div className="w-4"></div>
                       <div className="flex-1">
                         {errors.mdl_acara_selesai && (
-                          <p className="text-red-500 text-sm">{errors.mdl_acara_selesai}</p>
+                          <p className="text-red-500 text-sm">
+                            {errors.mdl_acara_selesai}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -960,25 +982,34 @@ export default function AddEvent({ isOpen, onClose, token }) {
               </form>
             </Modal>
           </motion.div>
-        </>
-      )}
-
-      {/* ✅ TAMBAHKAN: Style untuk animasi */}
-      <style jsx>{`
-        @keyframes slide-in {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
+        )}
+        {/* Hide native right-side calendar icon and remove default appearance */}
+        <style>{`
+        /* Remove native calendar/picker icon on date and datetime-local inputs (Chrome/WebKit) */
+        input[type="date"]::-webkit-calendar-picker-indicator,
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+          display: none !important;
+          -webkit-appearance: none;
+          appearance: none;
+          pointer-events: none;
+          opacity: 0;
         }
-        .animate-slide-in {
-          animation: slide-in 0.3s ease-out;
+
+        /* Remove default appearance so our custom left icon + padding aligns */
+        input[type="date"],
+        input[type="datetime-local"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background-repeat: no-repeat;
+        }
+
+        /* Optional: hide clear/spinner for some browsers */
+        input[type="datetime-local"]::-webkit-clear-button,
+        input[type="datetime-local"]::-webkit-inner-spin-button {
+          display: none;
         }
       `}</style>
-    </AnimatePresence>
+      </AnimatePresence>
+    </>
   );
 }
