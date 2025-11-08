@@ -9,6 +9,7 @@ import {
   Facebook,
   MessageCircle,
   X,
+  Monitor,
 } from "lucide-react";
 import { Typography } from "../../../../components/typography";
 import { Button } from "../../../../components/button";
@@ -33,6 +34,8 @@ const DetailEvent = () => {
   const [alert, setAlert] = useState(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showWAModal, setShowWAModal] = useState(false);
+  const [showHybridModal, setShowHybridModal] = useState(false);
+  const [attendanceType, setAttendanceType] = useState(null); 
 
   const event = events.find((e) => e.id === parseInt(id));
 
@@ -188,6 +191,10 @@ const DetailEvent = () => {
     if (isRegistered && now < eventStart) {
       setShowCancelModal(true);
     } else if (canRegister && !isRegistered) {
+      if (event.mdl_tipe === "hybrid") {
+        setShowHybridModal(true);
+        return;
+      }
       setShowConfirmModal(true);
     }
   };
@@ -272,9 +279,12 @@ const DetailEvent = () => {
         return;
       }
 
+      const body = event.mdl_tipe === "hybrid"
+        ? { tipe_kehadiran: attendanceType } 
+        : {};
       const response = await axios.post(
         `${API_BASE_URL}/events/${id}/daftar`,
-        {},
+        body,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -508,39 +518,6 @@ const DetailEvent = () => {
               {buttonText}
             </Button>
 
-            {showConfirmModal && (
-              <div
-                className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                onClick={() => setShowConfirmModal(false)}
-              >
-                <div
-                  className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Typography
-                    type="heading5"
-                    weight="bold"
-                    className="text-gray-900 mb-4"
-                  >
-                    Konfirmasi Pendaftaran
-                  </Typography>
-                  <Typography type="body" className="text-gray-600 mb-6">
-                    Apakah Anda yakin ingin mendaftar pada event "
-                    {event.mdl_nama}"?
-                  </Typography>
-
-                  <div className="flex justify-center gap-3">
-                    <Button variant="third" onClick={cancelRegis}>
-                      Batal
-                    </Button>
-                    <Button variant="primary" onClick={confirmRegis}>
-                      Ya, Daftar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             <div className="flex flex-col gap-3">
               <Typography type="body" weight="medium" className="text-gray-700">
                 Bagikan Event:
@@ -583,6 +560,87 @@ const DetailEvent = () => {
             </div>
           </div>
         </div>
+
+        <div className="bg-white p-8 rounded-xl shadow-sm">
+          <Typography
+            type="heading5"
+            weight="semibold"
+            className="mb-4 flex items-center gap-2"
+          >
+            Informasi Acara
+          </Typography>
+          <div className="flex flex-col gap-3 text-sm">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <MapPin className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Lokasi:</strong> {event.mdl_lokasi || "Online"}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Tanggal Pendaftaran:</strong>{" "}
+                {formatDate(event.mdl_pendaftaran_mulai)} -{" "}
+                {formatDate(event.mdl_pendaftaran_selesai)}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Tanggal Acara:</strong>{" "}
+                {formatDate(event.mdl_acara_mulai)}
+              </Typography>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <Clock className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)}{" "}
+                - {formatTime(event.mdl_acara_selesai)} WIB
+              </Typography>
+            </div>
+          </div>
+        </div>
+
+        {showConfirmModal && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-auto"
+            onClick={() => setShowConfirmModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Typography
+                type="heading5"
+                weight="bold"
+                className="text-gray-900 mb-4"
+              >
+                Konfirmasi Pendaftaran
+              </Typography>
+              <Typography type="body" className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin mendaftar pada event "
+                {event.mdl_nama}"?
+              </Typography>
+
+              <div className="flex justify-center gap-3">
+                <Button variant="gray_outline" onClick={cancelRegis}>
+                  Batal
+                </Button>
+                <Button variant="primary" onClick={confirmRegis}>
+                  Ya, Daftar
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isRegistered && (
           <div className="grid md:grid-cols-2 gap-6">
@@ -642,54 +700,6 @@ const DetailEvent = () => {
           </div>
         )}
 
-        <div className="bg-white p-8 rounded-xl shadow-sm">
-          <Typography
-            type="heading5"
-            weight="semibold"
-            className="mb-4 flex items-center gap-2"
-          >
-            Informasi Acara
-          </Typography>
-          <div className="flex flex-col gap-3 text-sm">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-30 text-white p-2 rounded-full">
-                <MapPin className="w-6 h-6" />
-              </div>
-              <Typography type="body" className="text-typo-secondary">
-                <strong>Lokasi:</strong> {event.mdl_lokasi || "Online"}
-              </Typography>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Pendaftaran:</strong>{" "}
-                {formatDate(event.mdl_pendaftaran_mulai)} -{" "}
-                {formatDate(event.mdl_pendaftaran_selesai)}
-              </Typography>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Acara:</strong>{" "}
-                {formatDate(event.mdl_acara_mulai)}
-              </Typography>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Clock className="w-6 h-6" />
-              </div>
-              <Typography type="body" className="text-typo-secondary">
-                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)}{" "}
-                - {formatTime(event.mdl_acara_selesai)} WIB
-              </Typography>
-            </div>
-          </div>
-        </div>
-
         {event.mdl_catatan && event.mdl_catatan.trim() !== "" && (
           <div className="bg-white p-8 rounded-xl shadow-sm mt-6">
             <Typography
@@ -728,7 +738,7 @@ const DetailEvent = () => {
 
               <div className="flex justify-center gap-3">
                 <Button
-                  variant="third"
+                  variant="gray_outline"
                   onClick={() => setShowCancelModal(false)}
                 >
                   Tidak
@@ -792,6 +802,116 @@ const DetailEvent = () => {
               >
                 Gabung Grup WhatsApp
               </Button>
+            </div>
+          </div>
+        )}
+
+        {showHybridModal && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setShowHybridModal(false)}
+          >
+            <div
+              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowHybridModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                title="Tutup"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+
+              <Typography
+                type="heading5"
+                weight="bold"
+                className="text-gray-900 mb-2"
+              >
+                Pilih Metode Kehadiran
+              </Typography>
+              <Typography type="body" className="text-gray-600 mb-6">
+                Silakan pilih bagaimana Anda ingin mengikuti acara ini
+              </Typography>
+
+              <div className="space-y-3 mb-6">
+                <div
+                  onClick={() => setAttendanceType("online")}
+                  className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
+                    attendanceType === "online"
+                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                    : "border-gray-200 hover:border-blue-400/50"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                      attendanceType === "online" ? "border-primary bg-primary" : "border-gray-400"
+                  }`}>
+                    {attendanceType === "online" && (
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-primary/10 rounded-full">
+                      <Monitor className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <Typography type="body" weight="semibold">
+                        Online
+                      </Typography>
+                      <Typography type="caption2" className="text-gray-500">
+                        Ikuti acara via Zoom/Google Meet
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setAttendanceType("offline")}
+                  className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
+                    attendanceType === "offline"
+                      ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                      : "border-gray-200 hover:border-green-400/50"
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                      attendanceType === "offline" ? "border-green-500 bg-green-500" : "border-gray-400"
+                  }`}>
+                    {attendanceType === "offline" && (
+                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-green-100 rounded-full">
+                      <MapPin className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <Typography type="body" weight="semibold">
+                        Offline
+                      </Typography>
+                      <Typography type="caption2" className="text-gray-500">
+                        Hadiri acara secara langsung di lokasi
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button variant="gray_outline" onClick={() => setShowHybridModal(false)}>
+                  Batal
+                </Button>
+                <Button
+                  variant="primary"
+                  disabled={!attendanceType}
+                  onClick={() => {
+                    if (!attendanceType) return;
+                    setShowHybridModal(false);
+                    confirmRegis();
+                  }}
+                >
+                  Konfirmasi Pendaftaran
+                </Button>
+              </div>
             </div>
           </div>
         )}
