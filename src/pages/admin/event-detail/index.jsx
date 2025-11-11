@@ -12,6 +12,40 @@ import CreateSertif from "../../../components/pop-up/CreateSertif";
 import { QRCodeCanvas } from "qrcode.react";
 import { Typography } from "../../../components/typography";
 
+// === BARU: Komponen Modal Konfirmasi Selesai ===
+const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity duration-300">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
+        <h3 className="text-lg font-semibold text-gray-900">
+          Selesaikan Acara
+        </h3>
+        <p className="mt-2 text-sm text-gray-600">
+          Apakah Anda yakin ingin menyelesaikan acara ini?
+        </p>
+        <div className="mt-6 flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:bg-red-400 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Memproses..." : "Ya, Selesaikan"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const API_BASE_URL =
   "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
@@ -35,69 +69,17 @@ const AdminDetail = () => {
   const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5);
   const [showCreateSertif, setShowCreateSertif] = useState(false);
 
+  // === BARU: State untuk modal selesaikan acara & loading-nya ===
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
     { label: "Acara", link: "/admin/events" },
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
 
-  const handleGenerateSertif = async ({ noSkMulai, formatPenomoran, file }) => {
-    if (!id) return showPopup("error", "Gagal", "ID acara tidak ditemukan");
-
-    if (!file)
-      return showPopup(
-        "error",
-        "Gagal",
-        "File template sertifikat belum dipilih"
-      );
-
-    // ✅ Validasi ekstensi dan ukuran file
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
-    if (!allowedTypes.includes(file.type)) {
-      return showPopup(
-        "error",
-        "Gagal",
-        "Format file harus JPG, JPEG, atau PNG"
-      );
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      return showPopup("error", "Gagal", "Ukuran file maksimal 2MB");
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("nomor_sk", noSkMulai);
-      formData.append("format_nomor", formatPenomoran);
-      formData.append("template_sertifikat", file);
-      formData.append(
-        "tanggal_pengesahan",
-        new Date().toISOString().split("T")[0]
-      );
-
-      await axios.post(
-        `${API_BASE_URL}/admin/events/${id}/generate-nomor-sertifikat`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-            Accept: "application/json",
-          },
-        }
-      );
-
-      showPopup("success", "Berhasil", "Nomor sertifikat berhasil digenerate");
-      setShowCreateSertif(false);
-    } catch (error) {
-      console.log("Response error:", error.response?.data);
-      const message =
-        error.response?.data?.message ||
-        "Gagal generate sertifikat. Silakan coba lagi.";
-      showPopup("error", "Gagal", message);
-    }
-  };
-
-  // ARSIP ACARA
+  // ACARA
   const handleArchiveEvent = async () => {
     try {
       const response = await axios.put(
@@ -121,6 +103,52 @@ const AdminDetail = () => {
     } catch (error) {
       console.error("Gagal mengarsipkan acara:", error);
       showPopup("error", "Gagal", "Tidak dapat mengarsipkan acara");
+    }
+  };
+
+  const handleFinishEvent = async () => {
+    setIsFinishing(true); // Mulai loading
+    try {
+      // Membuat format tanggal YYYY-MM-DD HH:MM:SS
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}`,
+        {
+          mdl_status: "closed",
+          mdl_acara_selesai: formattedDateTime, // Kirim waktu selesai
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Acara telah diselesaikan.");
+
+      // Update state lokal untuk mencerminkan perubahan
+      setEventData((prev) => ({
+        ...prev,
+        mdl_status: "closed",
+        mdl_acara_selesai: formattedDateTime, // Update juga di tampilan
+        mdl_presensi_aktif: 0,
+      }));
+      setPresensiAktif(false);
+
+      setShowFinishConfirm(false);
+    } catch (error) {
+      console.error("Gagal menyelesaikan acara:", error);
+      const errorMessage =
+        error.response?.data?.message || "Tidak dapat menyelesaikan acara.";
+      showPopup("error", "Gagal", errorMessage);
+    } finally {
+      setIsFinishing(false);
     }
   };
 
@@ -246,11 +274,11 @@ const AdminDetail = () => {
   };
 
   // === POPUP SERTIF ===
-  // const handleGenerateSertif = (data) => {
-  //   console.log("Data sertifikat dikirim:", data);
-  //   showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
-  //   setShowCreateSertif(false);
-  // };
+  const handleGenerateSertif = (data) => {
+    console.log("Data sertifikat dikirim:", data);
+    showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
+    setShowCreateSertif(false);
+  };
 
   // === FUNGSI UNTUK MENAMPILKAN POPUP PRESENSI ===
   useEffect(() => {
@@ -279,9 +307,23 @@ const AdminDetail = () => {
   const handleTogglePresensi = async () => {
     if (!id) return alert("ID acara tidak ditemukan");
 
+    // === MODIFIKASI: Jangan biarkan toggle jika acara sudah selesai/diarsip ===
+    if (
+      eventData?.mdl_status === "closed" ||
+      eventData?.mdl_status === "archived"
+    ) {
+      showPopup(
+        "warning",
+        "Gagal",
+        "Presensi tidak dapat diubah untuk acara yang sudah selesai atau diarsipkan."
+      );
+      return;
+    }
+
     try {
       const newStatus = !presensiAktif;
-      const response = await axios.put(
+
+      await axios.put(
         `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
         { status_qr: newStatus },
         {
@@ -292,7 +334,15 @@ const AdminDetail = () => {
         }
       );
 
-      setPresensiAktif(response.data.data?.mdl_presensi_aktif === 1);
+      setPresensiAktif(newStatus);
+
+      const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updatedEvent = res.data.data;
+      setEventData(updatedEvent);
+      setPresensiAktif(updatedEvent.mdl_presensi_aktif === 1);
+
       showPopup(
         "success",
         "Berhasil",
@@ -321,6 +371,15 @@ const AdminDetail = () => {
   };
 
   const getEventStatus = (startDate, endDate) => {
+    // Cek status 'closed' & 'archived' dari data eventData dulu
+    if (eventData?.mdl_status === "closed") {
+      return { label: "Selesai", color: "bg-red-100 text-red-700" };
+    }
+    if (eventData?.mdl_status === "archived") {
+      return { label: "Diarsip", color: "bg-gray-100 text-gray-700" };
+    }
+    // === BATAS MODIFIKASI ===
+
     if (!startDate) return { label: "-", color: "bg-gray-100 text-gray-700" };
 
     const today = new Date();
@@ -356,6 +415,10 @@ const AdminDetail = () => {
         const eventDetail =
           res.data?.data?.data || res.data?.data || res.data || null;
         setEventData(eventDetail);
+        // === MODIFIKASI: Sinkronkan status presensi dari fetch detail ===
+        if (eventDetail) {
+          setPresensiAktif(eventDetail.mdl_presensi_aktif === 1);
+        }
       } catch (err) {
         console.error("Gagal mengambil detail event:", err);
         setError(err.response?.data?.message || err.message);
@@ -464,12 +527,12 @@ const AdminDetail = () => {
 
   // === GENERATE SERTIF ===
   // const EventDetail = () => {
-  //   const [showCreateSertif, setShowCreateSertif] = useState(false);
+  //   const [showCreateSertif, setShowCreateSertif] = useState(false);
 
-  //   const handleGenerateSertif = (data) => {
-  //     console.log("Data sertif dikirim:", data);
-  //     // TODO: kirim ke API
-  //   };
+  //   const handleGenerateSertif = (data) => {
+  //     console.log("Data sertif dikirim:", data);
+  //     // TODO: kirim ke API
+  //   };
   // };
   return (
     <>
@@ -519,8 +582,8 @@ const AdminDetail = () => {
               </div>
             ) : eventData ? (
               // card data
-              <div className="p-6 flex flex-column bg-white rounded-xl shadow-sm ">
-                <div className=" p-5  md:max-w-md lg:max-w-lg ">
+              <div className="p-6 flex flex-row bg-white rounded-xl shadow-sm ">
+                <div className="p-5">
                   <h2 className="text-xl font-semibold text-blue-900 mb-2">
                     {eventData.mdl_nama}
                   </h2>
@@ -563,20 +626,47 @@ const AdminDetail = () => {
                       })()}
                     </p>
                   </div>
-                  {/* === Button === */}
-                  <div className="flex flex-wrap items-center gap-3 mt-5">
+
+                  {/* === Button === (MODIFIKASI LAYOUT & LOGIKA) === */}
+                  {/* === Button === (MODIFIKASI LAYOUT & LOGIKA) === */}
+                  <div className="flex flex-row items-center gap-3 mt-5">
                     <Link to={`/admin/event/detail/${id}`}>
                       <button className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
                         Lihat Detail Lengkap
                       </button>
                     </Link>
 
-                    <button
-                      onClick={() => setShowArchiveConfirm(true)}
-                      className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition"
-                    >
-                      Arsipkan Acara
-                    </button>
+                    {/* === BARU: Tombol Selesaikan Acara === */}
+                    {/* Tombol Selesaikan Acara */}
+                    {/* Tampil HANYA jika acara BELUM diarsip */}
+                    {eventData.mdl_status !== "archived" && (
+                      <button
+                        onClick={() => setShowFinishConfirm(true)}
+                        className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition disabled:bg-red-400 disabled:cursor-not-allowed"
+                        // Disable jika sedang loading ATAU acara sudah selesai
+                        disabled={
+                          isFinishing || eventData.mdl_status === "closed"
+                        }
+                      >
+                        {isFinishing ? "Memproses..." : "Selesaikan Acara"}
+                      </button>
+                    )}
+
+                    {/* === MODIFIKASI: Tombol Arsipkan Acara === */}
+                    {/* Tampil HANYA jika acara BELUM diarsip */}
+                    {eventData.mdl_status !== "archived" && (
+                      <button
+                        onClick={() => setShowArchiveConfirm(true)}
+                        className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition
+                                   disabled:bg-gray-300 disabled:cursor-not-allowed" // Style saat nonaktif
+                        // Tombol arsip aktif HANYA JIKA acara sudah selesai (closed)
+                        disabled={
+                          eventData.mdl_status !== "closed" || isFinishing
+                        }
+                      >
+                        Arsipkan Acara
+                      </button>
+                    )}
                   </div>
                 </div>
                 {/* === QR + PRESENSI === */}
@@ -628,9 +718,15 @@ const AdminDetail = () => {
                         <div className="flex items-center gap-4">
                           <button
                             onClick={handleTogglePresensi}
+                            // === MODIFIKASI: Disable toggle jika acara selesai/diarsip ===
+                            disabled={
+                              eventData.mdl_status === "closed" ||
+                              eventData.mdl_status === "archived" ||
+                              isFinishing
+                            }
                             className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 ${
                               presensiAktif ? "bg-primary" : "bg-gray-300"
-                            }`}
+                            } disabled:bg-gray-200 disabled:cursor-not-allowed`}
                           >
                             <span
                               className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 ${
@@ -642,19 +738,19 @@ const AdminDetail = () => {
                           </button>
 
                           {/* <button
-                            onClick={handleTogglePresensi}
-                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${
-                              presensiAktif ? "bg-primary" : "bg-gray-300"
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                                presensiAktif
-                                  ? "translate-x-9"
-                                  : "translate-x-1"
-                              }`}
-                            />
-                          </button> */}
+                            onClick={handleTogglePresensi}
+                            className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors ${
+                              presensiAktif ? "bg-primary" : "bg-gray-300"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                                presensiAktif
+                t                 ? "translate-x-9"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </button> */}
                           <span className="text-sm font-medium text-gray-700">
                             {presensiAktif ? "ON" : "OFF"}
                           </span>
@@ -712,34 +808,34 @@ const AdminDetail = () => {
             </>
           )}
         </div>
-
-        {/* ===== POPUP MODAL ===== */}
-        {openPreview && selectedParticipant && (
-          <ParticipantPreview
-            isOpen={openPreview}
-            onClose={handleClosePreview}
-            data={selectedParticipant}
-          />
-        )}
-        <CreateSertif
-          isOpen={showCreateSertif}
-          onClose={() => setShowCreateSertif(false)}
-          onGenerate={handleGenerateSertif}
-        />
-        <ArchiveConfirmModal
-          isOpen={showArchiveConfirm}
-          onClose={() => setShowArchiveConfirm(false)}
-          onConfirm={handleArchiveEvent}
-        />
-
-        {/* <ArchiveConfirmModal
-          isOpen={showArchiveConfirm}
-          onClose={() => setShowArchiveConfirm(false)}
-          onConfirm={() => {
-            console.log("Acara diarsipkan!");
-          }}
-        /> */}
       </div>
+
+      {/* ===== POPUP MODAL ===== */}
+      {openPreview && selectedParticipant && (
+        <ParticipantPreview
+          isOpen={openPreview}
+          onClose={handleClosePreview}
+          data={selectedParticipant}
+        />
+      )}
+      <CreateSertif
+        isOpen={showCreateSertif}
+        onClose={() => setShowCreateSertif(false)}
+        onGenerate={handleGenerateSertif}
+      />
+      <ArchiveConfirmModal
+        isOpen={showArchiveConfirm}
+        onClose={() => setShowArchiveConfirm(false)}
+        onConfirm={handleArchiveEvent}
+      />
+
+      {/* === BARU: Modal Konfirmasi Selesai Acara === */}
+      <FinishConfirmModal
+        isOpen={showFinishConfirm}
+        onClose={() => setShowFinishConfirm(false)}
+        onConfirm={handleFinishEvent}
+        isLoading={isFinishing}
+      />
     </>
   );
 };
