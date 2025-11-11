@@ -88,14 +88,22 @@ const Activity = () => {
 
         const fetchedData = Object.values(groupedData).map((group) => {
           const acara = group[0].modul_acara;
-          
+
           const mulai = new Date(acara.mdl_acara_mulai);
           const selesai = new Date(acara.mdl_acara_selesai);
           const sekarang = new Date();
 
           // Hitung jumlah hari
-          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
-          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
+          const mulaiDate = new Date(
+            mulai.getFullYear(),
+            mulai.getMonth(),
+            mulai.getDate()
+          );
+          const selesaiDate = new Date(
+            selesai.getFullYear(),
+            selesai.getMonth(),
+            selesai.getDate()
+          );
           const diffTime = selesaiDate.getTime() - mulaiDate.getTime();
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
@@ -114,8 +122,11 @@ const Activity = () => {
           }));
 
           // Cek apakah semua hari sudah presensi
-          const totalHadir = presensiList.filter(p => p.sudahPresensi).length;
-          const semuaHadirAtauSatuHari = diffDays <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === diffDays;
+          const totalHadir = presensiList.filter((p) => p.sudahPresensi).length;
+          const semuaHadirAtauSatuHari =
+            diffDays <= 1
+              ? presensiList[0]?.sudahPresensi
+              : totalHadir === diffDays;
 
           const sudahLewat = sekarang > selesai;
           const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
@@ -159,9 +170,7 @@ const Activity = () => {
 
     setActivities((prev) =>
       prev.map((item) =>
-        item.id === activityId
-          ? { ...item, sudahPresensi: true }
-          : item
+        item.id === activityId ? { ...item, sudahPresensi: true } : item
       )
     );
 
@@ -271,72 +280,81 @@ const Activity = () => {
                       >
                         {activity.status}
                       </span>
-                      
-                      {activity.jumlahHari <= 1 ? (
-                        // Acara 1 hari atau kurang
-                        activity.sudahPresensi && (
-                          <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">
-                            Hadir
-                          </span>
-                        )
-                      ) : (
-                        // Acara lebih dari 1 hari
-                        activity.presensiList.map((presensi) => 
-                          presensi.sudahPresensi && (
-                            <span
-                              key={presensi.hari}
-                              className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10"
-                            >
-                              Hadir Hari {presensi.hari}
+                      {activity.jumlahHari <= 1
+                        ? // Acara 1 hari atau kurang
+                          activity.sudahPresensi && (
+                            <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">
+                              Hadir
                             </span>
                           )
-                        )
-                      )}
-                      
+                        : // Acara lebih dari 1 hari
+                          activity.presensiList.map(
+                            (presensi) =>
+                              presensi.sudahPresensi && (
+                                <span
+                                  key={presensi.hari}
+                                  className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10"
+                                >
+                                  Hadir Hari {presensi.hari}
+                                </span>
+                              )
+                          )}
                       {/* Badge doorprize */}
                       {activity.getDoorprize && (
                         <span className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10">
-                          <Award size={12}/>Pemenang Doorprize
+                          <Award size={12} />
+                          Pemenang Doorprize
                         </span>
                       )}
                     </Typography>
                   </div>
 
                   {/* Sertifikat */}
-                  {activity.totalHadir > 0 && (
-                    activity.isDownloaded ? (
+                  {activity.totalHadir > 0 &&
+                    (activity.isDownloaded ? (
                       <Button
                         variant="secondary"
                         iconLeft={<Download size={18} />}
                         className="w-30"
                         onClick={async () => {
-                          console.log(activity);
                           try {
                             const token = localStorage.getItem("token");
 
-                            const response = await axios.get(
-                              `${API_BASE_URL}/sertifikat/acara/${activity.id}/download`,
+                            const response = await axios.post(
+                              `${API_BASE_URL}/events/${activity.id}/generate-sertif`,
+                              null,
                               {
                                 headers: {
                                   Authorization: `Bearer ${token}`,
                                 },
-                                responseType: 'blob'
                               }
                             );
 
-                            const url = window.URL.createObjectURL(new Blob([response.data]));
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', `Sertifikat-${activity.title}.pdf`);
-                            document.body.appendChild(link);
-                            link.click();
-                            link.remove();
-                            window.URL.revokeObjectURL(url);
+                            // Ambil URL file dari response
+                            const fileUrl = response.data?.data;
 
-                            setAlert({
-                              message: "Sertifikat berhasil diunduh",
-                              type: "success",
-                            });
+                            if (fileUrl) {
+                              // Langsung buka link di tab baru (atau bisa paksa download)
+                              const link = document.createElement("a");
+                              link.href = fileUrl;
+                              link.setAttribute(
+                                "download",
+                                `Sertifikat-${activity.title}.pdf`
+                              );
+                              document.body.appendChild(link);
+                              link.click();
+                              link.remove();
+
+                              setAlert({
+                                message:
+                                  "Sertifikat berhasil digenerate dan diunduh",
+                                type: "success",
+                              });
+                            } else {
+                              throw new Error(
+                                "URL file tidak ditemukan dalam response"
+                              );
+                            }
                           } catch (error) {
                             console.error("Gagal download sertifikat:", error);
                             setAlert({
@@ -359,8 +377,7 @@ const Activity = () => {
                       >
                         Sertifikat
                       </Button>
-                    )
-                  )}
+                    ))}
                 </div>
               </div>
             );

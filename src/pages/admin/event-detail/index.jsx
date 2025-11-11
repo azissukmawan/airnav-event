@@ -41,6 +41,62 @@ const AdminDetail = () => {
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
 
+  const handleGenerateSertif = async ({ noSkMulai, formatPenomoran, file }) => {
+    if (!id) return showPopup("error", "Gagal", "ID acara tidak ditemukan");
+
+    if (!file)
+      return showPopup(
+        "error",
+        "Gagal",
+        "File template sertifikat belum dipilih"
+      );
+
+    // ✅ Validasi ekstensi dan ukuran file
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      return showPopup(
+        "error",
+        "Gagal",
+        "Format file harus JPG, JPEG, atau PNG"
+      );
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return showPopup("error", "Gagal", "Ukuran file maksimal 2MB");
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("nomor_sk", noSkMulai);
+      formData.append("format_nomor", formatPenomoran);
+      formData.append("template_sertifikat", file);
+      formData.append(
+        "tanggal_pengesahan",
+        new Date().toISOString().split("T")[0]
+      );
+
+      await axios.post(
+        `${API_BASE_URL}/admin/events/${id}/generate-nomor-sertifikat`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Nomor sertifikat berhasil digenerate");
+      setShowCreateSertif(false);
+    } catch (error) {
+      console.log("Response error:", error.response?.data);
+      const message =
+        error.response?.data?.message ||
+        "Gagal generate sertifikat. Silakan coba lagi.";
+      showPopup("error", "Gagal", message);
+    }
+  };
+
   // ARSIP ACARA
   const handleArchiveEvent = async () => {
     try {
@@ -190,11 +246,11 @@ const AdminDetail = () => {
   };
 
   // === POPUP SERTIF ===
-  const handleGenerateSertif = (data) => {
-    console.log("Data sertifikat dikirim:", data);
-    showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
-    setShowCreateSertif(false);
-  };
+  // const handleGenerateSertif = (data) => {
+  //   console.log("Data sertifikat dikirim:", data);
+  //   showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
+  //   setShowCreateSertif(false);
+  // };
 
   // === FUNGSI UNTUK MENAMPILKAN POPUP PRESENSI ===
   useEffect(() => {

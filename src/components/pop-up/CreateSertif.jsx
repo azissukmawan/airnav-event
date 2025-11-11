@@ -1,13 +1,14 @@
 import React, { useState } from "react";
-import { X, Upload, CheckCircle } from "lucide-react";
+import { X, CheckCircle } from "lucide-react";
 
 const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
   const [noSkMulai, setNoSkMulai] = useState("");
   const [formatPenomoran, setFormatPenomoran] = useState("");
+  const [tanggalPengesahan, setTanggalPengesahan] = useState(""); // ✅ state baru
   const [file, setFile] = useState(null);
   const [previewName, setPreviewName] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
-  const [errors, setErrors] = useState({}); // 🔹 Tambahan state error
+  const [errors, setErrors] = useState({});
 
   if (!isOpen) return null;
 
@@ -25,31 +26,29 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
     if (!noSkMulai) newErrors.noSkMulai = "Nomor SK mulai wajib diisi.";
     if (!formatPenomoran)
       newErrors.formatPenomoran = "Format penomoran wajib diisi.";
+    if (!tanggalPengesahan)
+      newErrors.tanggalPengesahan = "Tanggal pengesahan wajib diisi.";
     if (!file) newErrors.file = "File sertifikat wajib diunggah.";
 
     setErrors(newErrors);
 
-    // Jika ada error, jangan lanjut
     if (Object.keys(newErrors).length > 0) return;
 
-    // Kirim data ke parent
     onGenerate({
       noSkMulai,
       formatPenomoran,
+      tanggalPengesahan,
       file,
     });
 
-    // Tampilkan popup sukses
-    setShowSuccess(true);
-
-    // Reset input
+    // setShowSuccess(true);
     setNoSkMulai("");
     setFormatPenomoran("");
+    setTanggalPengesahan("");
     setFile(null);
     setPreviewName("");
     setErrors({});
 
-    // Tutup popup sukses otomatis setelah 2 detik
     setTimeout(() => {
       setShowSuccess(false);
       onClose();
@@ -67,12 +66,10 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
           <X size={22} />
         </button>
 
-        {/* Header */}
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           Buat Sertifikat
         </h2>
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Nomor SK Mulai */}
           <div>
@@ -83,7 +80,7 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
               type="text"
               value={noSkMulai}
               onChange={(e) => setNoSkMulai(e.target.value)}
-              placeholder="Contoh: 001/ACARA/2025"
+              placeholder="Contoh: 345"
               className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
             />
             {errors.noSkMulai && (
@@ -115,10 +112,9 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
             <label className="block text-gray-700 font-medium mb-1">
               Unggah Desain Sertifikat <span className="text-red-500">*</span>
             </label>
-
             <input
               type="file"
-              accept=".doc,.docx,.pdf,.ppt,.pptx"
+              accept=".jpg,.jpeg,.png"
               onChange={handleFileChange}
               className="w-full border border-gray-300 rounded-lg px-3 py-2
               file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
@@ -134,8 +130,26 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
               <p className="text-sm text-red-500 mt-1">{errors.file}</p>
             )}
             <p className="text-xs mt-2 text-gray-400">
-              Maksimal ukuran file 2MB (JPG/JPEG/PNG).
+              Format diperbolehkan: JPG, JPEG, PNG (maksimal 2MB)
             </p>
+          </div>
+
+          {/* Tanggal Pengesahan */}
+          <div>
+            <label className="block text-gray-700 font-medium mb-1">
+              Tanggal Pengesahan <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={tanggalPengesahan}
+              onChange={(e) => setTanggalPengesahan(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+            {errors.tanggalPengesahan && (
+              <p className="text-sm text-red-500 mt-1">
+                {errors.tanggalPengesahan}
+              </p>
+            )}
           </div>
 
           {/* Tombol Aksi */}
@@ -157,7 +171,7 @@ const CreateSertif = ({ isOpen, onClose, onGenerate }) => {
         </form>
       </div>
 
-      {/* 🔹 Popup sukses */}
+      {/* Popup sukses */}
       {showSuccess && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-60">
           <div className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center gap-3 animate-fadeIn">
