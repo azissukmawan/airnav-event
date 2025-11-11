@@ -508,7 +508,7 @@ const AdminEvent = () => {
               </button>
             </Link>
 
-            {isPublished ? (
+            {/* {isPublished ? (
               // Disabled edit button for published events
               <button
                 className="text-gray-400 cursor-not-allowed mb-1"
@@ -517,8 +517,8 @@ const AdminEvent = () => {
               >
                 <FiEdit size={18} />
               </button>
-            ) : (
-              // Normal edit button for non-published events
+            ) : ( */}
+              {/* // Normal edit button for non-published events */}
               <Link to={`/admin/event/edit/${row.id}`}>
                 <button
                   className="text-yellow-500 hover:text-yellow-700"
@@ -527,7 +527,7 @@ const AdminEvent = () => {
                   <FiEdit size={18} />
                 </button>
               </Link>
-            )}
+            {/* )} */}
 
             <button
               onClick={() => {

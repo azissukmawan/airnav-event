@@ -298,19 +298,19 @@ const InfoAcara = () => {
 
         const data = response.data.data;
 
-        if (data.mdl_status === "active") {
-          showPopup(
-            "warning",
-            "Akses Ditolak",
-            "Acara ini sudah dipublikasikan dan tidak bisa diedit."
-          );
+        // if (data.mdl_status === "active") {
+        //   showPopup(
+        //     "warning",
+        //     "Akses Ditolak",
+        //     "Acara ini sudah dipublikasikan dan tidak bisa diedit."
+        //   );
 
-          // Redirect ke halaman daftar acara
-          setTimeout(() => {
-            window.location.href = "/admin/events";
-          }, 1500);
-          // hentikan eksekusi lebih lanjut
-        }
+        //   // Redirect ke halaman daftar acara
+        //   setTimeout(() => {
+        //     window.location.href = "/admin/events";
+        //   }, 1500);
+        //   // hentikan eksekusi lebih lanjut
+        // }
 
         setFormData({
           mdl_nama: data.mdl_nama || "",
