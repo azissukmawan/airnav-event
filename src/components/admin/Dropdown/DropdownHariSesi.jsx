@@ -2,76 +2,97 @@ import React, { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
 const DropdownHariSesi = ({ participants, onFilter }) => {
-  const hariList = Object.keys(participants || {});
   const [selectedHari, setSelectedHari] = useState("");
   const [selectedSesi, setSelectedSesi] = useState("");
 
-  // Ambil daftar sesi dari hari yang dipilih
+  // daftar hari dari key object (Hari-1, Hari-2, dst)
+  const hariList = Object.keys(participants || {}).sort((a, b) => {
+    const numA = parseInt(a.replace("Hari-", ""));
+    const numB = parseInt(b.replace("Hari-", ""));
+    return numA - numB;
+  });
+
+  // ambil sesi dari hari yang dipilih
   const sesiList = selectedHari
-    ? Object.keys(participants[selectedHari] || {})
+    ? Object.keys(participants[selectedHari] || {}).sort((a, b) => {
+        const numA = parseInt(a.replace("Sesi-", ""));
+        const numB = parseInt(b.replace("Sesi-", ""));
+        return numA - numB;
+      })
     : [];
 
-  // Set default Hari-1 dan Sesi-1 saat data sudah tersedia
+  // set default ke Hari pertama dan Sesi pertama yang tersedia (HANYA SEKALI)
   useEffect(() => {
     if (hariList.length > 0 && !selectedHari) {
-      const defaultHari = hariList.find((h) => h === "Hari-1") || hariList[0];
-      const defaultSesiList = Object.keys(participants[defaultHari] || {});
-      const defaultSesi =
-        defaultSesiList.find((s) => s === "Sesi-1") || defaultSesiList[0];
+      const defaultHari = hariList[0];
+      const defaultSesiList = Object.keys(participants[defaultHari] || {}).sort(
+        (a, b) => {
+          const numA = parseInt(a.replace("Sesi-", ""));
+          const numB = parseInt(b.replace("Sesi-", ""));
+          return numA - numB;
+        }
+      );
+      const defaultSesi = defaultSesiList[0] || "";
 
       setSelectedHari(defaultHari);
       setSelectedSesi(defaultSesi);
     }
-  }, [hariList, participants]);
+  }, [hariList.length]); // Hanya trigger saat ada data pertama kali
 
-  // Kirim data filter ke parent setiap kali berubah
+  // kirim peserta yang difilter ke parent setiap perubahan
   useEffect(() => {
-    if (onFilter && selectedHari && selectedSesi) {
-      onFilter(selectedHari, selectedSesi);
+    if (selectedHari && selectedSesi && onFilter) {
+      const dataFiltered = participants[selectedHari]?.[selectedSesi] || [];
+      onFilter(dataFiltered);
     }
   }, [selectedHari, selectedSesi]);
 
+  const handleHariChange = (e) => {
+    const newHari = e.target.value;
+    setSelectedHari(newHari);
+
+    // reset sesi ke sesi pertama dari hari baru
+    const newSesiList = Object.keys(participants[newHari] || {}).sort(
+      (a, b) => {
+        const numA = parseInt(a.replace("Sesi-", ""));
+        const numB = parseInt(b.replace("Sesi-", ""));
+        return numA - numB;
+      }
+    );
+    setSelectedSesi(newSesiList[0] || "");
+  };
+
+  const handleSesiChange = (e) => {
+    setSelectedSesi(e.target.value);
+  };
+
   return (
-    <div className="flex gap-3 mb-4 relative w-80 mb-3">
-      {/* Hari */}
-      <div className="flex-1 flex flex-col relative">
-        <label className="font-semibold text-gray-700 "></label>
+    <div className="flex gap-3 w-80">
+      {/* Dropdown Hari */}
+      <div className="flex-1 relative">
         <select
           value={selectedHari}
-          onChange={(e) => {
-            const newHari = e.target.value;
-            setSelectedHari(newHari);
-            // Reset sesi ke sesi pertama dari hari baru
-            const newSesiList = Object.keys(participants[newHari] || {});
-            setSelectedSesi(newSesiList[0] || "");
-          }}
+          onChange={handleHariChange}
           className="border border-blue-900 rounded-xl p-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none"
         >
-          {hariList.length === 0 ? (
-            <option value="">Memuat...</option>
-          ) : (
-            <>
-              <option value="">Pilih Hari</option>
-              {hariList.map((hari) => (
-                <option key={hari} value={hari}>
-                  {hari.replace("Hari-", "Hari ")}
-                </option>
-              ))}
-            </>
-          )}
+          <option value="">Pilih Hari</option>
+          {hariList.map((hari) => (
+            <option key={hari} value={hari}>
+              {hari.replace("Hari-", "Hari ")}
+            </option>
+          ))}
         </select>
         <ChevronDown
           size={18}
-          className="absolute right-3 top-[18px] text-gray-500 pointer-events-none"
+          className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
         />
       </div>
 
-      {/* Sesi */}
-      <div className="flex-1 flex flex-col relative">
-        <label className="font-semibold text-gray-700"></label>
+      {/* Dropdown Sesi */}
+      <div className="flex-1 relative">
         <select
           value={selectedSesi}
-          onChange={(e) => setSelectedSesi(e.target.value)}
+          onChange={handleSesiChange}
           disabled={!selectedHari}
           className="border border-blue-900 rounded-xl p-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none disabled:bg-gray-100 disabled:text-gray-500"
         >
@@ -84,7 +105,7 @@ const DropdownHariSesi = ({ participants, onFilter }) => {
         </select>
         <ChevronDown
           size={18}
-          className="absolute right-3 top-[18px] text-gray-500 pointer-events-none"
+          className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
         />
       </div>
     </div>
