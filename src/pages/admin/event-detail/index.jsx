@@ -453,8 +453,7 @@ const AdminDetail = () => {
     
     return [...filteredParticipants].sort((a, b) => {
       if (eventData?.doorprize_active !== 1) return 0;
-      
-      // FIXED: Validasi winners adalah array sebelum menggunakan some
+
       const aWinner = Array.isArray(winners) && winners.some(
         (w) => w.name?.trim().toLowerCase() === a.nama?.trim().toLowerCase()
       );
