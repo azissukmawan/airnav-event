@@ -731,7 +731,7 @@ const AdminDetail = () => {
                   <QRFullscreen
                     qrValue={eventData.mdl_kode_qr}
                     eventTitle={eventData.mdl_nama}
-                    sesi={sesi}
+                    sesi={eventData.mdl_sesi_acara}
                     onClose={() => setShowFullscreen(false)}
                   />
                 )}
