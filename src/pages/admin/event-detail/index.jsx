@@ -11,10 +11,11 @@ import ArchiveConfirmModal from "../../../components/pop-up/ArchiveConfirmModal"
 import CreateSertif from "../../../components/pop-up/CreateSertif";
 import DropdownHariSesi from "../../../components/admin/Dropdown/DropdownHariSesi";
 import FinishConfirmModal from "../../../components/pop-up/FinishConfirmModal";
-
+import ChangeSesiConfirmModal from "../../../components/pop-up/ChangeSesiConfirmModal";
+import { QRFullscreen } from "./fullscreen";
 import { QRCodeCanvas } from "qrcode.react";
 import { Typography } from "../../../components/typography";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Maximize2, Download } from "lucide-react";
 
 const API_BASE_URL =
   "https://mediumpurple-swallow-757782.hostingersite.com/api";
@@ -44,6 +45,12 @@ const AdminDetail = () => {
   const [sesi, setSesi] = useState("");
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [showChangeSesiConfirm, setShowChangeSesiConfirm] = useState(false);
+  const [pendingSesi, setPendingSesi] = useState("");
+  const [sesiPresensi, setSesiPresensi] = useState("");
+  const [filterHari, setFilterHari] = useState("");
+  const [filterSesi, setFilterSesi] = useState("");
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -51,6 +58,258 @@ const AdminDetail = () => {
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
   console.log("participants:", participants);
+
+  // Ganti dengan callback yang lebih simple:
+  const handleFilterChange = (filtered) => {
+    setFilteredParticipants(filtered);
+    setCurrentPage(1); // Reset ke halaman pertama saat filter berubah
+  };
+
+  useEffect(() => {
+    if (eventData?.mdl_sesi_acara) {
+      setSesiPresensi(eventData.mdl_sesi_acara.toString());
+    }
+  }, [eventData]);
+
+  const handleSesiPresensiChange = (e) => {
+    const newSesi = e.target.value;
+    setSesiPresensi(newSesi);
+    handleChangeSesiClick(newSesi);
+  };
+
+  const handleChangeSesiClick = (newSesi) => {
+    if (!newSesi || newSesi === sesiPresensi) return;
+    setPendingSesi(newSesi);
+    setShowChangeSesiConfirm(true);
+  };
+
+  const handleConfirmChangeSesi = async () => {
+    if (!pendingSesi) return;
+
+    try {
+      const sesiNumber = parseInt(pendingSesi);
+
+      await axios.put(
+        `${API_BASE_URL}/admin/event/${id}/sesi/toggle`,
+        { mdl_sesi_acara: sesiNumber },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setSesiPresensi(pendingSesi);
+
+      setEventData((prev) => ({
+        ...prev,
+        mdl_sesi_acara: sesiNumber,
+      }));
+
+      setShowChangeSesiConfirm(false);
+      setPendingSesi("");
+
+      showPopup(
+        "success",
+        "Berhasil",
+        `Anda berhasil mengubah ke Sesi ${sesiNumber}. Peserta yang scan QR presensi akan masuk ke sesi tersebut.`
+      );
+    } catch (error) {
+      console.error("Gagal mengubah sesi:", error);
+      setShowChangeSesiConfirm(false);
+      setPendingSesi("");
+      showPopup("error", "Gagal", "Tidak dapat mengubah sesi acara");
+    }
+  };
+
+  // ============================================
+  // BAGIAN 2: DROPDOWN FILTER TABEL
+  // ============================================
+
+  // const handleFilterChange = (filtered) => {
+  //   setFilteredParticipants(filtered);
+  //   setCurrentPage(1);
+  // };
+
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = res.data?.data?.data || res.data?.data || res.data || {};
+        setParticipantsData(data);
+
+        // Set initial filtered participants
+        const firstHari = Object.keys(data)[0];
+        if (firstHari) {
+          const firstSesi = Object.keys(data[firstHari])[0];
+          if (firstSesi) {
+            setFilterHari(firstHari);
+            setFilterSesi(firstSesi);
+            setFilteredParticipants(data[firstHari][firstSesi] || []);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data peserta:", err);
+        setFilteredParticipants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParticipants();
+  }, [id, token]);
+
+  // Ubah bagian useEffect fetchParticipants menjadi:
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = res.data?.data?.data || res.data?.data || res.data || {};
+        setParticipantsData(data);
+
+        // Set initial filtered participants
+        const firstHari = Object.keys(data)[0];
+        if (firstHari) {
+          const firstSesi = Object.keys(data[DropdownHariSesi])[0];
+          if (firstSesi) {
+            setFilteredParticipants(data[firstHari][firstSesi] || []);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data peserta:", err);
+        setFilteredParticipants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParticipants();
+  }, [id, token]);
+
+  // ====== SELESAIKAN ACARA =========
+  const handleFinishEvent = async () => {
+    setIsFinishing(true);
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}`,
+        {
+          mdl_status: "closed",
+          mdl_acara_selesai: formattedDateTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Acara telah diselesaikan.");
+
+      // Update state lokal untuk mencerminkan perubahan
+      setEventData((prev) => ({
+        ...prev,
+        mdl_status: "closed",
+        mdl_acara_selesai: formattedDateTime, // Update juga di tampilan
+        mdl_presensi_aktif: 0,
+      }));
+      setPresensiAktif(false);
+
+      setShowFinishConfirm(false);
+    } catch (error) {
+      console.error("Gagal menyelesaikan acara:", error);
+      const errorMessage =
+        error.response?.data?.message || "Tidak dapat menyelesaikan acara.";
+      showPopup("error", "Gagal", errorMessage);
+    } finally {
+      setIsFinishing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (eventData?.mdl_sesi_acara) {
+      setSesi(eventData.mdl_sesi_acara.toString());
+    }
+  }, [eventData]);
+
+  const handleChange = (e) => {
+    setSesi(e.target.value);
+    handleChangeSesiClick(e.target.value);
+  };
+
+  // FUNGSI UNTUK MENAMPILKAN POPUP KONFIRMASI
+  // const handleChangeSesiClick = (newSesi) => {
+  //   if (!newSesi || newSesi === sesi) return; // Skip jika sama atau kosong
+
+  //   setPendingSesi(newSesi);
+  //   setShowChangeSesiConfirm(true);
+  // };
+
+  // FUNGSI UPDATE SESI KE API (SETELAH KONFIRMASI)
+  // const handleConfirmChangeSesi = async () => {
+  //   if (!pendingSesi) return;
+
+  //   try {
+  //     const sesiNumber = parseInt(pendingSesi.replace("Hari-", ""));
+
+  //     // PUT ke API
+  //     await axios.put(
+  //       `${API_BASE_URL}/admin/event/${id}/sesi/toggle`,
+  //       { mdl_sesi_acara: sesiNumber },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     // Update state lokal
+  //     setSesi(pendingSesi);
+  //     handleFilter(hari, pendingSesi); // Filter participants
+
+  //     // Update eventData agar selected tetap persist
+  //     setEventData((prev) => ({
+  //       ...prev,
+  //       mdl_sesi_acara: sesiNumber,
+  //     }));
+
+  //     // Tutup modal konfirmasi
+  //     setShowChangeSesiConfirm(false);
+  //     setPendingSesi("");
+
+  //     // Tampilkan popup sukses
+  //     showPopup(
+  //       "success",
+  //       "Berhasil",
+  //       `Anda berhasil mengubah ke Sesi ${sesiNumber}. Peserta yang scan QR presensi akan masuk ke sesi tersebut.`
+  //     );
+  //   } catch (error) {
+  //     console.error("Gagal mengubah sesi:", error);
+  //     setShowChangeSesiConfirm(false);
+  //     setPendingSesi("");
+  //     showPopup("error", "Gagal", "Tidak dapat mengubah sesi acara");
+  //   }
+  // };
 
   // ARSIP ACARA
   const handleArchiveEvent = async () => {
@@ -268,7 +527,6 @@ const AdminDetail = () => {
       showPopup("error", "Gagal", "Tidak dapat mengubah status presensi");
     }
   };
-
   const handleDownloadQR = () => {
     const canvas = document.querySelector("canvas");
     if (!canvas) {
@@ -338,15 +596,15 @@ const AdminDetail = () => {
         setLoading(true);
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          `${API_BASE_URL}/admin/events/${id}/participants`,
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("RESPON PESERTA DARI BE:", res.data); // 👈 tambahin ini
+        console.log("RESPON PESERTA DARI BE:", res.data);
 
         const data = res.data?.data?.data || res.data?.data || res.data || {};
 
-        console.log("HASIL DATA YANG DISIMPAN:", data); // 👈 dan ini
+        console.log("HASIL DATA YANG DISIMPAN:", data);
 
         setParticipantsData(data);
 
@@ -614,7 +872,62 @@ const AdminDetail = () => {
                       </button>
                     </Link>
 
-                    {/* SELESAIKAN BUTTON */}
+                    {/* === POPUP KONFIRMASI SELESAIKAN ACARA === */}
+                    {/* {showFinishConfirm && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
+                          <p className="text-gray-800 mb-4 font-medium">
+                            Apakah kamu yakin ingin menyelesaikan acara ini?
+                          </p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setShowFinishConfirm(false)}
+                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsFinished(true);
+                                setShowFinishConfirm(false);
+                              }}
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+                            >
+                              Ya, Selesai
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+
+                    {/* === POPUP KONFIRMASI ARSIPKAN ACARA === */}
+                    {/* {showArchiveConfirm && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
+                          <p className="text-gray-800 mb-4 font-medium">
+                            Apakah kamu yakin ingin mengarsipkan acara ini?
+                          </p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setShowArchiveConfirm(false)}
+                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => {
+                                // tambahkan aksi arsip di sini (misalnya panggil API)
+                                setShowArchiveConfirm(false);
+                              }}
+                              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-800 transition"
+                            >
+                              Ya, Arsipkan
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+                    {/* BUTTON SELESAIKAN ACARA */}
                     <button
                       onClick={() => setShowFinishConfirm(true)}
                       className=" w-40 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
@@ -622,7 +935,7 @@ const AdminDetail = () => {
                       Selesaikan Acara
                     </button>
 
-                    {/* ARSIP BUTTON */}
+                    {/* BUTTON ARSIP ACARA */}
                     <button
                       onClick={() => setShowArchiveConfirm(true)}
                       className="w-35 px-1 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition"
@@ -637,119 +950,149 @@ const AdminDetail = () => {
                 </div>
 
                 {/* === QR + PRESENSI === */}
-                <div className=" ml-25">
+                <div className="ml-25">
                   {/* KANAN */}
                   <div className="flex-1">
                     {!loadingEvent && eventData && (
-                      // <div className="flex flex-wrap gap-3 outline outline-2 outline-offset-2 outline-gray-200 w-fit rounded-2xl p-7 ml-50">
-                      <div className="flex flex-wrap gap-3 w-fit rounded-2xl ">
-                        <div className="flex flex-col items-center">
-                          <div className="flex flex-col rounded-xl items-center">
-                            {eventData.mdl_kode_qr ? (
-                              <QRCodeCanvas
-                                value={eventData.mdl_kode_qr}
-                                size={130}
-                                bgColor="#ffffff"
-                                fgColor="#000000"
-                                level="H"
-                                includeMargin={true}
-                              />
-                            ) : (
-                              <div className="w-[150px] h-[150px] bg-gray-200 rounded-lg flex items-center justify-center">
-                                <p className="text-gray-500 text-sm">
-                                  QR belum tersedia
-                                </p>
-                              </div>
-                            )}
+                      <div className="space-y-5">
+                        {/* QR CODE & CONTROLS SECTION */}
+                        <div className="flex flex-wrap gap-5 items-start">
+                          {/* QR CODE */}
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="relative bg-white border-2 border-gray-200 rounded-lg p-2">
+                              {eventData.mdl_kode_qr ? (
+                                <QRCodeCanvas
+                                  value={eventData.mdl_kode_qr}
+                                  size={120}
+                                  bgColor="#ffffff"
+                                  fgColor="#000000"
+                                  level="H"
+                                  includeMargin={true}
+                                />
+                              ) : (
+                                <div className="w-[120px] h-[120px] bg-gray-100 rounded flex items-center justify-center">
+                                  <p className="text-gray-400 text-xs text-center px-2">
+                                    QR tidak tersedia
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* ICON BUTTONS */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setShowFullscreen(true)}
+                                disabled={!eventData.mdl_kode_qr}
+                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                title="Fullscreen"
+                              >
+                                <Maximize2 size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                  Fullscreen
+                                </span>
+                              </button>
+
+                              <button
+                                onClick={handleDownloadQR}
+                                disabled={!eventData.mdl_kode_qr}
+                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                title="Download"
+                              >
+                                <Download size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                  Download QR
+                                </span>
+                              </button>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <Typography
-                              type="body"
-                              className="text-gray-600 mb-2"
-                            ></Typography>
-                            <button
-                              onClick={handleDownloadQR}
-                              disabled={!eventData.mdl_kode_qr}
-                              className="outline outline-2 outline-offset-2 outline-primary text-primary px-3 py-1 text-xs rounded-lg hover:bg-primary-80 hover:text-primary-0 disabled:bg-gray-400"
-                            >
-                              Download QR
-                            </button>
+
+                          {/* PRESENSI & SESI CONTROLS */}
+                          <div className="flex-1 min-w-[180px] space-y-4">
+                            {/* PRESENSI TOGGLE */}
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Presensi Acara
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={handleTogglePresensi}
+                                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
+                                    presensiAktif ? "bg-primary" : "bg-gray-300"
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                                      presensiAktif
+                                        ? "translate-x-8"
+                                        : "translate-x-1"
+                                    }`}
+                                  />
+                                </button>
+                                <span
+                                  className={`text-xs font-bold ${
+                                    presensiAktif
+                                      ? "text-primary"
+                                      : "text-gray-400"
+                                  }`}
+                                >
+                                  {presensiAktif ? "ON" : "OFF"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* PILIH SESI */}
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Pilih Sesi
+                              </label>
+                              <div className="relative">
+                                <select
+                                  value={sesiPresensi}
+                                  onChange={handleSesiPresensiChange}
+                                  className="w-full border-2 border-primary rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none bg-white text-gray-700"
+                                >
+                                  <option value="">Pilih Sesi</option>
+                                  {Array.from(
+                                    { length: 10 },
+                                    (_, i) => i + 1
+                                  ).map((num) => (
+                                    <option key={num} value={num.toString()}>
+                                      Sesi {num}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown
+                                  size={18}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
 
-                        <div className="p-3 ml-5">
-                          <Typography
-                            type="caption1"
-                            weight="semibold"
-                            className="mb-4"
+                        {/* GENERATE SERTIFIKAT BUTTON */}
+                        <div className="pt-3">
+                          <button
+                            onClick={() => setShowCreateSertif(true)}
+                            className="w-full px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-80 transition-colors shadow-sm"
                           >
-                            Presensi Acara
-                          </Typography>
-                          <div className="flex items-center gap-4">
-                            <button
-                              onClick={handleTogglePresensi}
-                              className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors duration-300 ${
-                                presensiAktif ? "bg-primary" : "bg-gray-300"
-                              }`}
-                            >
-                              <span
-                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 ${
-                                  presensiAktif
-                                    ? "translate-x-9"
-                                    : "translate-x-1"
-                                }`}
-                              />
-                            </button>
-                            <span className="text-sm font-medium text-gray-700">
-                              {presensiAktif ? "ON" : "OFF"}
-                            </span>
-                          </div>
-
-                          {/* === PILIH SESI === */}
-                          <div className="flex-1 flex flex-col mb-3 relative w-30">
-                            <label className="font-semibold text-gray-700 mb-1"></label>
-
-                            <select
-                              value={hari}
-                              onChange={(e) =>
-                                handleFilter(hari, e.target.value)
-                              }
-                              // disabled={!hari}
-                              className=" mt-2 border border-blue-900 rounded-xl p-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none"
-                            >
-                              <option value="">Pilih Sesi</option>
-                              {Array.from({ length: 10 }, (_, i) => i + 1).map(
-                                (num) => (
-                                  <option key={num} value={`Hari-${num}`}>
-                                    Sesi {num}
-                                  </option>
-                                )
-                              )}
-                            </select>
-
-                            <ChevronDown
-                              size={18}
-                              className="absolute right-3 top-[25px] text-gray-500 pointer-events-none"
-                            />
-                          </div>
-
-                          {/* {Object.keys(participantsData).map((hariKey) => (
-                          <option key={hariKey} value={hariKey}>
-                            {hariKey.replace("-", " ")}
-                          </option>
-                        ))} */}
+                            Generate Sertifikat
+                          </button>
                         </div>
                       </div>
                     )}
-                    {/* === SERTIFIKAT === */}
-                    <button
-                      onClick={() => setShowCreateSertif(true)}
-                      className="mt-8 ml-7 px-15 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-80"
-                    >
-                      Generate Sertifikat
-                    </button>
                   </div>
                 </div>
+
+                {/* ✅ FULLSCREEN MODAL - TARUH DI SINI (DI LUAR SEMUA DIV) */}
+                {showFullscreen && (
+                  <QRFullscreen
+                    qrValue={eventData.mdl_kode_qr}
+                    eventTitle={eventData.mdl_nama}
+                    sesi={sesi}
+                    onClose={() => setShowFullscreen(false)}
+                  />
+                )}
               </div>
             ) : (
               <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-10 w-full">
@@ -777,7 +1120,7 @@ const AdminDetail = () => {
               />
               <DropdownHariSesi
                 participants={participantsData}
-                onFilter={handleFilter}
+                onFilter={handleFilterChange}
               />
               <div className="overflow-x-auto">
                 <TableParticipants
@@ -820,12 +1163,38 @@ const AdminDetail = () => {
         <FinishConfirmModal
           isOpen={showFinishConfirm}
           onClose={() => setShowFinishConfirm(false)}
+          onConfirm={handleFinishEvent} // kirim langsung handler lama
+          isLoading={isFinishing}
+        />
+
+        <ChangeSesiConfirmModal
+          isOpen={showChangeSesiConfirm}
+          onClose={() => {
+            setShowChangeSesiConfirm(false);
+            setPendingSesi("");
+            setSesiPresensi(
+              eventData?.mdl_sesi_acara
+                ? eventData.mdl_sesi_acara.toString()
+                : ""
+            );
+          }}
+          onConfirm={handleConfirmChangeSesi}
+          sesiNumber={pendingSesi}
+        />
+
+        {/* <FinishConfirmModal
+          isOpen={showFinishConfirm}
+          onClose={() => setShowFinishConfirm(false)}
           onConfirm={async () => {
             setIsFinishing(true);
             try {
-              await axios.post(
-                `${API_BASE_URL}/admin/events/${id}/finish`,
-                {},
+              await axios.put(
+                `⁠ ${API_BASE_URL}/admin/events/${id}`⁠,
+                {
+                  mdl_status: "closed",
+                  mdl_acara_selesai: formattedDateTime, // Kirim waktu selesai
+                },
+        
                 {
                   headers: { Authorization: `Bearer ${token}` },
                 }
@@ -840,7 +1209,7 @@ const AdminDetail = () => {
             }
           }}
           isLoading={isFinishing}
-        />
+        /> */}
 
         {/* <ArchiveConfirmModal
           isOpen={showArchiveConfirm}

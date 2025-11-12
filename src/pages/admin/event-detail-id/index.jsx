@@ -5,6 +5,7 @@ import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
+import { X } from "lucide-react"; 
 
 const API_BASE_URL =
   "https://mediumpurple-swallow-757782.hostingersite.com/api";
@@ -17,6 +18,8 @@ const DetailEventId = () => {
   const [error, setError] = useState(null);
   const token = localStorage.getItem("token");
   const qrRef = useRef();
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupContent, setPopupContent] = useState({ title: "", text: "" });
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -133,20 +136,38 @@ const DetailEventId = () => {
             />
             <div className="mb-5">
               <Typography weight="semibold">Deskripsi Acara</Typography>
-              <textarea
-                disabled
-                value={event.mdl_deskripsi || ""}
-                className="w-full h-24 rounded-xl p-2 text-sm"
-              ></textarea>
+              <div className="w-80 rounded-xl text-sm">
+                <p className="line-clamp-3">{event.mdl_deskripsi}</p>
+               <p
+                  onClick={() => {
+                    setPopupContent({
+                      title: "Deskripsi Acara",
+                      text: event.mdl_deskripsi || "Tidak ada deskripsi",
+                    });
+                    setShowPopup(true);
+                  }}
+                  className="text-blue-600 mt-1 cursor-pointer hover:underline"
+                >
+                  Lihat Selengkapnya
+                </p>
+             </div>
             </div>
-            <div>
-              <Typography weight="semibold">Informasi Tambahan</Typography>
-              <textarea
-                disabled
-                value={event.mdl_catatan || ""}
-                className="w-full h-24 rounded-xl p-2 text-sm"
-              ></textarea>
-            </div>
+            <Typography weight="semibold">Informasi Tambahan</Typography>
+              <div className="w-80 rounded-xl text-sm">
+                <p className="line-clamp-3">{event.mdl_catatan}</p>
+                  <p
+                    onClick={() => {
+                      setPopupContent({
+                        title: "Informasi Tambahan",
+                        text: event.mdl_catatan || "Tidak ada catatan tambahan",
+                      });
+                      setShowPopup(true);
+                    }}
+                    className="text-blue-600 mt-1 cursor-pointer hover:underline"
+                  >
+                    Lihat Selengkapnya
+                  </p>
+             </div>
           </div>
 
           <div className="flex-1 min-w-[300px]">
@@ -264,6 +285,26 @@ const DetailEventId = () => {
           </div>
         </div>
       </div>
+        {showPopup && (
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-[9999]">
+            <div className="relative bg-white w-[90%] max-w-xl rounded-2xl p-6 shadow-2xl animate-fadeIn">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+              >
+                <X size={24} />
+              </button>
+
+              <Typography type="heading5" weight="bold" className="mb-3 text-blue-900">
+                {popupContent.title}
+              </Typography>
+
+              <div className="max-h-[400px] overflow-y-auto text-gray-700 leading-relaxed whitespace-pre-line">
+                {popupContent.text}
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

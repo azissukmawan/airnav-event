@@ -10,14 +10,13 @@ import { Typography } from "../../../components/typography";
 import Breadcrumb from "../../../components/breadcrumb";
 import { useNavigate, useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
-import { X } from "lucide-react";
 
 export default function EventWheel() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { width, height } = useWindowSize();
   const token = localStorage.getItem("token");
-
+  
   const [data, setData] = useState([]);
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
@@ -29,22 +28,16 @@ export default function EventWheel() {
   const [eventTitle, setEventTitle] = useState("Loading...");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // console.log("Winner:", winner);
-  // console.log("Winners:", winners);
-  // console.log("New Winner:", newWinner);
+  const [currentHari, setCurrentHari] = useState("");
+  const [currentSesi, setCurrentSesi] = useState("");
 
   // Hanya peserta yang hadir tapi belum menang
-  const wheelData = Array.isArray(data)
-    ? data.filter(
-        (p) =>
-          !winners.some(
-            (w) =>
-              (w.name || w.nama || "").toLowerCase().trim() ===
-              p.option.toLowerCase().trim()
-          )
+  const wheelData = data.filter(
+    (p) =>
+      !winners.some(
+        (w) => w.toLowerCase().trim() === p.option.toLowerCase().trim()
       )
-    : [];
+  );
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -71,8 +64,7 @@ export default function EventWheel() {
         const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-        // Sesuaikan struktur response
+        
         const eventData = res.data?.data?.data || res.data?.data;
         setEventTitle(eventData?.mdl_nama || "Judul tidak tersedia");
       } catch (err) {
@@ -86,7 +78,7 @@ export default function EventWheel() {
         setLoading(true);
 
         const [participantsRes, winnersRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/admin/events/${id}/participants`, {
+          axios.get(`${API_BASE_URL}/admin/events/${id}/attendance`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
           axios.get(`${API_BASE_URL}/admin/events/${id}/winners`, {
@@ -94,25 +86,37 @@ export default function EventWheel() {
           }),
         ]);
 
-        // Parse participants - cek berbagai struktur
-        let participantsData = [];
-        if (participantsRes.data?.data?.data) {
-          participantsData = participantsRes.data.data.data;
-        } else if (participantsRes.data?.data) {
-          participantsData = participantsRes.data.data;
-        } else if (Array.isArray(participantsRes.data)) {
-          participantsData = participantsRes.data;
+        // PARSE DATA BARU SESUAI STRUKTUR
+        const participantsData = participantsRes.data?.data || {};
+        const metaData = participantsRes.data?.meta || {};
+        
+        // Ambil hari dan sesi terakhir dari meta
+        const lastDate = metaData.unique_dates?.[metaData.unique_dates.length - 1];
+        const lastSession = metaData.unique_sessions?.[metaData.unique_sessions.length - 1];
+        
+        // Cari hari terakhir di data
+        const hariKeys = Object.keys(participantsData);
+        const lastHari = hariKeys[hariKeys.length - 1] || "";
+        
+        // Cari sesi terakhir di hari terakhir
+        let lastSesi = "";
+        let participantsList = [];
+        
+        if (lastHari && participantsData[lastHari]) {
+          const sesiKeys = Object.keys(participantsData[lastHari]);
+          lastSesi = sesiKeys[sesiKeys.length - 1] || "";
+          
+          if (lastSesi) {
+            participantsList = participantsData[lastHari][lastSesi] || [];
+          }
         }
+        
+        setCurrentHari(lastHari);
+        setCurrentSesi(lastSesi);
 
-        // Filter peserta yang hadir (cek berbagai field name)
-        const hadirOnly = participantsData.filter((p) => {
-          const status = p.status || p.status_kehadiran || p.hadir;
-          return (
-            status === "Hadir" ||
-            status === "hadir" ||
-            status === true ||
-            p.hadir === true
-          );
+        // Filter peserta yang hadir
+        const hadirOnly = participantsList.filter((p) => {
+          return p.status === "Hadir" || p.status === "hadir";
         });
 
         setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
@@ -127,14 +131,9 @@ export default function EventWheel() {
             : [];
         }
 
-        console.log("Winners Data from API:", winnersData);
-        setWinners(
-          winnersData.map((w) => ({
-            id: w.id,
-            name: w.name,
-          }))
-        );
+        setWinners(winnersData.map((w) => w.name || w.nama));
       } catch (err) {
+        console.error("Error fetching data:", err);
         if (err.response?.status === 403) {
           setError("Akses ditolak. Anda tidak memiliki izin untuk event ini.");
         } else if (err.response?.status === 404) {
@@ -163,7 +162,7 @@ export default function EventWheel() {
 
       const winnerFromAPI = response.data.data.winner || response.data.data;
 
-      // Cari index di wheelData (bukan data asli)
+      // Cari index di wheelData
       const selectedIndex = wheelData.findIndex(
         (p) =>
           p.option.toLowerCase().trim() ===
@@ -172,18 +171,13 @@ export default function EventWheel() {
 
       if (selectedIndex === -1) {
         alert(
-          `${
-            winnerFromAPI.name || winnerFromAPI.nama
-          } sudah menang sebelumnya atau tidak ada di wheel.`
+          `${winnerFromAPI.name || winnerFromAPI.nama} sudah menang sebelumnya atau tidak ada di wheel.`
         );
         return;
       }
 
       setPrizeNumber(selectedIndex);
-      setNewWinner({
-        id: winnerFromAPI.id,
-        name: winnerFromAPI.name || winnerFromAPI.nama,
-      });
+      setNewWinner(winnerFromAPI.name || winnerFromAPI.nama);
       setMustSpin(true);
       setShowConfetti(false);
     } catch (err) {
@@ -195,13 +189,10 @@ export default function EventWheel() {
 
   const handleStopSpinning = () => {
     setMustSpin(false);
-    setWinner(newWinner.name); // Menampilkan nama pemenang
+    setWinner(newWinner);
 
-    // Tambahkan pemenang ke daftar pemenang
     setWinners((prev) =>
-      newWinner && !prev.some((w) => w.id === newWinner.id) // Cek apakah ID sudah ada
-        ? [...prev, newWinner]
-        : prev
+      newWinner && !prev.includes(newWinner) ? [...prev, newWinner] : prev
     );
 
     setModalOpen(true);
@@ -209,30 +200,12 @@ export default function EventWheel() {
     setTimeout(() => setShowConfetti(false), 6000);
   };
 
-  const handleCancelWinner = async (userId) => {
-    try {
-      await axios.put(
-        `${API_BASE_URL}/admin/events/${id}/winners/${userId}`,
-        { isWinner: false },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Hapus pemenang dari daftar lokal
-      setWinners((prev) => prev.filter((w) => w.id !== userId));
-
-      alert("Pemenang berhasil dibatalkan!");
-    } catch (error) {
-      console.error(error);
-      alert("Gagal membatalkan pemenang.");
-    }
-  };
-
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex relative bg-gray-50">
+      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
         <Sidebar role="admin" />
-        <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+        <div className="flex-1 p-6 mt-2 space-y-4">
           <div className="flex items-center justify-center h-64">
             <p className="text-gray-500 text-lg">Memuat data...</p>
           </div>
@@ -244,9 +217,9 @@ export default function EventWheel() {
   // Error state
   if (error) {
     return (
-      <div className="min-h-screen flex relative bg-gray-50">
+      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
         <Sidebar role="admin" />
-        <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+        <div className="flex-1 p-6 mt-2 space-y-4">
           <Breadcrumb items={breadcrumbItems} />
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <p className="text-red-600 text-lg font-semibold mb-2">Error</p>
@@ -264,9 +237,9 @@ export default function EventWheel() {
   }
 
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0">
+    <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
       <Sidebar role="admin" />
-      <div className="flex-1 p-6 mt-4 space-y-4 min-h-screen">
+      <div className="flex-1 p-6 mt-2 space-y-4 min-h-screen">
         {showConfetti &&
           ReactDOM.createPortal(
             <div className="fixed inset-0 z-[9999] pointer-events-none">
@@ -289,6 +262,16 @@ export default function EventWheel() {
             <h1 className="text-4xl font-bold text-blue-900">Doorprize</h1>
           </div>
           <p className="text-gray-500 mt-2">{eventTitle}</p>
+          
+          {/* ✅ KETERANGAN SESI DAN HARI */}
+          {currentHari && currentSesi && (
+            <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg w-fit">
+              
+              <span className="text-sm font-medium text-blue-800">
+                Menampilkan peserta dari <span className="font-bold">{currentHari}</span> - <span className="font-bold">{currentSesi}</span>
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -376,29 +359,16 @@ export default function EventWheel() {
               </div>
 
               {winners.length > 0 ? (
-                <ul className="space-y-3">
-                  {winners.map((winner, index) => (
+                <ul className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                  {winners.map((name, index) => (
                     <li
-                      key={winner.id}
-                      className="flex items-center justify-between gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
+                      key={index}
+                      className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                          {index + 1}
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          {winner.name}{" "}
-                          {/* Gunakan winner.name, bukan winner */}
-                        </span>
-                      </div>
-                      {/* Tombol batal */}
-                      <button
-                        onClick={() => handleCancelWinner(winner.id)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Batalkan pemenang"
-                      >
-                        <X size={20} />
-                      </button>
+                      <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </span>
+                      <span className="text-gray-800 font-medium">{name}</span>
                     </li>
                   ))}
                 </ul>
@@ -445,7 +415,7 @@ export default function EventWheel() {
             </Typography>
             <div className="mt-4 px-6 py-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
               <Typography type="body" className="text-yellow-800 font-semibold">
-                Pemenang Doorprize
+                🏆 Pemenang Doorprize 🏆
               </Typography>
             </div>
           </div>

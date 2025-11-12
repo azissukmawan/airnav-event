@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Calendar,
+  CalendarPlus2,
+  CalendarMinus2,
   MapPin,
-  Clock,
   Download,
   Copy,
   Facebook,
@@ -580,30 +581,38 @@ const DetailEvent = () => {
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Calendar className="w-6 h-6" />
+                <CalendarPlus2 className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Pendaftaran:</strong>{" "}
-                {formatDate(event.mdl_pendaftaran_mulai)} -{" "}
-                {formatDate(event.mdl_pendaftaran_selesai)}
+                <strong>Mulai Pendaftaran:</strong>{" "}
+                {formatDate(event.mdl_pendaftaran_mulai)}, {formatTime(event.mdl_pendaftaran_mulai)} WIB
               </Typography>
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Calendar className="w-6 h-6" />
+                <CalendarMinus2 className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Tanggal Acara:</strong>{" "}
-                {formatDate(event.mdl_acara_mulai)}
+                <strong>Pendaftaran Berakhir:</strong>{" "}
+                {formatDate(event.mdl_pendaftaran_selesai)}, {formatTime(event.mdl_pendaftaran_selesai)} WIB
               </Typography>
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-primary-30 text-white p-2 rounded-full">
-                <Clock className="w-6 h-6" />
+                <CalendarPlus2 className="w-6 h-6" />
               </div>
               <Typography type="body" className="text-typo-secondary">
-                <strong>Jam Acara:</strong> {formatTime(event.mdl_acara_mulai)}{" "}
-                - {formatTime(event.mdl_acara_selesai)} WIB
+                <strong>Mulai Acara:</strong>{" "}
+                {formatDate(event.mdl_acara_mulai)}, {formatTime(event.mdl_acara_mulai)} WIB
+              </Typography>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="bg-primary-30 text-white p-2 rounded-full">
+                <CalendarMinus2 className="w-6 h-6" />
+              </div>
+              <Typography type="body" className="text-typo-secondary">
+                <strong>Acara Berakhir:</strong>{" "}
+                {formatDate(event.mdl_acara_selesai)}, {formatTime(event.mdl_acara_selesai)} WIB
               </Typography>
             </div>
           </div>
