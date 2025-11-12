@@ -1163,7 +1163,7 @@ const AdminDetail = () => {
         <FinishConfirmModal
           isOpen={showFinishConfirm}
           onClose={() => setShowFinishConfirm(false)}
-          onConfirm={handleFinishEvent} // kirim langsung handler lama
+          onConfirm={handleFinishEvent}
           isLoading={isFinishing}
         />
 
