@@ -36,7 +36,7 @@ const AdminDetail = () => {
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const token = localStorage.getItem("token");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [showCreateSertif, setShowCreateSertif] = useState(false);
   const [participantsData, setParticipantsData] = useState({});
   const [filteredParticipants, setFilteredParticipants] = useState([]);
@@ -56,12 +56,11 @@ const AdminDetail = () => {
     { label: "Acara", link: "/admin/events" },
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
-  console.log("participants:", participants);
 
-  // Ganti dengan callback yang lebih simple:
+  // FIXED: Handle filter change dengan validasi
   const handleFilterChange = (filtered) => {
-    setFilteredParticipants(filtered);
-    setCurrentPage(1); // Reset ke halaman pertama saat filter berubah
+    setFilteredParticipants(Array.isArray(filtered) ? filtered : []);
+    setCurrentPage(1);
   };
 
   useEffect(() => {
@@ -100,7 +99,6 @@ const AdminDetail = () => {
       );
 
       setSesiPresensi(pendingSesi);
-
       setEventData((prev) => ({
         ...prev,
         mdl_sesi_acara: sesiNumber,
@@ -108,7 +106,6 @@ const AdminDetail = () => {
 
       setShowChangeSesiConfirm(false);
       setPendingSesi("");
-
       showPopup(
         "success",
         "Berhasil",
@@ -122,15 +119,7 @@ const AdminDetail = () => {
     }
   };
 
-  // ============================================
-  // BAGIAN 2: DROPDOWN FILTER TABEL
-  // ============================================
-
-  // const handleFilterChange = (filtered) => {
-  //   setFilteredParticipants(filtered);
-  //   setCurrentPage(1);
-  // };
-
+  // FIXED: Fetch participants dengan error handling yang lebih baik
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -141,64 +130,48 @@ const AdminDetail = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const data = res.data?.data?.data || res.data?.data || res.data || {};
+        console.log("RESPON PESERTA DARI BE:", res.data);
+
+        // FIXED: Handle berbagai kemungkinan struktur response
+        let data = {};
+        if (res.data?.data?.data) {
+          data = res.data.data.data;
+        } else if (res.data?.data) {
+          data = res.data.data;
+        } else if (res.data) {
+          data = res.data;
+        }
+
         setParticipantsData(data);
 
-        // Set initial filtered participants
-        const firstHari = Object.keys(data)[0];
-        if (firstHari) {
-          const firstSesi = Object.keys(data[firstHari])[0];
-          if (firstSesi) {
-            setFilterHari(firstHari);
-            setFilterSesi(firstSesi);
-            setFilteredParticipants(data[firstHari][firstSesi] || []);
+        // FIXED: Validasi data sebelum menggunakan Object.keys
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          const firstHari = Object.keys(data)[0];
+          if (firstHari && data[firstHari] && typeof data[firstHari] === 'object') {
+            const firstSesi = Object.keys(data[firstHari])[0];
+            if (firstSesi) {
+              setFilterHari(firstHari);
+              setFilterSesi(firstSesi);
+              setFilteredParticipants(Array.isArray(data[firstHari][firstSesi]) ? data[firstHari][firstSesi] : []);
+            }
           }
+        } else {
+          setFilteredParticipants([]);
         }
       } catch (err) {
         console.error("Gagal mengambil data peserta:", err);
         setFilteredParticipants([]);
+        setError("Gagal mengambil data peserta");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchParticipants();
+    if (id && token) {
+      fetchParticipants();
+    }
   }, [id, token]);
 
-  // Ubah bagian useEffect fetchParticipants menjadi:
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          `${API_BASE_URL}/admin/events/${id}/attendance`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        const data = res.data?.data?.data || res.data?.data || res.data || {};
-        setParticipantsData(data);
-
-        // Set initial filtered participants
-        const firstHari = Object.keys(data)[0];
-        if (firstHari) {
-          const firstSesi = Object.keys(data[DropdownHariSesi])[0];
-          if (firstSesi) {
-            setFilteredParticipants(data[firstHari][firstSesi] || []);
-          }
-        }
-      } catch (err) {
-        console.error("Gagal mengambil data peserta:", err);
-        setFilteredParticipants([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchParticipants();
-  }, [id, token]);
-
-  // ====== SELESAIKAN ACARA =========
   const handleFinishEvent = async () => {
     setIsFinishing(true);
     try {
@@ -224,15 +197,13 @@ const AdminDetail = () => {
 
       showPopup("success", "Berhasil", "Acara telah diselesaikan.");
 
-      // Update state lokal untuk mencerminkan perubahan
       setEventData((prev) => ({
         ...prev,
         mdl_status: "closed",
-        mdl_acara_selesai: formattedDateTime, // Update juga di tampilan
+        mdl_acara_selesai: formattedDateTime,
         mdl_presensi_aktif: 0,
       }));
       setPresensiAktif(false);
-
       setShowFinishConfirm(false);
     } catch (error) {
       console.error("Gagal menyelesaikan acara:", error);
@@ -244,77 +215,11 @@ const AdminDetail = () => {
     }
   };
 
-  useEffect(() => {
-    if (eventData?.mdl_sesi_acara) {
-      setSesi(eventData.mdl_sesi_acara.toString());
-    }
-  }, [eventData]);
-
-  const handleChange = (e) => {
-    setSesi(e.target.value);
-    handleChangeSesiClick(e.target.value);
-  };
-
-  // FUNGSI UNTUK MENAMPILKAN POPUP KONFIRMASI
-  // const handleChangeSesiClick = (newSesi) => {
-  //   if (!newSesi || newSesi === sesi) return; // Skip jika sama atau kosong
-
-  //   setPendingSesi(newSesi);
-  //   setShowChangeSesiConfirm(true);
-  // };
-
-  // FUNGSI UPDATE SESI KE API (SETELAH KONFIRMASI)
-  // const handleConfirmChangeSesi = async () => {
-  //   if (!pendingSesi) return;
-
-  //   try {
-  //     const sesiNumber = parseInt(pendingSesi.replace("Hari-", ""));
-
-  //     // PUT ke API
-  //     await axios.put(
-  //       `${API_BASE_URL}/admin/event/${id}/sesi/toggle`,
-  //       { mdl_sesi_acara: sesiNumber },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     // Update state lokal
-  //     setSesi(pendingSesi);
-  //     handleFilter(hari, pendingSesi); // Filter participants
-
-  //     // Update eventData agar selected tetap persist
-  //     setEventData((prev) => ({
-  //       ...prev,
-  //       mdl_sesi_acara: sesiNumber,
-  //     }));
-
-  //     // Tutup modal konfirmasi
-  //     setShowChangeSesiConfirm(false);
-  //     setPendingSesi("");
-
-  //     // Tampilkan popup sukses
-  //     showPopup(
-  //       "success",
-  //       "Berhasil",
-  //       `Anda berhasil mengubah ke Sesi ${sesiNumber}. Peserta yang scan QR presensi akan masuk ke sesi tersebut.`
-  //     );
-  //   } catch (error) {
-  //     console.error("Gagal mengubah sesi:", error);
-  //     setShowChangeSesiConfirm(false);
-  //     setPendingSesi("");
-  //     showPopup("error", "Gagal", "Tidak dapat mengubah sesi acara");
-  //   }
-  // };
-
-  // ARSIP ACARA
+  // Archive Event
   const handleArchiveEvent = async () => {
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/admin/events/${id}/archive`, // BE
+      await axios.put(
+        `${API_BASE_URL}/admin/events/${id}/archive`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -322,14 +227,10 @@ const AdminDetail = () => {
       );
 
       showPopup("success", "Berhasil", "Acara berhasil diarsipkan");
-
-      // Update status eventData agar tidak perlu reload manual
       setEventData((prev) => ({
         ...prev,
         mdl_status: "archived",
       }));
-
-      // Tutup popup konfirmasi
       setShowArchiveConfirm(false);
     } catch (error) {
       console.error("Gagal mengarsipkan acara:", error);
@@ -337,7 +238,7 @@ const AdminDetail = () => {
     }
   };
 
-  // Notifikasi pop-up
+  // Notification popup
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
@@ -351,7 +252,6 @@ const AdminDetail = () => {
     setTimeout(() => setShowNotification(false), 3000);
   };
 
-  // === NOTIFICATION POPUP COMPONENT ===
   const NotificationPopup = () => {
     if (!showNotification) return null;
 
@@ -381,48 +281,18 @@ const AdminDetail = () => {
           <div className="flex items-start gap-3">
             <div className={style.icon}>
               {notificationConfig.type === "success" && (
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
               {notificationConfig.type === "error" && (
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               )}
               {notificationConfig.type === "warning" && (
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               )}
             </div>
@@ -438,18 +308,8 @@ const AdminDetail = () => {
               onClick={() => setShowNotification(false)}
               className={`${style.text} hover:opacity-70`}
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
@@ -458,14 +318,13 @@ const AdminDetail = () => {
     );
   };
 
-  // === POPUP SERTIF ===
   const handleGenerateSertif = (data) => {
     console.log("Data sertifikat dikirim:", data);
     showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
     setShowCreateSertif(false);
   };
 
-  // === FUNGSI UNTUK MENAMPILKAN POPUP PRESENSI ===
+  // Fetch event data
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -486,10 +345,12 @@ const AdminDetail = () => {
       }
     };
 
-    fetchEventData();
+    if (id && token) {
+      fetchEventData();
+    }
   }, [id, token]);
 
-  // === ON/OFF PRESENSI ===
+  // Toggle presensi
   const handleTogglePresensi = async () => {
     if (!id) return alert("ID acara tidak ditemukan");
 
@@ -508,7 +369,6 @@ const AdminDetail = () => {
       );
 
       setPresensiAktif(newStatus);
-      //refatch
       const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -526,6 +386,7 @@ const AdminDetail = () => {
       showPopup("error", "Gagal", "Tidak dapat mengubah status presensi");
     }
   };
+
   const handleDownloadQR = () => {
     const canvas = document.querySelector("canvas");
     if (!canvas) {
@@ -558,137 +419,7 @@ const AdminDetail = () => {
     }
   };
 
-  useEffect(() => {
-    if (participants.length > 0) {
-      setRowsPerPage(participants.length);
-    }
-  }, [participants]);
-
-  useEffect(() => {
-    const fetchEventDetail = async () => {
-      if (!id) {
-        setLoadingEvent(false);
-        return;
-      }
-      try {
-        setLoadingEvent(true);
-        const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const eventDetail =
-          res.data?.data?.data || res.data?.data || res.data || null;
-        setEventData(eventDetail);
-      } catch (err) {
-        console.error("Gagal mengambil detail event:", err);
-        setError(err.response?.data?.message || err.message);
-      } finally {
-        setLoadingEvent(false);
-      }
-    };
-    fetchEventDetail();
-  }, [id, token]);
-
-  // === NUNGGU BE ===
-  useEffect(() => {
-    const fetchParticipants = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        const res = await axios.get(
-          `${API_BASE_URL}/admin/events/${id}/attendance`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        console.log("RESPON PESERTA DARI BE:", res.data);
-
-        const data = res.data?.data?.data || res.data?.data || res.data || {};
-
-        console.log("HASIL DATA YANG DISIMPAN:", data);
-
-        setParticipantsData(data);
-
-        const firstHari = Object.keys(data)[0];
-        if (firstHari) {
-          const firstSesi = Object.keys(data[firstHari])[0];
-          if (firstSesi) {
-            setHari(firstHari);
-            setSesi(firstSesi);
-            setFilteredParticipants(data[firstHari][firstSesi] || []);
-          }
-        }
-      } catch (err) {
-        console.error("Gagal mengambil data peserta:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchParticipants();
-  }, []);
-
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const res = await axios.get(
-  //         `${API_BASE_URL}/admin/events/${id}/participants`,
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-
-  //       // ✅ Data dari BE langsung diambil dari res.data.data
-  //       console.log("RESPON PESERTA DARI BE:", res.data);
-  //       const data = res.data?.data?.data || res.data?.data || res.data || {};
-
-  //       console.log("HASIL DATA YANG DISIMPAN:", data);
-  //       // const data = res.data?.data || {};
-
-  //       // Simpan ke state
-  //       setParticipantsData(data);
-
-  //       // (Opsional) log untuk cek strukturnya
-  //       console.log("Participants data:", data);
-  //     } catch (error) {
-  //       console.error("Error fetching participants:", error);
-  //       setParticipantsData({});
-  //     }
-  //   };
-
-  //   fetchParticipants();
-  // }, [id]);
-
-  const handleFilter = (hari, sesi) => {
-    if (hari && sesi && participantsData[hari]?.[sesi]) {
-      setFilteredParticipants(participantsData[hari][sesi]);
-    } else {
-      setFilteredParticipants([]);
-    }
-  };
-
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     if (!id) {
-  //       setLoading(false);
-  //       return;
-  //     }
-  //     try {
-  //       setLoading(true);
-  //       const res = await axios.get(
-  //         `${API_BASE_URL}/admin/events/${id}/participants`,
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-  //       const participantsData =
-  //         res.data?.data?.data || res.data?.data || res.data || [];
-  //       setParticipants(participantsData);
-  //     } catch (err) {
-  //       console.error("Gagal mengambil data peserta:", err);
-  //       setError(err.response?.data?.message || err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchParticipants();
-  // }, [id, token]);
-
+  // Fetch winners dengan error handling
   useEffect(() => {
     const fetchWinners = async () => {
       if (!id) return;
@@ -697,6 +428,7 @@ const AdminDetail = () => {
           `${API_BASE_URL}/admin/events/${id}/winners`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        // FIXED: Pastikan winners selalu array
         const winnersData = res.data?.data?.winners || [];
         setWinners(Array.isArray(winnersData) ? winnersData : []);
       } catch (err) {
@@ -705,20 +437,17 @@ const AdminDetail = () => {
           setWinners([]);
         } else {
           console.error("Gagal mengambil data pemenang:", err);
+          setWinners([]);
         }
       }
     };
-    fetchWinners();
+    
+    if (id && token) {
+      fetchWinners();
+    }
   }, [id, token]);
 
-  // === SEARCH FILTER ===
-  // const filteredParticipants = useMemo(() => {
-  //   if (!Array.isArray(participants)) return [];
-  //   return participants.filter((p) =>
-  //     p.nama?.toLowerCase().includes(search.toLowerCase())
-  //   );
-  // }, [participants, search]);
-
+  // FIXED: Sorted participants dengan validasi winners
   const sortedParticipants = useMemo(() => {
     if (!Array.isArray(filteredParticipants)) return [];
     
@@ -736,12 +465,6 @@ const AdminDetail = () => {
       return (bWinner ? 1 : 0) - (aWinner ? 1 : 0);
     });
   }, [filteredParticipants, winners, eventData]);
-
-  // const currentTableData = useMemo(() => {
-  //   const firstIndex = (currentPage - 1) * rowsPerPage;
-  //   const lastIndex = firstIndex + rowsPerPage;
-  //   return sortedParticipants.slice(firstIndex, lastIndex);
-  // }, [currentPage, sortedParticipants, rowsPerPage]);
 
   const totalPages = Math.ceil(sortedParticipants.length / rowsPerPage);
 
@@ -765,15 +488,6 @@ const AdminDetail = () => {
     setSelectedParticipant(null);
   };
 
-  // === GENERATE SERTIF ===
-  // const EventDetail = () => {
-  //   const [showCreateSertif, setShowCreateSertif] = useState(false);
-
-  //   const handleGenerateSertif = (data) => {
-  //     console.log("Data sertif dikirim:", data);
-  //     // TODO: kirim ke API
-  //   };
-  // };
   return (
     <>
       <NotificationPopup />
@@ -814,42 +528,38 @@ const AdminDetail = () => {
             )}
           </div>
 
-          {/* === CARD INFO ACARA === */}
+          {/* Card Info Acara */}
           <div className="flex flex-col lg:flex-row gap-6 w-full mb-5">
             {loadingEvent ? (
               <div className="p-6 rounded-xl shadow-sm w-full max-w-full md:max-w-md lg:max-w-lg">
                 <p className="text-gray-500">Loading event info...</p>
               </div>
             ) : eventData ? (
-              // card data
-              <div className="p-5 flex flex-column bg-white rounded-xl shadow-sm ">
-                {/* KIRI */}
-                <div className=" p-5  md:max-w-lg lg:max-w-xl">
+              <div className="p-5 flex flex-column bg-white rounded-xl shadow-sm">
+                {/* Kiri - Info Event */}
+                <div className="p-5 md:max-w-lg lg:max-w-xl">
                   <h2 className="text-xl font-semibold text-blue-900 mb-2">
                     {eventData.mdl_nama}
                   </h2>
                   <div className="text-sm text-gray-600 space-y-3 mt-3">
                     <p>
-                      <span className="font-medium ">Kategori:</span>{" "}
+                      <span className="font-medium">Kategori:</span>{" "}
                       {eventData.mdl_kategori || "-"}
                     </p>
                     <p>
-                      <span className="font-medium ">Lokasi:</span>{" "}
+                      <span className="font-medium">Lokasi:</span>{" "}
                       {eventData.mdl_lokasi || "-"}
                     </p>
                     <p>
                       <span className="font-medium">Tanggal:</span>{" "}
                       {eventData.mdl_acara_mulai
-                        ? new Date(
-                            eventData.mdl_acara_mulai
-                          ).toLocaleDateString("id-ID")
+                        ? new Date(eventData.mdl_acara_mulai).toLocaleDateString("id-ID")
                         : "-"}
                     </p>
                     <p>
                       <span className="font-medium">Tipe:</span>{" "}
                       {eventData.mdl_tipe || "-"}
                     </p>
-
                     <p>
                       <span className="font-medium">Status:</span>{" "}
                       {(() => {
@@ -867,79 +577,19 @@ const AdminDetail = () => {
                       })()}
                     </p>
                   </div>
-                  {/* ==== BUTTON ==== */}
-                  {/* DETAIL BUTTON */}
+                  
                   <div className="flex items-center gap-3 mt-5">
-                    <Link to={`/admin/event/detail/${id}`} className="">
-                      <button className="w-45  px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
+                    <Link to={`/admin/event/detail/${id}`}>
+                      <button className="w-45 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
                         Lihat Detail Lengkap
                       </button>
                     </Link>
-
-                    {/* === POPUP KONFIRMASI SELESAIKAN ACARA === */}
-                    {/* {showFinishConfirm && (
-                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
-                          <p className="text-gray-800 mb-4 font-medium">
-                            Apakah kamu yakin ingin menyelesaikan acara ini?
-                          </p>
-                          <div className="flex justify-end gap-3">
-                            <button
-                              onClick={() => setShowFinishConfirm(false)}
-                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
-                            >
-                              Batal
-                            </button>
-                            <button
-                              onClick={() => {
-                                setIsFinished(true);
-                                setShowFinishConfirm(false);
-                              }}
-                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
-                            >
-                              Ya, Selesai
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )} */}
-
-                    {/* === POPUP KONFIRMASI ARSIPKAN ACARA === */}
-                    {/* {showArchiveConfirm && (
-                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
-                          <p className="text-gray-800 mb-4 font-medium">
-                            Apakah kamu yakin ingin mengarsipkan acara ini?
-                          </p>
-                          <div className="flex justify-end gap-3">
-                            <button
-                              onClick={() => setShowArchiveConfirm(false)}
-                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
-                            >
-                              Batal
-                            </button>
-                            <button
-                              onClick={() => {
-                                // tambahkan aksi arsip di sini (misalnya panggil API)
-                                setShowArchiveConfirm(false);
-                              }}
-                              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-800 transition"
-                            >
-                              Ya, Arsipkan
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )} */}
-                    {/* BUTTON SELESAIKAN ACARA */}
                     <button
                       onClick={() => setShowFinishConfirm(true)}
-                      className=" w-40 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
+                      className="w-40 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
                     >
                       Selesaikan Acara
                     </button>
-
-                    {/* BUTTON ARSIP ACARA */}
                     <button
                       onClick={() => setShowArchiveConfirm(true)}
                       className="w-35 px-1 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition"
@@ -948,147 +598,136 @@ const AdminDetail = () => {
                     </button>
                   </div>
                 </div>
-                {/* === GARIS PEMBATAS === */}
+                
+                {/* Garis Pembatas */}
                 <div className="hidden lg:flex items-center justify-center px-6">
-                  <div className=" ml-10 w-[2px] h-[80%] bg-gray-300 rounded-full"></div>
+                  <div className="ml-10 w-[2px] h-[80%] bg-gray-300 rounded-full"></div>
                 </div>
 
-                {/* === QR + PRESENSI === */}
+                {/* Kanan - QR & Presensi */}
                 <div className="ml-25">
-                  {/* KANAN */}
                   <div className="flex-1">
-                    {!loadingEvent && eventData && (
-                      <div className="space-y-5">
-                        {/* QR CODE & CONTROLS SECTION */}
-                        <div className="flex flex-wrap gap-5 items-start">
-                          {/* QR CODE */}
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="relative bg-white border-2 border-gray-200 rounded-lg p-2">
-                              {eventData.mdl_kode_qr ? (
-                                <QRCodeCanvas
-                                  value={eventData.mdl_kode_qr}
-                                  size={120}
-                                  bgColor="#ffffff"
-                                  fgColor="#000000"
-                                  level="H"
-                                  includeMargin={true}
-                                />
-                              ) : (
-                                <div className="w-[120px] h-[120px] bg-gray-100 rounded flex items-center justify-center">
-                                  <p className="text-gray-400 text-xs text-center px-2">
-                                    QR tidak tersedia
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* ICON BUTTONS */}
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => setShowFullscreen(true)}
-                                disabled={!eventData.mdl_kode_qr}
-                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                title="Fullscreen"
-                              >
-                                <Maximize2 size={16} />
-                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                  Fullscreen
-                                </span>
-                              </button>
-
-                              <button
-                                onClick={handleDownloadQR}
-                                disabled={!eventData.mdl_kode_qr}
-                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
-                                title="Download"
-                              >
-                                <Download size={16} />
-                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                                  Download QR
-                                </span>
-                              </button>
-                            </div>
+                    <div className="space-y-5">
+                      <div className="flex flex-wrap gap-5 items-start">
+                        {/* QR Code */}
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="relative bg-white border-2 border-gray-200 rounded-lg p-2">
+                            {eventData.mdl_kode_qr ? (
+                              <QRCodeCanvas
+                                value={eventData.mdl_kode_qr}
+                                size={120}
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                                level="H"
+                                includeMargin={true}
+                              />
+                            ) : (
+                              <div className="w-[120px] h-[120px] bg-gray-100 rounded flex items-center justify-center">
+                                <p className="text-gray-400 text-xs text-center px-2">
+                                  QR tidak tersedia
+                                </p>
+                              </div>
+                            )}
                           </div>
 
-                          {/* PRESENSI & SESI CONTROLS */}
-                          <div className="flex-1 min-w-[180px] space-y-4">
-                            {/* PRESENSI TOGGLE */}
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Presensi Acara
-                              </label>
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={handleTogglePresensi}
-                                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
-                                    presensiAktif ? "bg-primary" : "bg-gray-300"
-                                  }`}
-                                >
-                                  <span
-                                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
-                                      presensiAktif
-                                        ? "translate-x-8"
-                                        : "translate-x-1"
-                                    }`}
-                                  />
-                                </button>
-                                <span
-                                  className={`text-xs font-bold ${
-                                    presensiAktif
-                                      ? "text-primary"
-                                      : "text-gray-400"
-                                  }`}
-                                >
-                                  {presensiAktif ? "ON" : "OFF"}
-                                </span>
-                              </div>
-                            </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShowFullscreen(true)}
+                              disabled={!eventData.mdl_kode_qr}
+                              className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                              title="Fullscreen"
+                            >
+                              <Maximize2 size={16} />
+                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Fullscreen
+                              </span>
+                            </button>
 
-                            {/* PILIH SESI */}
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                Pilih Sesi
-                              </label>
-                              <div className="relative">
-                                <select
-                                  value={sesiPresensi}
-                                  onChange={handleSesiPresensiChange}
-                                  className="w-full border-2 border-primary rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none bg-white text-gray-700"
-                                >
-                                  <option value="">Pilih Sesi</option>
-                                  {Array.from(
-                                    { length: 10 },
-                                    (_, i) => i + 1
-                                  ).map((num) => (
-                                    <option key={num} value={num.toString()}>
-                                      Sesi {num}
-                                    </option>
-                                  ))}
-                                </select>
-                                <ChevronDown
-                                  size={18}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
-                                />
-                              </div>
-                            </div>
+                            <button
+                              onClick={handleDownloadQR}
+                              disabled={!eventData.mdl_kode_qr}
+                              className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                              title="Download"
+                            >
+                              <Download size={16} />
+                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Download QR
+                              </span>
+                            </button>
                           </div>
                         </div>
 
-                        {/* GENERATE SERTIFIKAT BUTTON */}
-                        <div className="pt-3">
-                          <button
-                            onClick={() => setShowCreateSertif(true)}
-                            className="w-full px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-80 transition-colors shadow-sm"
-                          >
-                            Generate Sertifikat
-                          </button>
+                        {/* Presensi & Sesi Controls */}
+                        <div className="flex-1 min-w-[180px] space-y-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Presensi Acara
+                            </label>
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={handleTogglePresensi}
+                                className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
+                                  presensiAktif ? "bg-primary" : "bg-gray-300"
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                                    presensiAktif
+                                      ? "translate-x-8"
+                                      : "translate-x-1"
+                                  }`}
+                                />
+                              </button>
+                              <span
+                                className={`text-xs font-bold ${
+                                  presensiAktif
+                                    ? "text-primary"
+                                    : "text-gray-400"
+                                }`}
+                              >
+                                {presensiAktif ? "ON" : "OFF"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              Pilih Sesi
+                            </label>
+                            <div className="relative">
+                              <select
+                                value={sesiPresensi}
+                                onChange={handleSesiPresensiChange}
+                                className="w-full border-2 border-primary rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none bg-white text-gray-700"
+                              >
+                                <option value="">Pilih Sesi</option>
+                                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                                  <option key={num} value={num.toString()}>
+                                    Sesi {num}
+                                  </option>
+                                ))}
+                              </select>
+                              <ChevronDown
+                                size={18}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
+                              />
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    )}
+
+                      <div className="pt-3">
+                        <button
+                          onClick={() => setShowCreateSertif(true)}
+                          className="w-full px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-80 transition-colors shadow-sm"
+                        >
+                          Generate Sertifikat
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* ✅ FULLSCREEN MODAL - TARUH DI SINI (DI LUAR SEMUA DIV) */}
                 {showFullscreen && (
                   <QRFullscreen
                     qrValue={eventData.mdl_kode_qr}
@@ -1105,7 +744,7 @@ const AdminDetail = () => {
             )}
           </div>
 
-          {/* ===== LOAD DATA ===== */}
+          {/* Load Data */}
           {loading ? (
             <div className="text-center py-10">
               <p className="text-gray-500">Memuat data peserta...</p>
@@ -1128,7 +767,6 @@ const AdminDetail = () => {
               />
               <div className="overflow-x-auto">
                 <TableParticipants
-                  // participants={currentTableData}
                   participants={filteredParticipants}
                   winners={winners}
                   onPreview={handleOpenPreview}
@@ -1139,14 +777,14 @@ const AdminDetail = () => {
                   onPageChange={setCurrentPage}
                   onRowsPerPageChange={handleRowsPerPageChange}
                   doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
-                  eventType={event.type}
+                  eventType={eventData?.mdl_tipe} // FIXED: gunakan eventData bukan event
                 />
               </div>
             </>
           )}
         </div>
 
-        {/* ===== POPUP MODAL ===== */}
+        {/* Popup Modals */}
         {openPreview && selectedParticipant && (
           <ParticipantPreview
             isOpen={openPreview}
@@ -1167,10 +805,9 @@ const AdminDetail = () => {
         <FinishConfirmModal
           isOpen={showFinishConfirm}
           onClose={() => setShowFinishConfirm(false)}
-          onConfirm={handleFinishEvent} // kirim langsung handler lama
+          onConfirm={handleFinishEvent}
           isLoading={isFinishing}
         />
-
         <ChangeSesiConfirmModal
           isOpen={showChangeSesiConfirm}
           onClose={() => {
@@ -1185,43 +822,6 @@ const AdminDetail = () => {
           onConfirm={handleConfirmChangeSesi}
           sesiNumber={pendingSesi}
         />
-
-        {/* <FinishConfirmModal
-          isOpen={showFinishConfirm}
-          onClose={() => setShowFinishConfirm(false)}
-          onConfirm={async () => {
-            setIsFinishing(true);
-            try {
-              await axios.put(
-                `⁠ ${API_BASE_URL}/admin/events/${id}`⁠,
-                {
-                  mdl_status: "closed",
-                  mdl_acara_selesai: formattedDateTime, // Kirim waktu selesai
-                },
-        
-                {
-                  headers: { Authorization: `Bearer ${token}` },
-                }
-              );
-              toast.success("Acara berhasil diselesaikan!");
-              setShowFinishConfirm(false);
-            } catch (err) {
-              console.error("Gagal menyelesaikan acara:", err);
-              toast.error("Gagal menyelesaikan acara.");
-            } finally {
-              setIsFinishing(false);
-            }
-          }}
-          isLoading={isFinishing}
-        /> */}
-
-        {/* <ArchiveConfirmModal
-          isOpen={showArchiveConfirm}
-          onClose={() => setShowArchiveConfirm(false)}
-          onConfirm={() => {
-            console.log("Acara diarsipkan!");
-          }}
-        /> */}
       </div>
     </>
   );
