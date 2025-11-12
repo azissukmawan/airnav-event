@@ -1,638 +1,1226 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState, useMemo } from "react";
+import { Link, useParams } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
-import Table from "../../../components/table";
+import CardList from "../../../components/card-status/CardList";
 import Search from "../../../components/form/SearchBar";
-import { FiEye, FiEdit, FiTrash2 } from "react-icons/fi";
-import { ArrowUpDown, Plus } from "lucide-react";
-import AddEvent from "../event-add";
-import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
-import DeletePopup from "../../../components/pop-up/Delete";
-import { Button } from "../../../components/button";
+import TableParticipants from "../../../components/admin/TableParticipants";
+import ParticipantPreview from "../../../components/admin/ParticipantPreview";
+import ArchiveConfirmModal from "../../../components/pop-up/ArchiveConfirmModal";
+import CreateSertif from "../../../components/pop-up/CreateSertif";
+import DropdownHariSesi from "../../../components/admin/Dropdown/DropdownHariSesi";
+import FinishConfirmModal from "../../../components/pop-up/FinishConfirmModal";
+import ChangeSesiConfirmModal from "../../../components/pop-up/ChangeSesiConfirmModal";
+import { QRFullscreen } from "./fullscreen";
+import { QRCodeCanvas } from "qrcode.react";
+import { Typography } from "../../../components/typography";
+import { ChevronDown, Maximize2, Download } from "lucide-react";
 
-// === KOMPONEN TABS BARU ===
-const EventTabs = ({ tabs, activeTab, onTabChange }) => {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {tabs.map((tab) => (
-        <button
-          key={tab}
-          onClick={() => onTabChange(tab)}
-          className={`
-            px-5 py-2 font-semibold text-sm rounded-lg
-            ${
-              activeTab === tab
-                ? "bg-primary text-white shadow-md"
-                : "bg-gray-200 text-gray-900 hover:bg-gray-300"
-            }
-            focus:outline-none transition-all duration-200 whitespace-nowrap
-          `}
-        >
-          {tab}
-        </button>
-      ))}
-    </div>
-  );
-};
-// === END KOMPONEN TABS ===
+const API_BASE_URL =
+  "https://mediumpurple-swallow-757782.hostingersite.com/api";
 
-const AdminEvent = () => {
-  const [eventData, setEventData] = useState([]);
+const AdminDetail = () => {
+  const { id } = useParams();
+  const [openPreview, setOpenPreview] = useState(false);
+  const [selectedParticipant, setSelectedParticipant] = useState(null);
   const [search, setSearch] = useState("");
-  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [participants, setParticipants] = useState([]);
+  const [winners, setWinners] = useState([]);
+  const [eventData, setEventData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  // sorting state
-  const [sortField, setSortField] = useState(null);
-  const [sortOrder, setSortOrder] = useState("asc");
-
-  // === STATE BARU UNTUK TABS ===
-  const [activeTab, setActiveTab] = useState("Semua");
-  // Daftar tab sesuai desain
-  const tabItems = ["Semua", "Draft", "Publish", "Selesai", "Archive"];
-
+  const [loadingEvent, setLoadingEvent] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedOption, setSelectedOption] = useState("active");
+  const [presensiAktif, setPresensiAktif] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const token = localStorage.getItem("token");
-
-  const fetchEvents = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/admin/events`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const events = res.data?.data?.data || res.data?.data || res.data || [];
-
-      if (Array.isArray(events)) {
-        setEventData(events);
-      } else {
-        console.warn("Data bukan array:", events);
-        setEventData([]);
-      }
-    } catch (error) {
-      console.error("Gagal fetch event:", error);
-      setError("Gagal mengambil data event");
-      setEventData([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-   useEffect(() => {
-    // --- PERUBAHAN 2: Panggil fungsinya di sini ---
-    fetchEvents();
-  }, [token]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(participants.length || 5);
+  const [showCreateSertif, setShowCreateSertif] = useState(false);
+  const [participantsData, setParticipantsData] = useState({});
+  const [filteredParticipants, setFilteredParticipants] = useState([]);
+  const [hari, setHari] = useState("");
+  const [sesi, setSesi] = useState("");
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [showFullscreen, setShowFullscreen] = useState(false);
+  const [showChangeSesiConfirm, setShowChangeSesiConfirm] = useState(false);
+  const [pendingSesi, setPendingSesi] = useState("");
+  const [sesiPresensi, setSesiPresensi] = useState("");
+  const [filterHari, setFilterHari] = useState("");
+  const [filterSesi, setFilterSesi] = useState("");
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
-    { label: "Daftar Acara", link: "/admin/events" },
+    { label: "Acara", link: "/admin/events" },
+    { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
+  console.log("participants:", participants);
 
-  // === SEARCH ===
-  const handleSearchChange = (value) => {
-    setSearch(value);
-    setCurrentPage(1);
+  // Ganti dengan callback yang lebih simple:
+  const handleFilterChange = (filtered) => {
+    setFilteredParticipants(filtered);
+    setCurrentPage(1); // Reset ke halaman pertama saat filter berubah
   };
 
-  // === SORT (Nama Acara & Status) ===
-  const handleSort = (field) => {
-    let order = sortOrder;
-    if (sortField === field) {
-      order = sortOrder === "asc" ? "desc" : "asc";
-      setSortOrder(order);
-    } else {
-      setSortField(field);
-      order = "asc";
-      setSortOrder(order);
+  useEffect(() => {
+    if (eventData?.mdl_sesi_acara) {
+      setSesiPresensi(eventData.mdl_sesi_acara.toString());
+    }
+  }, [eventData]);
+
+  const handleSesiPresensiChange = (e) => {
+    const newSesi = e.target.value;
+    setSesiPresensi(newSesi);
+    handleChangeSesiClick(newSesi);
+  };
+
+  const handleChangeSesiClick = (newSesi) => {
+    if (!newSesi || newSesi === sesiPresensi) return;
+    setPendingSesi(newSesi);
+    setShowChangeSesiConfirm(true);
+  };
+
+  const handleConfirmChangeSesi = async () => {
+    if (!pendingSesi) return;
+
+    try {
+      const sesiNumber = parseInt(pendingSesi);
+
+      await axios.put(
+        `${API_BASE_URL}/admin/event/${id}/sesi/toggle`,
+        { mdl_sesi_acara: sesiNumber },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setSesiPresensi(pendingSesi);
+
+      setEventData((prev) => ({
+        ...prev,
+        mdl_sesi_acara: sesiNumber,
+      }));
+
+      setShowChangeSesiConfirm(false);
+      setPendingSesi("");
+
+      showPopup(
+        "success",
+        "Berhasil",
+        `Anda berhasil mengubah ke Sesi ${sesiNumber}. Peserta yang scan QR presensi akan masuk ke sesi tersebut.`
+      );
+    } catch (error) {
+      console.error("Gagal mengubah sesi:", error);
+      setShowChangeSesiConfirm(false);
+      setPendingSesi("");
+      showPopup("error", "Gagal", "Tidak dapat mengubah sesi acara");
+    }
+  };
+
+  // ============================================
+  // BAGIAN 2: DROPDOWN FILTER TABEL
+  // ============================================
+
+  // const handleFilterChange = (filtered) => {
+  //   setFilteredParticipants(filtered);
+  //   setCurrentPage(1);
+  // };
+
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = res.data?.data?.data || res.data?.data || res.data || {};
+        setParticipantsData(data);
+
+        // Set initial filtered participants
+        const firstHari = Object.keys(data)[0];
+        if (firstHari) {
+          const firstSesi = Object.keys(data[firstHari])[0];
+          if (firstSesi) {
+            setFilterHari(firstHari);
+            setFilterSesi(firstSesi);
+            setFilteredParticipants(data[firstHari][firstSesi] || []);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data peserta:", err);
+        setFilteredParticipants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParticipants();
+  }, [id, token]);
+
+  // Ubah bagian useEffect fetchParticipants menjadi:
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        const data = res.data?.data?.data || res.data?.data || res.data || {};
+        setParticipantsData(data);
+
+        // Set initial filtered participants
+        const firstHari = Object.keys(data)[0];
+        if (firstHari) {
+          const firstSesi = Object.keys(data[DropdownHariSesi])[0];
+          if (firstSesi) {
+            setFilteredParticipants(data[firstHari][firstSesi] || []);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data peserta:", err);
+        setFilteredParticipants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchParticipants();
+  }, [id, token]);
+
+  // ====== SELESAIKAN ACARA =========
+  const handleFinishEvent = async () => {
+    setIsFinishing(true);
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}`,
+        {
+          mdl_status: "closed",
+          mdl_acara_selesai: formattedDateTime,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Acara telah diselesaikan.");
+
+      // Update state lokal untuk mencerminkan perubahan
+      setEventData((prev) => ({
+        ...prev,
+        mdl_status: "closed",
+        mdl_acara_selesai: formattedDateTime, // Update juga di tampilan
+        mdl_presensi_aktif: 0,
+      }));
+      setPresensiAktif(false);
+
+      setShowFinishConfirm(false);
+    } catch (error) {
+      console.error("Gagal menyelesaikan acara:", error);
+      const errorMessage =
+        error.response?.data?.message || "Tidak dapat menyelesaikan acara.";
+      showPopup("error", "Gagal", errorMessage);
+    } finally {
+      setIsFinishing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (eventData?.mdl_sesi_acara) {
+      setSesi(eventData.mdl_sesi_acara.toString());
+    }
+  }, [eventData]);
+
+  const handleChange = (e) => {
+    setSesi(e.target.value);
+    handleChangeSesiClick(e.target.value);
+  };
+
+  // FUNGSI UNTUK MENAMPILKAN POPUP KONFIRMASI
+  // const handleChangeSesiClick = (newSesi) => {
+  //   if (!newSesi || newSesi === sesi) return; // Skip jika sama atau kosong
+
+  //   setPendingSesi(newSesi);
+  //   setShowChangeSesiConfirm(true);
+  // };
+
+  // FUNGSI UPDATE SESI KE API (SETELAH KONFIRMASI)
+  // const handleConfirmChangeSesi = async () => {
+  //   if (!pendingSesi) return;
+
+  //   try {
+  //     const sesiNumber = parseInt(pendingSesi.replace("Hari-", ""));
+
+  //     // PUT ke API
+  //     await axios.put(
+  //       `${API_BASE_URL}/admin/event/${id}/sesi/toggle`,
+  //       { mdl_sesi_acara: sesiNumber },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
+
+  //     // Update state lokal
+  //     setSesi(pendingSesi);
+  //     handleFilter(hari, pendingSesi); // Filter participants
+
+  //     // Update eventData agar selected tetap persist
+  //     setEventData((prev) => ({
+  //       ...prev,
+  //       mdl_sesi_acara: sesiNumber,
+  //     }));
+
+  //     // Tutup modal konfirmasi
+  //     setShowChangeSesiConfirm(false);
+  //     setPendingSesi("");
+
+  //     // Tampilkan popup sukses
+  //     showPopup(
+  //       "success",
+  //       "Berhasil",
+  //       `Anda berhasil mengubah ke Sesi ${sesiNumber}. Peserta yang scan QR presensi akan masuk ke sesi tersebut.`
+  //     );
+  //   } catch (error) {
+  //     console.error("Gagal mengubah sesi:", error);
+  //     setShowChangeSesiConfirm(false);
+  //     setPendingSesi("");
+  //     showPopup("error", "Gagal", "Tidak dapat mengubah sesi acara");
+  //   }
+  // };
+
+  // ARSIP ACARA
+  const handleArchiveEvent = async () => {
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/events/${id}/archive`, // BE
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Acara berhasil diarsipkan");
+
+      // Update status eventData agar tidak perlu reload manual
+      setEventData((prev) => ({
+        ...prev,
+        mdl_status: "archived",
+      }));
+
+      // Tutup popup konfirmasi
+      setShowArchiveConfirm(false);
+    } catch (error) {
+      console.error("Gagal mengarsipkan acara:", error);
+      showPopup("error", "Gagal", "Tidak dapat mengarsipkan acara");
+    }
+  };
+
+  // Notifikasi pop-up
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationConfig, setNotificationConfig] = useState({
+    type: "success",
+    title: "",
+    message: "",
+  });
+
+  const showPopup = (type, title, message) => {
+    setNotificationConfig({ type, title, message });
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 3000);
+  };
+
+  // === NOTIFICATION POPUP COMPONENT ===
+  const NotificationPopup = () => {
+    if (!showNotification) return null;
+
+    const styles = {
+      success: {
+        bg: "bg-green-50 border-green-500",
+        text: "text-green-800",
+        icon: "text-green-600",
+      },
+      error: {
+        bg: "bg-red-50 border-red-500",
+        text: "text-red-800",
+        icon: "text-red-600",
+      },
+      warning: {
+        bg: "bg-yellow-50 border-yellow-500",
+        text: "text-yellow-800",
+        icon: "text-yellow-600",
+      },
+    };
+
+    const style = styles[notificationConfig.type];
+
+    return (
+      <div className="fixed top-4 right-4 z-[9999] animate-slide-in">
+        <div className={`${style.bg} border-l-4 rounded-lg shadow-lg p-4 w-80`}>
+          <div className="flex items-start gap-3">
+            <div className={style.icon}>
+              {notificationConfig.type === "success" && (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              )}
+              {notificationConfig.type === "error" && (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              )}
+              {notificationConfig.type === "warning" && (
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              )}
+            </div>
+            <div className="flex-1">
+              <h3 className={`font-semibold ${style.text}`}>
+                {notificationConfig.title}
+              </h3>
+              <p className={`text-sm mt-1 ${style.text}`}>
+                {notificationConfig.message}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNotification(false)}
+              className={`${style.text} hover:opacity-70`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // === POPUP SERTIF ===
+  const handleGenerateSertif = (data) => {
+    console.log("Data sertifikat dikirim:", data);
+    showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
+    setShowCreateSertif(false);
+  };
+
+  // === FUNGSI UNTUK MENAMPILKAN POPUP PRESENSI ===
+  useEffect(() => {
+    const fetchEventData = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = response.data.data;
+        setEventData(data);
+        setPresensiAktif(data.mdl_presensi_aktif === 1);
+        setSelectedOption(data.mdl_status || "active");
+      } catch (err) {
+        console.error("Gagal mengambil data acara:", err);
+        setError("Gagal mengambil data acara");
+      } finally {
+        setLoadingEvent(false);
+      }
+    };
+
+    fetchEventData();
+  }, [id, token]);
+
+  // === ON/OFF PRESENSI ===
+  const handleTogglePresensi = async () => {
+    if (!id) return alert("ID acara tidak ditemukan");
+
+    try {
+      const newStatus = !presensiAktif;
+
+      await axios.put(
+        `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
+        { status_qr: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setPresensiAktif(newStatus);
+      //refatch
+      const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const updatedEvent = res.data.data;
+      setEventData(updatedEvent);
+      setPresensiAktif(updatedEvent.mdl_presensi_aktif === 1);
+
+      showPopup(
+        "success",
+        "Berhasil",
+        `Presensi ${newStatus ? "diaktifkan" : "dinonaktifkan"}`
+      );
+    } catch (error) {
+      console.error(error);
+      showPopup("error", "Gagal", "Tidak dapat mengubah status presensi");
+    }
+  };
+  const handleDownloadQR = () => {
+    const canvas = document.querySelector("canvas");
+    if (!canvas) {
+      showPopup("warning", "Peringatan", "QR Code belum tersedia");
+      return;
     }
 
-    const sortedData = [...eventData].sort((a, b) => {
-      const aValue = a[field];
-      const bValue = b[field];
+    const url = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `QR-${eventData?.mdl_kode_qr || "event"}.png`;
+    link.click();
 
-      // jika field berupa tanggal
-      if (
-        aValue &&
-        bValue &&
-        !isNaN(Date.parse(aValue)) &&
-        !isNaN(Date.parse(bValue))
-      ) {
-        return order === "asc"
-          ? new Date(aValue) - new Date(bValue)
-          : new Date(bValue) - new Date(aValue);
-      }
-
-      // default (string/angka biasa)
-      if (aValue < bValue) return order === "asc" ? -1 : 1;
-      if (aValue > bValue) return order === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    setEventData(sortedData);
+    showPopup("success", "Berhasil", "QR Code berhasil diunduh");
   };
 
-  // === Fungsi Hitung Status Berdasarkan Tanggal ===
-  const getEventStatus = (start, end) => {
-    const now = new Date();
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+  const getEventStatus = (startDate, endDate) => {
+    if (!startDate) return { label: "-", color: "bg-gray-100 text-gray-700" };
 
-    if (!start || !end)
-      return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-700" };
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : start;
 
-    if (now >= startDate && now <= endDate) {
-      return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
-    } else if (now < startDate) {
+    if (today < start) {
       return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
+    } else if (today >= start && today <= end) {
+      return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
     } else {
       return { label: "Selesai", color: "bg-red-100 text-red-700" };
     }
   };
 
-  // === FILTER (Tab + Search) + SORT ===
-  const filteredData = eventData
-    // --- TAHAP 1: FILTER BERDASARKAN TAB ---
-    .filter((item) => {
-      // Jika tab "Semua", tampilkan semua data
-      if (activeTab === "Semua") {
-        return true;
+  useEffect(() => {
+    if (participants.length > 0) {
+      setRowsPerPage(participants.length);
+    }
+  }, [participants]);
+
+  useEffect(() => {
+    const fetchEventDetail = async () => {
+      if (!id) {
+        setLoadingEvent(false);
+        return;
       }
-
-      // Ambil status publikasi dari item, ubah ke lowercase agar mudah dicocokkan
-      const itemStatus = (item.mdl_status || "").toString().toLowerCase();
-      const tabKey = activeTab.toLowerCase();
-
-      // === LOGIKA FILTER PER TAB ===
-
-      if (tabKey === "draft") {
-        return itemStatus.includes("draft");
+      try {
+        setLoadingEvent(true);
+        const res = await axios.get(`${API_BASE_URL}/admin/events/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const eventDetail =
+          res.data?.data?.data || res.data?.data || res.data || null;
+        setEventData(eventDetail);
+      } catch (err) {
+        console.error("Gagal mengambil detail event:", err);
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoadingEvent(false);
       }
+    };
+    fetchEventDetail();
+  }, [id, token]);
 
-      if (tabKey === "publish") {
-        // cocokkan untuk event aktif / dipublish
-        return (
-          itemStatus.includes("publish") ||
-          itemStatus.includes("active") ||
-          itemStatus.includes("aktif")
+  // === NUNGGU BE ===
+  useEffect(() => {
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/attendance`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        console.log("RESPON PESERTA DARI BE:", res.data);
+
+        const data = res.data?.data?.data || res.data?.data || res.data || {};
+
+        console.log("HASIL DATA YANG DISIMPAN:", data);
+
+        setParticipantsData(data);
+
+        const firstHari = Object.keys(data)[0];
+        if (firstHari) {
+          const firstSesi = Object.keys(data[firstHari])[0];
+          if (firstSesi) {
+            setHari(firstHari);
+            setSesi(firstSesi);
+            setFilteredParticipants(data[firstHari][firstSesi] || []);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data peserta:", err);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (tabKey === "selesai") {
-        // cocokkan untuk event yang selesai / ditutup
-        return (
-          itemStatus.includes("closed") ||
-          itemStatus.includes("done") ||
-          itemStatus.includes("selesai")
-        );
-      }
+    fetchParticipants();
+  }, []);
 
-      if (tabKey === "archive") {
-        // cocokkan semua variasi status arsip
-        return (
-          itemStatus.includes("archive") ||
-          itemStatus.includes("archived") ||
-          itemStatus.includes("arsip") ||
-          itemStatus.includes("inactive") ||
-          itemStatus === "nonaktif"
-        );
-      }
-
-      // default fallback
-      return itemStatus.includes(tabKey);
-    })
-    // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
-    .filter((item) =>
-      item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
-    )
-    // --- TAHAP 3: SORTING ---
-    .sort((a, b) => {
-      if (!sortField) return 0;
-
-      const aVal = a[sortField] || "";
-      const bVal = b[sortField] || "";
-
-      if (
-        aVal &&
-        bVal &&
-        !isNaN(Date.parse(aVal)) &&
-        !isNaN(Date.parse(bVal))
-      ) {
-        return sortOrder === "asc"
-          ? new Date(aVal) - new Date(bVal)
-          : new Date(bVal) - new Date(aVal);
-      }
-
-      if (typeof aVal === "string" && typeof bVal === "string") {
-        return sortOrder === "asc"
-          ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal);
-      }
-      return 0;
-    });
-
-  // const filteredData = eventData
-  //   // --- TAHAP 1: FILTER BERDASARKAN TAB ---
-  //   .filter((item) => {
-  //     // Jika tab "Semua", tampilkan semua data
-  //     if (activeTab === "Semua") {
-  //       return true;
-  //     }
-
-  //     // Ambil status publikasi dari item, ubah ke lowercase agar mudah dicocokkan
-  //     const itemStatus = (item.mdl_status || "").toString().toLowerCase();
-  //     const tabKey = activeTab.toLowerCase();
-
-  //     // Logika pencocokan (disesuaikan dengan logika di kolom "Publikasi" Anda)
-  //     if (tabKey === "publish") {
-  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-  //       return itemStatus.includes("active") || itemStatus.includes("active");
-  //     }
-  //     if (tabKey === "archive") {
-  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-  //       return (
-  //         itemStatus.includes("archive") || itemStatus.includes("archived")
+  // useEffect(() => {
+  //   const fetchParticipants = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const res = await axios.get(
+  //         `${API_BASE_URL}/admin/events/${id}/participants`,
+  //         { headers: { Authorization: `Bearer ${token}` } }
   //       );
+
+  //       // ✅ Data dari BE langsung diambil dari res.data.data
+  //       console.log("RESPON PESERTA DARI BE:", res.data);
+  //       const data = res.data?.data?.data || res.data?.data || res.data || {};
+
+  //       console.log("HASIL DATA YANG DISIMPAN:", data);
+  //       // const data = res.data?.data || {};
+
+  //       // Simpan ke state
+  //       setParticipantsData(data);
+
+  //       // (Opsional) log untuk cek strukturnya
+  //       console.log("Participants data:", data);
+  //     } catch (error) {
+  //       console.error("Error fetching participants:", error);
+  //       setParticipantsData({});
   //     }
-  //     if (tabKey === "selesai") {
-  //       // Asumsi: Tab "Selesai" cocok dengan data "closed"
-  //       return itemStatus.includes("closed");
-  //     }
+  //   };
 
-  //     // Untuk tab lain (Draft, Active, Publish), gunakan pencocokan langsung
-  //     // .includes() lebih aman daripada === (misal: "active" akan cocok dengan "active")
-  //     return itemStatus.includes(tabKey);
-  //   })
-  //   // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
-  //   .filter((item) =>
-  //     item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
-  //   )
-  //   // --- TAHAP 3: SORTING ---
-  //   .sort((a, b) => {
-  //     if (!sortField) return 0;
+  //   fetchParticipants();
+  // }, [id]);
 
-  //     const aVal = a[sortField] || "";
-  //     const bVal = b[sortField] || "";
-
-  //     // Pindahkan logika sorting tanggal Anda yang lebih baik dari handleSort ke sini
-  //     if (
-  //       aVal &&
-  //       bVal &&
-  //       !isNaN(Date.parse(aVal)) &&
-  //       !isNaN(Date.parse(bVal))
-  //     ) {
-  //       return sortOrder === "asc"
-  //         ? new Date(aVal) - new Date(bVal)
-  //         : new Date(bVal) - new Date(aVal);
-  //     }
-
-  //     // Fallback untuk string/angka
-  //     if (typeof aVal === "string" && typeof bVal === "string") {
-  //       return sortOrder === "asc"
-  //         ? aVal.localeCompare(bVal)
-  //         : bVal.localeCompare(aVal);
-  //     }
-  //     return 0;
-  //   });
-
-  // === PAGINATION ===
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
-  // === DELETE ===
-  const handleDelete = async () => {
-    try {
-      await axios.delete(`${API_BASE_URL}/admin/events/${selectedEventId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setEventData((prev) =>
-        prev.filter((item) => item.id !== selectedEventId)
-      );
-      setIsDeleteOpen(false);
-    } catch (err) {
-      console.error("Gagal menghapus event:", err);
-      alert("Gagal menghapus event!");
+  const handleFilter = (hari, sesi) => {
+    if (hari && sesi && participantsData[hari]?.[sesi]) {
+      setFilteredParticipants(participantsData[hari][sesi]);
+    } else {
+      setFilteredParticipants([]);
     }
   };
 
-  // === TABLE COLUMNS ===
-  const columns = [
-    {
-      header: "No",
-      accessor: (row, i) => {
-        const index = paginatedData.indexOf(row);
-        return index === -1 ? "-" : (currentPage - 1) * rowsPerPage + index + 1;
-      },
-      className: "w-[4%] text-center",
-    },
-    // NAMA
-    {
-      header: (
-        <div
-          onClick={() => handleSort("mdl_nama")}
-          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
-        >
-          Nama Acara <ArrowUpDown size={14} />
-        </div>
-      ),
-      accessor: (row) => (
-        <div className="line-clamp-2 break-words max-w-[330px]">
-          {row.mdl_nama || "-"}
-        </div>
-      ),
-      className: "w-[21%] text-left",
-    },
-    // TANGGAL DAFTAR
-    {
-      header: (
-        <div
-          onClick={() => handleSort("mdl_pendaftaran_mulai")}
-          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
-        >
-          Pendaftaran <ArrowUpDown size={14} />
-        </div>
-      ),
-      accessor: (row) =>
-        row.mdl_pendaftaran_mulai
-          ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
-          : "-",
+  // useEffect(() => {
+  //   const fetchParticipants = async () => {
+  //     if (!id) {
+  //       setLoading(false);
+  //       return;
+  //     }
+  //     try {
+  //       setLoading(true);
+  //       const res = await axios.get(
+  //         `${API_BASE_URL}/admin/events/${id}/participants`,
+  //         { headers: { Authorization: `Bearer ${token}` } }
+  //       );
+  //       const participantsData =
+  //         res.data?.data?.data || res.data?.data || res.data || [];
+  //       setParticipants(participantsData);
+  //     } catch (err) {
+  //       console.error("Gagal mengambil data peserta:", err);
+  //       setError(err.response?.data?.message || err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchParticipants();
+  // }, [id, token]);
 
-      className: "w-[13%] text-left",
-    },
-
-    // {
-    //   header: "Pendaftaran",
-    //   accessor: (row) =>
-    //     row.mdl_pendaftaran_mulai
-    //       ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
-    //       : "-",
-    //   className: "w-[10%] whitespace-nowrap text-left",
-    // },
-    // JENIS ACARA
-    {
-      header: "Jenis Acara",
-      accessor: (row) => {
-        const val = row.mdl_kategori || "";
-        if (!val) return "-";
-        // Capitalize first letter of each word
-        return val
-          .toString()
-          .split(" ")
-          .map((w) =>
-            w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""
-          )
-          .join(" ");
-      },
-      className: "w-[10%] whitespace-nowrap text-left",
-    },
-    // TANGGAL ACARA
-    {
-      header: (
-        <div
-          onClick={() => handleSort("mdl_acara_mulai")}
-          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
-        >
-          Pelaksanaan <ArrowUpDown size={14} />
-        </div>
-      ),
-      accessor: (row) =>
-        row.mdl_acara_mulai
-          ? new Date(row.mdl_acara_mulai).toLocaleDateString("id-ID")
-          : "-",
-
-      className: "w-[14%] text-left",
-    },
-    // STATUS
-    {
-      header: (
-        <div
-          onClick={() => handleSort("mdl_acara_mulai")}
-          className="flex items-center gap-2 cursor-pointer  select-none hover:text-blue-700"
-        >
-          Status <ArrowUpDown size={14} />
-        </div>
-      ),
-      accessor: (row) => {
-        const status = getEventStatus(
-          row.mdl_acara_mulai,
-          row.mdl_acara_selesai
+  useEffect(() => {
+    const fetchWinners = async () => {
+      if (!id) return;
+      try {
+        const res = await axios.get(
+          `${API_BASE_URL}/admin/events/${id}/winners`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-        return (
-          <span
-            className={`${status.color} inline-flex items-center text-xs  text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
-            style={{ minWidth: 90, justifyContent: "center" }}
-          >
-            {status.label}
-          </span>
-        );
-      },
-      className: "w-[11%] text-left",
-    },
-    // PUBLIKASI
-    {
-      header: (
-        <div
-          onClick={() => handleSort("mdl_status")}
-          className="flex items-center gap-2 cursor-pointer select-none hover:text-blue-700"
-        >
-          Publikasi <ArrowUpDown size={14} />
-        </div>
-      ),
-      accessor: (row) => {
-        const raw = row.mdl_status ?? "";
-        if (!raw) return "-";
-
-        // Map status values to display text
-        let displayText = raw.toString();
-        if (displayText.toLowerCase().includes("active")) {
-          displayText = "Publish";
+        const winnersData = res.data?.data?.winners || [];
+        setWinners(Array.isArray(winnersData) ? winnersData : []);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          console.warn("Belum ada data pemenang untuk event ini");
+          setWinners([]);
+        } else {
+          console.error("Gagal mengambil data pemenang:", err);
         }
+      }
+    };
+    fetchWinners();
+  }, [id, token]);
 
-        const label = displayText
-          .split(" ")
-          .map((w) =>
-            w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""
-          )
-          .join(" ");
+  // === SEARCH FILTER ===
+  // const filteredParticipants = useMemo(() => {
+  //   if (!Array.isArray(participants)) return [];
+  //   return participants.filter((p) =>
+  //     p.nama?.toLowerCase().includes(search.toLowerCase())
+  //   );
+  // }, [participants, search]);
 
-        const key = raw.toString().toLowerCase();
-        const color =
-          key.includes("active") || key === "active"
-            ? "bg-green-600 text-xs  text-white"
-            : key.includes("draft")
-            ? "bg-white-100 text-gray-700 text-xs  outline-gray-700 outline"
-            : key.includes("archived") || key.includes("archive")
-            ? "bg-gray-700 text-xs  text-white"
-            : key.includes("closed")
-            ? "bg-gray-400 text-xs  text-white"
-            : "bg-blue-100 text-xs  text-blue-700";
+  const sortedParticipants = useMemo(() => {
+    return [...filteredParticipants].sort((a, b) => {
+      if (eventData?.doorprize_active !== 1) return 0;
+      const aWinner = winners.some(
+        (w) => w.name?.trim().toLowerCase() === a.nama?.trim().toLowerCase()
+      );
+      const bWinner = winners.some(
+        (w) => w.name?.trim().toLowerCase() === b.nama?.trim().toLowerCase()
+      );
+      return bWinner - aWinner;
+    });
+  }, [filteredParticipants, winners, eventData]);
 
-        return (
-          <span
-            className={`${color} inline-flex items-center text-sm font-medium px-3 py-1 rounded-md whitespace-nowrap`}
-            style={{ minWidth: 90, justifyContent: "center" }}
-          >
-            {label}
-          </span>
-        );
-      },
-      className: "w-[11%] text-left",
-    },
-    // AKSI
-    {
-      header: "Aksi",
-      accessor: (row) => {
-        const status = (row.mdl_status || "").toLowerCase();
-        const disabledKeys = status.includes("archive");
-        //const isPublished = disabledKeys.some((k) => status.includes(k));
+  // const currentTableData = useMemo(() => {
+  //   const firstIndex = (currentPage - 1) * rowsPerPage;
+  //   const lastIndex = firstIndex + rowsPerPage;
+  //   return sortedParticipants.slice(firstIndex, lastIndex);
+  // }, [currentPage, sortedParticipants, rowsPerPage]);
 
-        return (
-          <div className="flex items-center gap-3">
-            <Link to={`/admin/event/${row.id}`}>
-              <button
-                className="text-blue-500 hover:text-blue-700"
-                title="Lihat"
-              >
-                <FiEye size={18} />
-              </button>
-            </Link>
+  const totalPages = Math.ceil(sortedParticipants.length / rowsPerPage);
 
-            {/* {isPublished ? (
-              // Disabled edit button for published events
-              <button
-                className="text-gray-400 cursor-not-allowed mb-1"
-                title="Tidak dapat mengedit acara yang sudah dipublish"
-                disabled
-              >
-                <FiEdit size={18} />
-              </button>
-            ) : ( */}
-              {/* // Normal edit button for non-published events */}
-              <Link to={`/admin/event/edit/${row.id}`}
-              className={disabledKeys ? "pointer-events-none" : ""}>
-                <button
-                className="text-yellow-500 hover:text-yellow-700 
-                           disabled:text-gray-400 disabled:cursor-not-allowed" // 4. Tambah style disabled
-                title={disabledKeys ? "Tidak dapat mengedit acara yang diarsip" : "Edit"} // 5. Ubah title saat disabled
-                disabled={disabledKeys} // 6. Logika disabled
-              >
-                  <FiEdit size={18} />
-                </button>
-              </Link>
-            {/* )} */}
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
 
-            <button
-              onClick={() => {
-                setSelectedEventId(row.id);
-                setIsDeleteOpen(true);
-              }}
-              className="text-red-500 hover:text-red-700 mb-1.5"
-              title="Hapus"
-            >
-              <FiTrash2 size={18} />
-            </button>
-          </div>
-        );
-      },
-      className: "w-[10%] text-left",
-    },
-  ];
+  const handleRowsPerPageChange = (value) => {
+    setRowsPerPage(value);
+    setCurrentPage(1);
+  };
 
+  const handleOpenPreview = (participant) => {
+    setSelectedParticipant(participant);
+    setOpenPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    setOpenPreview(false);
+    setSelectedParticipant(null);
+  };
+
+  // === GENERATE SERTIF ===
+  // const EventDetail = () => {
+  //   const [showCreateSertif, setShowCreateSertif] = useState(false);
+
+  //   const handleGenerateSertif = (data) => {
+  //     console.log("Data sertif dikirim:", data);
+  //     // TODO: kirim ke API
+  //   };
+  // };
   return (
-    <div className="flex-1 w-full lg:pl-52 pt-20 lg:pt-0 bg-gray-50 min-h-screen">
-      <Sidebar role="admin" />
+    <>
+      <NotificationPopup />
 
-      <main className="flex-1 p-6 space-y-6 overflow-x-hidden">
-        <Breadcrumb items={breadcrumbItems} />
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-primary-70">Daftar Acara</h1>
-            <h4 className="text-sm text-gray-500">
-              Menampilkan Halaman Event Acara
-            </h4>
+      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
+        <Sidebar role="admin" />
+        <div className="flex-1 p-6 mt-2 space-y-4">
+          <Breadcrumb items={breadcrumbItems} />
+
+          <div className="flex flex-col mt-5">
+            <h1 className="text-4xl font-bold text-blue-900">
+              Informasi Acara
+            </h1>
+            <p className="text-gray-500 mt-2">
+              Menampilkan halaman peserta dari acara{" "}
+              <span className="font-semibold italic">
+                {loadingEvent
+                  ? "Loading..."
+                  : eventData?.mdl_nama || "Unknown Event"}
+              </span>
+            </p>
           </div>
 
-          {/* Search + Button */}
-          <div className="flex items-center space-x-4">
-            <div className="w-120">
+          <div className="flex flex-row md:flex-col md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
+            <div className="flex-1 w-full">
               <Search
-                placeholder="Cari nama acara..."
+                placeholder="Cari nama peserta..."
                 onSearch={handleSearchChange}
               />
             </div>
-            <Button
-              variant="primary"
-              iconLeft={<Plus />}
-              onClick={() => setIsAddEventOpen(true)}
-            >
-              Tambah Acara
-            </Button>
+            {eventData?.mdl_doorprize_aktif === 1 && (
+              <Link
+                to={`/admin/event/doorprize/${id}`}
+                className="px-7 py-2 rounded-xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors"
+              >
+                Doorprize
+              </Link>
+            )}
           </div>
-        </div>
-        {/* === BAGIAN TABS BARU === */}
-        <div className="mb-6 flex justify-between items-center">
-          <EventTabs
-            tabs={tabItems}
-            activeTab={activeTab}
-            onTabChange={(tab) => {
-              setActiveTab(tab);
-              setCurrentPage(1); // Reset ke halaman 1 setiap ganti tab
-            }}
-          />
-        </div>
-        {/* === END BAGIAN TABS === */}
-        {/* Table */}
-        <section className="bg-white rounded-lg shadow-md p-6">
-          {loading ? (
-            <p className="text-center text-gray-500">Memuat data...</p>
-          ) : error ? (
-            <p className="text-center text-red-500">{error}</p>
-          ) : (
-            <div className="overflow-x-auto w-full">
-              <div className="min-w-[900px]">
-                <Table columns={columns} data={paginatedData} />
+
+          {/* === CARD INFO ACARA === */}
+          <div className="flex flex-col lg:flex-row gap-6 w-full mb-5">
+            {loadingEvent ? (
+              <div className="p-6 rounded-xl shadow-sm w-full max-w-full md:max-w-md lg:max-w-lg">
+                <p className="text-gray-500">Loading event info...</p>
               </div>
-            </div>
-          )}
+            ) : eventData ? (
+              // card data
+              <div className="p-5 flex flex-column bg-white rounded-xl shadow-sm ">
+                {/* KIRI */}
+                <div className=" p-5  md:max-w-lg lg:max-w-xl">
+                  <h2 className="text-xl font-semibold text-blue-900 mb-2">
+                    {eventData.mdl_nama}
+                  </h2>
+                  <div className="text-sm text-gray-600 space-y-3 mt-3">
+                    <p>
+                      <span className="font-medium ">Kategori:</span>{" "}
+                      {eventData.mdl_kategori || "-"}
+                    </p>
+                    <p>
+                      <span className="font-medium ">Lokasi:</span>{" "}
+                      {eventData.mdl_lokasi || "-"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tanggal:</span>{" "}
+                      {eventData.mdl_acara_mulai
+                        ? new Date(
+                            eventData.mdl_acara_mulai
+                          ).toLocaleDateString("id-ID")
+                        : "-"}
+                    </p>
+                    <p>
+                      <span className="font-medium">Tipe:</span>{" "}
+                      {eventData.mdl_tipe || "-"}
+                    </p>
 
-          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-200">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredData.length}
-              onPageChange={setCurrentPage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={(val) => {
-                setRowsPerPage(val);
-                setCurrentPage(1);
-              }}
-            />
+                    <p>
+                      <span className="font-medium">Status:</span>{" "}
+                      {(() => {
+                        const status = getEventStatus(
+                          eventData.mdl_acara_mulai,
+                          eventData.mdl_acara_selesai
+                        );
+                        return (
+                          <span
+                            className={`px-3 py-1 rounded text-xs font-semibold ${status.color}`}
+                          >
+                            {status.label}
+                          </span>
+                        );
+                      })()}
+                    </p>
+                  </div>
+                  {/* ==== BUTTON ==== */}
+                  {/* DETAIL BUTTON */}
+                  <div className="flex items-center gap-3 mt-5">
+                    <Link to={`/admin/event/detail/${id}`} className="">
+                      <button className="w-45  px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
+                        Lihat Detail Lengkap
+                      </button>
+                    </Link>
+
+                    {/* === POPUP KONFIRMASI SELESAIKAN ACARA === */}
+                    {/* {showFinishConfirm && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
+                          <p className="text-gray-800 mb-4 font-medium">
+                            Apakah kamu yakin ingin menyelesaikan acara ini?
+                          </p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setShowFinishConfirm(false)}
+                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsFinished(true);
+                                setShowFinishConfirm(false);
+                              }}
+                              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-700 transition"
+                            >
+                              Ya, Selesai
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+
+                    {/* === POPUP KONFIRMASI ARSIPKAN ACARA === */}
+                    {/* {showArchiveConfirm && (
+                      <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                        <div className="bg-white rounded-xl p-6 w-80 shadow-xl">
+                          <p className="text-gray-800 mb-4 font-medium">
+                            Apakah kamu yakin ingin mengarsipkan acara ini?
+                          </p>
+                          <div className="flex justify-end gap-3">
+                            <button
+                              onClick={() => setShowArchiveConfirm(false)}
+                              className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400 transition"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => {
+                                // tambahkan aksi arsip di sini (misalnya panggil API)
+                                setShowArchiveConfirm(false);
+                              }}
+                              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-800 transition"
+                            >
+                              Ya, Arsipkan
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )} */}
+                    {/* BUTTON SELESAIKAN ACARA */}
+                    <button
+                      onClick={() => setShowFinishConfirm(true)}
+                      className=" w-40 px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
+                    >
+                      Selesaikan Acara
+                    </button>
+
+                    {/* BUTTON ARSIP ACARA */}
+                    <button
+                      onClick={() => setShowArchiveConfirm(true)}
+                      className="w-35 px-1 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition"
+                    >
+                      Arsipkan Acara
+                    </button>
+                  </div>
+                </div>
+                {/* === GARIS PEMBATAS === */}
+                <div className="hidden lg:flex items-center justify-center px-6">
+                  <div className=" ml-10 w-[2px] h-[80%] bg-gray-300 rounded-full"></div>
+                </div>
+
+                {/* === QR + PRESENSI === */}
+                <div className="ml-25">
+                  {/* KANAN */}
+                  <div className="flex-1">
+                    {!loadingEvent && eventData && (
+                      <div className="space-y-5">
+                        {/* QR CODE & CONTROLS SECTION */}
+                        <div className="flex flex-wrap gap-5 items-start">
+                          {/* QR CODE */}
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="relative bg-white border-2 border-gray-200 rounded-lg p-2">
+                              {eventData.mdl_kode_qr ? (
+                                <QRCodeCanvas
+                                  value={eventData.mdl_kode_qr}
+                                  size={120}
+                                  bgColor="#ffffff"
+                                  fgColor="#000000"
+                                  level="H"
+                                  includeMargin={true}
+                                />
+                              ) : (
+                                <div className="w-[120px] h-[120px] bg-gray-100 rounded flex items-center justify-center">
+                                  <p className="text-gray-400 text-xs text-center px-2">
+                                    QR tidak tersedia
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* ICON BUTTONS */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setShowFullscreen(true)}
+                                disabled={!eventData.mdl_kode_qr}
+                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                title="Fullscreen"
+                              >
+                                <Maximize2 size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                  Fullscreen
+                                </span>
+                              </button>
+
+                              <button
+                                onClick={handleDownloadQR}
+                                disabled={!eventData.mdl_kode_qr}
+                                className="group relative p-2 rounded-lg bg-primary-10 hover:bg-primary-20 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                title="Download"
+                              >
+                                <Download size={16} />
+                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                  Download QR
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* PRESENSI & SESI CONTROLS */}
+                          <div className="flex-1 min-w-[180px] space-y-4">
+                            {/* PRESENSI TOGGLE */}
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Presensi Acara
+                              </label>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={handleTogglePresensi}
+                                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors duration-300 ${
+                                    presensiAktif ? "bg-primary" : "bg-gray-300"
+                                  }`}
+                                >
+                                  <span
+                                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${
+                                      presensiAktif
+                                        ? "translate-x-8"
+                                        : "translate-x-1"
+                                    }`}
+                                  />
+                                </button>
+                                <span
+                                  className={`text-xs font-bold ${
+                                    presensiAktif
+                                      ? "text-primary"
+                                      : "text-gray-400"
+                                  }`}
+                                >
+                                  {presensiAktif ? "ON" : "OFF"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* PILIH SESI */}
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                Pilih Sesi
+                              </label>
+                              <div className="relative">
+                                <select
+                                  value={sesiPresensi}
+                                  onChange={handleSesiPresensiChange}
+                                  className="w-full border-2 border-primary rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none bg-white text-gray-700"
+                                >
+                                  <option value="">Pilih Sesi</option>
+                                  {Array.from(
+                                    { length: 10 },
+                                    (_, i) => i + 1
+                                  ).map((num) => (
+                                    <option key={num} value={num.toString()}>
+                                      Sesi {num}
+                                    </option>
+                                  ))}
+                                </select>
+                                <ChevronDown
+                                  size={18}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary pointer-events-none"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* GENERATE SERTIFIKAT BUTTON */}
+                        <div className="pt-3">
+                          <button
+                            onClick={() => setShowCreateSertif(true)}
+                            className="w-full px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-80 transition-colors shadow-sm"
+                          >
+                            Generate Sertifikat
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ✅ FULLSCREEN MODAL - TARUH DI SINI (DI LUAR SEMUA DIV) */}
+                {showFullscreen && (
+                  <QRFullscreen
+                    qrValue={eventData.mdl_kode_qr}
+                    eventTitle={eventData.mdl_nama}
+                    sesi={sesi}
+                    onClose={() => setShowFullscreen(false)}
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="bg-white p-8 rounded-xl shadow-sm max-w-md mb-10 w-full">
+                <p className="text-red-500">Failed to load event data</p>
+              </div>
+            )}
           </div>
-        </section>
 
-        <AddEvent
-          isOpen={isAddEventOpen}
-          onClose={() => setIsAddEventOpen(false)}
-          onSuccess={fetchEvents}
-          token={token}
+          {/* ===== LOAD DATA ===== */}
+          {loading ? (
+            <div className="text-center py-10">
+              <p className="text-gray-500">Memuat data peserta...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-10">
+              <p className="text-red-500">Error: {error}</p>
+            </div>
+          ) : (
+            <>
+              <CardList
+                eventId={id}
+                participants={participants}
+                doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
+                eventType={eventData?.mdl_tipe}
+              />
+              <DropdownHariSesi
+                participants={participantsData}
+                onFilter={handleFilterChange}
+              />
+              <div className="overflow-x-auto">
+                <TableParticipants
+                  // participants={currentTableData}
+                  participants={filteredParticipants}
+                  winners={winners}
+                  onPreview={handleOpenPreview}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={sortedParticipants.length}
+                  rowsPerPage={rowsPerPage}
+                  onPageChange={setCurrentPage}
+                  onRowsPerPageChange={handleRowsPerPageChange}
+                  doorprizeActive={eventData?.mdl_doorprize_aktif === 1}
+                  eventType={event.type}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ===== POPUP MODAL ===== */}
+        {openPreview && selectedParticipant && (
+          <ParticipantPreview
+            isOpen={openPreview}
+            onClose={handleClosePreview}
+            data={selectedParticipant}
+          />
+        )}
+        <CreateSertif
+          isOpen={showCreateSertif}
+          onClose={() => setShowCreateSertif(false)}
+          onGenerate={handleGenerateSertif}
         />
-        <DeletePopup
-          isOpen={isDeleteOpen}
-          onClose={() => setIsDeleteOpen(false)}
-          onConfirm={handleDelete}
+        <ArchiveConfirmModal
+          isOpen={showArchiveConfirm}
+          onClose={() => setShowArchiveConfirm(false)}
+          onConfirm={handleArchiveEvent}
         />
-      </main>
-    </div>
+        <FinishConfirmModal
+          isOpen={showFinishConfirm}
+          onClose={() => setShowFinishConfirm(false)}
+          onConfirm={handleFinishEvent} // kirim langsung handler lama
+          isLoading={isFinishing}
+        />
+
+        <ChangeSesiConfirmModal
+          isOpen={showChangeSesiConfirm}
+          onClose={() => {
+            setShowChangeSesiConfirm(false);
+            setPendingSesi("");
+            setSesiPresensi(
+              eventData?.mdl_sesi_acara
+                ? eventData.mdl_sesi_acara.toString()
+                : ""
+            );
+          }}
+          onConfirm={handleConfirmChangeSesi}
+          sesiNumber={pendingSesi}
+        />
+
+        {/* <FinishConfirmModal
+          isOpen={showFinishConfirm}
+          onClose={() => setShowFinishConfirm(false)}
+          onConfirm={async () => {
+            setIsFinishing(true);
+            try {
+              await axios.put(
+                `⁠ ${API_BASE_URL}/admin/events/${id}`⁠,
+                {
+                  mdl_status: "closed",
+                  mdl_acara_selesai: formattedDateTime, // Kirim waktu selesai
+                },
+        
+                {
+                  headers: { Authorization: `Bearer ${token}` },
+                }
+              );
+              toast.success("Acara berhasil diselesaikan!");
+              setShowFinishConfirm(false);
+            } catch (err) {
+              console.error("Gagal menyelesaikan acara:", err);
+              toast.error("Gagal menyelesaikan acara.");
+            } finally {
+              setIsFinishing(false);
+            }
+          }}
+          isLoading={isFinishing}
+        /> */}
+
+        {/* <ArchiveConfirmModal
+          isOpen={showArchiveConfirm}
+          onClose={() => setShowArchiveConfirm(false)}
+          onConfirm={() => {
+            console.log("Acara diarsipkan!");
+          }}
+        /> */}
+      </div>
+    </>
   );
 };
 
-export default AdminEvent;
+export default AdminDetail;
