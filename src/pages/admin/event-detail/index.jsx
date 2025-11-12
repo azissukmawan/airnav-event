@@ -720,15 +720,20 @@ const AdminDetail = () => {
   // }, [participants, search]);
 
   const sortedParticipants = useMemo(() => {
+    if (!Array.isArray(filteredParticipants)) return [];
+    
     return [...filteredParticipants].sort((a, b) => {
       if (eventData?.doorprize_active !== 1) return 0;
-      const aWinner = winners.some(
+      
+      // FIXED: Validasi winners adalah array sebelum menggunakan some
+      const aWinner = Array.isArray(winners) && winners.some(
         (w) => w.name?.trim().toLowerCase() === a.nama?.trim().toLowerCase()
       );
-      const bWinner = winners.some(
+      const bWinner = Array.isArray(winners) && winners.some(
         (w) => w.name?.trim().toLowerCase() === b.nama?.trim().toLowerCase()
       );
-      return bWinner - aWinner;
+      
+      return (bWinner ? 1 : 0) - (aWinner ? 1 : 0);
     });
   }, [filteredParticipants, winners, eventData]);
 
