@@ -33,6 +33,22 @@ const InfoAcara = () => {
     mdl_doorprize_aktif: "",
   });
 
+  const [isEditable, setIsEditable] = useState({
+  all: false, // semua bisa diedit
+  onlyFiles: false, // hanya file
+  none: false, // tidak bisa edit
+  });
+
+  useEffect(() => {
+  if (formData.mdl_status === "draft") {
+    setIsEditable({ all: true, onlyFiles: false, none: false });
+  } else if (formData.mdl_status === "active") {
+    setIsEditable({ all: false, onlyFiles: true, none: false });
+  } else {
+    setIsEditable({ all: false, onlyFiles: false, none: true });
+  }
+}, [formData.mdl_status]);
+
   const [fileNames, setFileNames] = useState({
     mdl_file_acara: "",
     mdl_file_rundown: "",
@@ -384,45 +400,53 @@ const InfoAcara = () => {
     }
   };
 
-  const handleTogglePresensi = async () => {
-    if (!id) {
-      showPopup("error", "Error", "ID acara tidak ditemukan");
-      return;
-    }
+const handleTogglePresensi = async () => {
+  if (!id) {
+    showPopup("error", "Error", "ID acara tidak ditemukan");
+    return;
+  }
 
-    try {
-      const newStatus = !presensiAktif;
+  // Simpan status lama dulu
+  const oldStatus = presensiAktif;
+  const newStatus = !presensiAktif;
 
-      const response = await axios.put(
-        `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
-        { status_qr: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            "Content-Type": "application/json",
-          },
-          timeout: 10000,
-        }
-      );
+  // Optimistic update (ubah UI langsung)
+  setPresensiAktif(newStatus);
 
-      if (response.data && response.data.data) {
-        setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
-      } else {
-        setPresensiAktif(newStatus);
+  try {
+    const response = await axios.put(
+      `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
+      { status_qr: newStatus },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
       }
+    );
 
-      showPopup(
-        "success",
-        "Berhasil",
-        `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`
-      );
-    } catch (error) {
-      console.error(error.response?.data || error.message);
-      const errorMsg =
-        error.response?.data?.message || "Gagal mengubah status presensi";
-      showPopup("error", "Error", errorMsg);
+    // Jika API berhasil tapi tidak mengembalikan status, tetap pakai local state
+    if (response.data && response.data.data) {
+      setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
     }
-  };
+
+    showPopup(
+      "success",
+      "Berhasil",
+      `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`
+    );
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+
+    // Rollback ke status lama jika gagal
+    setPresensiAktif(oldStatus);
+
+    const errorMsg =
+      error.response?.data?.message || "Gagal mengubah status presensi";
+    showPopup("error", "Error", errorMsg);
+  }
+};
 
   // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
   const handleSave = async (targetStatus) => {
@@ -521,8 +545,9 @@ const InfoAcara = () => {
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
     { label: "Acara", link: "/admin/events" },
+    { label: "Informasi Acara", link: `/admin/event/${id}` },
     {
-      label: event?.mdl_nama || "Detail Acara",
+      label: formData.mdl_nama || "Detail Acara",
       link: `/admin/events/detail/${id}`,
     },
     { label: "Edit Acara" },
@@ -573,10 +598,9 @@ const InfoAcara = () => {
             items={[
               { label: "Dashboard", link: "/admin" },
               { label: "Acara", link: "/admin/events" },
-              event?.mdl_nama
-                ? { label: event.mdl_nama, link: `/admin/events/${id}` }
-                : { label: "Detail Acara", link: `/admin/events/${id}` },
-              { label: "Edit Acara" },
+              { label: "Informasi Acara", link: `/admin/event/${id}` },
+              { label: "Detail Acara", link: `/admin/event/detail/${id}` },
+              { label: formData.mdl_nama || "Edit Acara" },
             ]}
           />
 
@@ -588,7 +612,7 @@ const InfoAcara = () => {
                 weight="bold"
                 className="text-blue-900 text-xl"
               >
-                Detail Acara
+                Edit Acara
               </Typography>
               <Typography
                 type="body"
@@ -604,14 +628,14 @@ const InfoAcara = () => {
               <button
                 onClick={() => handleSave("draft")}
                 disabled={isLoading}
-                className="px-6 py-3 rounded-2xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 cursor-pointer rounded-2xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Menyimpan..." : "Simpan Draft"}
               </button>
               <button
                 onClick={() => setShowConfirmModal(true)}
                 disabled={isLoading}
-                className="px-6 py-3 rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-3 cursor-pointer rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isLoading && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -679,8 +703,8 @@ const InfoAcara = () => {
                       name="mdl_nama"
                       value={formData.mdl_nama || ""}
                       onChange={handleChange}
-                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
-                    />
+                      disabled={!isEditable.all}
+                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
                   </div>
                 </div>
 
@@ -700,8 +724,8 @@ const InfoAcara = () => {
                       name="mdl_lokasi"
                       value={formData.mdl_lokasi || ""}
                       onChange={handleChange}
-                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400"
-                    />
+                      disabled={!isEditable.all}                      
+                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
                   </div>
                 </div>
               </div>
@@ -721,8 +745,8 @@ const InfoAcara = () => {
                     onChange={handleChange}
                     placeholder="Deskripsi untuk acara..."
                     rows={5}
-                    className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
-                  />
+                    disabled={!isEditable.all}
+                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
                 </div>
 
                 <div className="flex-1">
@@ -739,8 +763,8 @@ const InfoAcara = () => {
                     onChange={handleChange}
                     placeholder="Informasi tambahan untuk acara..."
                     rows={5}
-                    className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 resize-none"
-                  />
+                    disabled={!isEditable.all}
+                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
                 </div>
               </div>
             </div>
@@ -748,76 +772,109 @@ const InfoAcara = () => {
 
           {/* Form Fields Grid */}
           <div className="flex flex-wrap mt-6 w-full gap-6">
-            {statusField.map((field, index) => (
-              <div key={index} className="w-72">
-                <Typography type="caption1" weight="semibold" className="mb-2">
-                  {field.label}
-                </Typography>
-                <div className="relative w-full">
-                  {field.type === "select" ? (
-                    <select
-                      name={field.name}
-                      value={
-                        field.name === "mdl_doorprize_aktif"
-                          ? formData.mdl_doorprize_aktif === 0
-                            ? 0
-                            : formData.mdl_doorprize_aktif
-                          : formData[field.name] || ""
-                      }
-                      onChange={handleChange}
-                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
-                    >
-                      {field.name === "mdl_tipe" && (
-                        <>
-                          <option value="">Pilih Tipe</option>
-                          <option value="offline">Offline</option>
-                          <option value="online">Online</option>
-                          <option value="hybrid">Hybrid</option>
-                        </>
+            {statusField.map((field, index) => {
+              const isFileField = ["mdl_file_acara", "mdl_file_rundown", "mdl_template_sertifikat"].includes(field.name);
+              const canEdit =
+                isEditable.all ||
+                (isEditable.onlyFiles && isFileField);
+
+              return (
+                <div key={index} className="w-72">
+                  <Typography type="caption1" weight="semibold" className="mb-2">
+                    {field.label}
+                  </Typography>
+
+                    {!canEdit ? (
+                      <p className="text-gray-800 border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer">
+                        {field.name === "mdl_doorprize_aktif"
+                          ? formData.mdl_doorprize_aktif === 1
+                            ? "Ada"
+                            : formData.mdl_doorprize_aktif === 0
+                            ? "Tidak Ada"
+                            : "-"
+                          : ["mdl_file_acara", "mdl_file_rundown", "mdl_template_sertifikat"].includes(field.name)
+                          ? formData[field.name]
+                            ? getFileNameFromUrl(formData[field.name])
+                            : "Tidak ada file"
+                          : formData[field.name]
+                          ? field.type === "datetime-local"
+                            ? new Date(formData[field.name]).toLocaleString("id-ID")
+                            : formData[field.name].toString()
+                          : "-"}
+                      </p>
+                    ) : (
+
+                    <div className="relative w-full ">
+                      {field.type === "select" ? (
+                        <select
+                          name={field.name}
+                          value={
+                            field.name === "mdl_doorprize_aktif"
+                              ? formData.mdl_doorprize_aktif === 0
+                                ? "Tidak Ada"
+                                : formData.mdl_doorprize_aktif
+                                : formData[field.name] || ""
+                          }
+                          onChange={handleChange}
+                          disabled={!isEditable.all}
+                          className={`w-full rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 border ${
+                            isEditable.all ? "bg-white cursor-pointer" : "bg-white cursor-not-allowed"
+                          }`}                        >
+                          {field.name === "mdl_tipe" && (
+                            <>
+                              <option value="">Pilih Tipe</option>
+                              <option value="offline">Offline</option>
+                              <option value="online">Online</option>
+                              <option value="hybrid">Hybrid</option>
+                            </>
+                          )}
+                          {field.name === "mdl_kategori" && (
+                            <>
+                              <option value="">Pilih Kategori</option>
+                              <option value="public">Public</option>
+                              <option value="private">Private</option>
+                            </>
+                          )}
+                          {field.name === "mdl_doorprize_aktif" && (
+                            <>
+                              <option value="">Pilih Status Doorprize</option>
+                              <option value={1}>Ada</option>
+                              <option value={0}>Tidak Ada</option>
+                            </>
+                          )}
+                        </select>
+                      ) : field.type === "file" ? (
+                        <label className="relative block w-full cursor-pointer">
+                          <div className="flex items-center bg-white rounded-lg px-3 py-2 text-gray-700 hover:border-blue-400 border">
+                            <span className="truncate flex-1">
+                              {fileNames[field.name] || "Pilih file..."}
+                            </span>
+                            <FilePlus className="text-gray-400 w-5 h-5 flex-shrink-0 ml-2" />
+                          </div>
+                          <input
+                            type="file"
+                            name={field.name}
+                            onChange={handleChange}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                          />
+                        </label>
+                      ) : (
+                          <input
+                            type={field.type}
+                            name={field.name}
+                            value={formData[field.name] || ""}
+                            onChange={handleChange}
+                            placeholder={field.label}
+                            className={`w-full bg-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 border 
+                              ${field.type === "datetime-local" && canEdit ? "cursor-pointer" : ""}
+                              ${!canEdit ? "cursor-not-allowed" : ""}`}
+                          />
                       )}
-                      {field.name === "mdl_kategori" && (
-                        <>
-                          <option value="">Pilih Kategori</option>
-                          <option value="public">Public</option>
-                          <option value="private">Private</option>
-                        </>
-                      )}
-                      {field.name === "mdl_doorprize_aktif" && (
-                        <>
-                          <option value="">Pilih Status Doorprize</option>
-                          <option value={1}>Ada</option>
-                          <option value={0}>Tidak Ada</option>
-                        </>
-                      )}
-                    </select>
-                  ) : field.type === "file" ? (
-                    <label className="relative block w-full cursor-pointer">
-                      <div className="flex items-center bg-typo-white2 rounded-lg px-3 py-2 text-gray-700 hover:border-blue-400">
-                        <span className="truncate flex-1">
-                          {fileNames[field.name] || "Pilih file..."}
-                        </span>
-                        <FilePlus className="text-gray-400 w-5 h-5 flex-shrink-0 ml-2" />
-                      </div>
-                      <input
-                        type="file"
-                        name={field.name}
-                        onChange={handleChange}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                    </label>
-                  ) : (
-                    <input
-                      type={field.type}
-                      name={field.name}
-                      value={formData[field.name] || ""}
-                      onChange={handleChange}
-                      placeholder={field.label}
-                      className="w-full bg-typo-white2 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400"
-                    />
+                    </div>
                   )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

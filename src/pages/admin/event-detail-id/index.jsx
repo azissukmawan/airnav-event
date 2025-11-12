@@ -115,13 +115,13 @@ const DetailEventId = () => {
             </button>
           </Link>
 
-          {event.mdl_status === "draft" && (
+          {/* {event.mdl_status === "draft" && (
             <Link to={`/admin/event/edit/${id}`}>
               <button className="bg-blue-900 px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-blue-700 transition-colors">
                 Edit Data
               </button>
             </Link>
-          )}
+          )} */}
         </div>
 
         <div className="flex flex-wrap justify-between gap-8">

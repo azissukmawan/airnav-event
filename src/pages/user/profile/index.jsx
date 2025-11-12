@@ -11,7 +11,9 @@ const Profile = () => {
 
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [profileImage, setProfileImage] = useState("https://ui-avatars.com/api/?name=User+Name&size=200&background=3b82f6&color=fff&bold=true");
+  
+  // ✅ PERBAIKAN: Inisialisasi default avatar dulu
+  const [profileImage, setProfileImage] = useState("");
 
   const [editFormData, setEditFormData] = useState({
     name: "",
@@ -24,7 +26,7 @@ const Profile = () => {
     current_password: "",
     new_password: "",
     new_password_confirmation: ""
-    });
+  });
 
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -57,48 +59,53 @@ const Profile = () => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-        try {
+      try {
         const token = localStorage.getItem("token");
         
         if (!token) {
-            window.location.href = "/login";
-            return;
+          window.location.href = "/login";
+          return;
         }
 
         const response = await axios.get(`${API_BASE_URL}/profile`, {
-            headers: {
+          headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
-            }
+          }
         });
         
         const data = response.data.data;
         setProfile(data);
 
         setEditFormData({
-            name: data.name || "",
-            telp: data.telp || "",
-            email: data.email || "",
-            profile_photo: null
+          name: data.name || "",
+          telp: data.telp || "",
+          email: data.email || "",
+          profile_photo: null
         });
 
+        // ✅ PERBAIKAN: Set profile image setelah data ada
         if (data.profile_photo) {
-            setProfileImage(data.profile_photo);
+          setProfileImage(data.profile_photo);
+        } else {
+          // Generate avatar dari nama
+          const avatarName = encodeURIComponent(data.name || "User");
+          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
         }
-        } catch (error) {            
+      } catch (error) {            
         if (error.response?.status === 401) {
-            localStorage.removeItem("token");
-            localStorage.removeItem("user");
-            window.location.href = "/login";
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.location.href = "/login";
         }
-        } finally {
+      } finally {
         setLoading(false);
-        }
+      }
     };
 
     fetchProfile();
-    }, []);
+  }, []);
 
   const handleEditProfileSubmit = async (e) => {
     e.preventDefault();
@@ -128,6 +135,14 @@ const Profile = () => {
         setSuccessMessage("Profile berhasil diperbarui!");
         setProfile(response.data.data);
 
+        // ✅ Update profile image
+        if (response.data.data.profile_photo) {
+          setProfileImage(response.data.data.profile_photo);
+        } else {
+          const avatarName = encodeURIComponent(response.data.data.name || "User");
+          setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
+        }
+
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         user.name = response.data.data.name;
         user.telp = response.data.data.telp;
@@ -153,64 +168,64 @@ const Profile = () => {
     setSuccessMessage("");
 
     if (!passwordFormData.current_password) {
-        setErrors({ current_password: "Password lama harus diisi" });
-        return;
+      setErrors({ current_password: "Password lama harus diisi" });
+      return;
     }
 
     if (passwordFormData.new_password.length < 8) {
-        setErrors({ new_password: "Password baru minimal 8 karakter" });
-        return;
+      setErrors({ new_password: "Password baru minimal 8 karakter" });
+      return;
     }
 
     if (passwordFormData.new_password !== passwordFormData.new_password_confirmation) {
-        setErrors({ new_password_confirmation: "Konfirmasi password tidak sesuai" });
-        return;
+      setErrors({ new_password_confirmation: "Konfirmasi password tidak sesuai" });
+      return;
     }
 
     try {
-        const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-        const response = await axios.post(
+      const response = await axios.post(
         `${API_BASE_URL}/profile/change-password`,
         {
-            current_password: passwordFormData.current_password,
-            new_password: passwordFormData.new_password,
-            new_password_confirmation: passwordFormData.new_password_confirmation
+          current_password: passwordFormData.current_password,
+          new_password: passwordFormData.new_password,
+          new_password_confirmation: passwordFormData.new_password_confirmation
         },
         {
-            headers: {
+          headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
-            }
+          }
         }
-        );
+      );
 
-        if (response.data.success) {
+      if (response.data.success) {
         setSuccessMessage("Password berhasil diubah!");
         setPasswordFormData({ 
-            current_password: "",
-            new_password: "", 
-            new_password_confirmation: "" 
+          current_password: "",
+          new_password: "", 
+          new_password_confirmation: "" 
         });
         
         setTimeout(() => {
-            setIsPasswordModalOpen(false);
-            setSuccessMessage("");
+          setIsPasswordModalOpen(false);
+          setSuccessMessage("");
         }, 1500);
-        }
+      }
     } catch (error) {
-        console.error("Error response:", error.response?.data);
-        
-        if (error.response?.data?.errors) {
+      console.error("Error response:", error.response?.data);
+      
+      if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
-        } else if (error.response?.data?.message) {
+      } else if (error.response?.data?.message) {
         setErrors({ general: error.response.data.message });
-        } else {
+      } else {
         setErrors({ general: "Terjadi kesalahan saat mengubah password" });
-        }
+      }
     }
-    };
+  };
 
   const handleEditFormChange = (e) => {
     setEditFormData({
@@ -271,7 +286,7 @@ const Profile = () => {
                 title="Klik untuk melihat foto lebih besar"
               >
                 <img 
-                  src={profileImage}
+                  src={profileImage || "https://ui-avatars.com/api/?name=User&size=200&background=3b82f6&color=fff&bold=true"}
                   alt="Profile" 
                   className="w-40 h-40 rounded-full object-cover border-4 border-gray-200 shadow-lg"
                 />
@@ -374,7 +389,7 @@ const Profile = () => {
             <div className="flex justify-center mt-6">
               <div className="relative">
                 <img 
-                  src={profileImage}
+                  src={profileImage || "https://ui-avatars.com/api/?name=User&size=200&background=3b82f6&color=fff&bold=true"}
                   alt="Profile" 
                   className="w-40 h-40 rounded-full object-cover border-4 border-gray-200 shadow-lg"
                 />
@@ -438,7 +453,7 @@ const Profile = () => {
           setIsPasswordModalOpen(false);
           setErrors({});
           setSuccessMessage("");
-          setPasswordFormData({ password: "", password_confirmation: "" });
+          setPasswordFormData({ current_password: "", new_password: "", new_password_confirmation: "" });
         }}
         title="Edit Password"
         size="md"
@@ -450,7 +465,7 @@ const Profile = () => {
                 setIsPasswordModalOpen(false);
                 setErrors({});
                 setSuccessMessage("");
-                setPasswordFormData({ password: "", password_confirmation: "" });
+                setPasswordFormData({ current_password: "", new_password: "", new_password_confirmation: "" });
               }}
             >
               Batal
@@ -479,7 +494,7 @@ const Profile = () => {
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-                <InputText
+              <InputText
                 id="current-password"
                 name="current_password"
                 label="Password Lama"
@@ -488,10 +503,10 @@ const Profile = () => {
                 value={passwordFormData.current_password}
                 onChange={handlePasswordFormChange}
                 error={errors.current_password}
-                />
+              />
             </div>
             <div>  
-                <InputText
+              <InputText
                 id="new-password"
                 name="new_password"
                 label="Password Baru"
@@ -500,10 +515,10 @@ const Profile = () => {
                 value={passwordFormData.new_password}
                 onChange={handlePasswordFormChange}
                 error={errors.new_password}
-                />
+              />
             </div>
             <div>
-                <InputText
+              <InputText
                 id="new-password-confirm"
                 name="new_password_confirmation"
                 label="Ketik Ulang Password Baru"
@@ -512,7 +527,7 @@ const Profile = () => {
                 value={passwordFormData.new_password_confirmation}
                 onChange={handlePasswordFormChange}
                 error={errors.new_password_confirmation}
-                />
+              />
             </div>
           </form>
         </div>

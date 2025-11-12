@@ -9,15 +9,21 @@ const TableParticipants = ({
   winners = [],
   onPreview,
   doorprizeActive = false,
+  eventType,
 }) => {
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [loadingId, setLoadingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const showTypeColumn = useMemo(() => {
-    return participants.some((p) => (p.type || "").toLowerCase() === "hybrid");
+    return participants.some(
+      (p) =>
+        (p.type || "").toLowerCase() === "online" ||
+        (p.type || "").toLowerCase() === "offline"
+    );
   }, [participants]);
 
   const winnerNames = useMemo(
@@ -33,6 +39,36 @@ const TableParticipants = ({
       ),
     [winners]
   );
+  // === STATUS BY ADMIN ===
+  const handleUpdateStatus = async (participant, newStatus) => {
+    try {
+      setUpdatingId(participant.id);
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${API_BASE_URL}/admin/events/${participant.event_id}/participants/${participant.id}/attendance`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const updated = participants.map((p) =>
+        p.id === participant.id ? { ...p, status: newStatus } : p
+      );
+      if (typeof setFilteredParticipants === "function") {
+        setFilteredParticipants(updated);
+      }
+
+      alert(`Status ${participant.nama} berhasil diubah menjadi ${newStatus}`);
+    } catch (error) {
+      console.error("Gagal update status:", error);
+      alert(
+        error.response?.data?.message ||
+          "Terjadi kesalahan saat mengubah status peserta"
+      );
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -117,30 +153,37 @@ const TableParticipants = ({
                 No
               </th>
               <th
-                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[220px]"
+                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[180px]"
                 onClick={() => handleSort("nama")}
               >
                 <div className="flex items-center gap-2">
                   Nama Peserta <ArrowUpDown size={16} />
                 </div>
               </th>
-              <th className="py-4 px-4 text-left w-[150px]">No Whatsapp</th>
-              <th className="py-4 px-4 text-left w-[200px]">Email</th>
-              <th className="py-4 px-4 text-left w-[70px]">Foto</th>
+              <th className="py-4 px-4 text-left w-[140px]">No Whatsapp</th>
+              <th className="py-4 px-4 text-left w-[170px]">Email</th>
+              <th className="py-4 px-4 text-left w-[60px]">Foto</th>
               {showTypeColumn && (
-                <th className="py-4 px-4 text-left w-[100px]">Tipe</th>
+                <th className="py-4 px-4 text-left w-[60px]">Tipe</th>
               )}
               <th
-                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[125px]"
+                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[120px]"
                 onClick={() => handleSort("status")}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   Status <ArrowUpDown size={16} />
                 </div>
               </th>
-              <th className="py-4 px-4 text-left w-[100px]">Sertifikat</th>
+              <th
+                className={`py-3 px-3 text-left w-[90px] mr-5 ${
+                  !doorprizeActive ? "rounded-tr-2xl" : ""
+                }`}
+              >
+                Sertifikat
+              </th>
+
               {doorprizeActive && (
-                <th className="py-4 px-4 text-center rounded-tr-2xl w-[120px]">
+                <th className="py-4 px-4 text-center rounded-tr-2xl w-[100px]">
                   Doorprize
                 </th>
               )}
@@ -165,23 +208,28 @@ const TableParticipants = ({
                     <td className="py-4 px-4 text-center text-gray-700 font-medium w-[60px]">
                       {startIndex + i + 1}
                     </td>
-
+                    {/* === NAMA === */}
                     <td
                       onClick={() => onPreview(p)}
-                      className="py-4 px-4 cursor-pointer text-gray-800 truncate w-[200px]"
+                      title={p.nama}
+                      className="py-4 px-4 cursor-pointer text-gray-800 truncate w-[180px]"
                     >
                       {p.nama}
                     </td>
-
+                    {/* === NO WHATSAPP === */}
                     <td className="py-4 px-4 text-gray-700 w-[150px] truncate">
                       {p.no_whatsapp}
                     </td>
-                    <td className="py-4 px-4 text-gray-700 w-[200px] truncate">
+                    {/* === EMAIL === */}
+                    <td
+                      title={p.email}
+                      className="py-4 px-4 text-gray-700 w-[200px] truncate"
+                    >
                       {p.email}
                     </td>
-
-                    <td className="py-4 px-4 w-[100px]">
-                      <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
+                    {/* === FOTO PROFILE === */}
+                    <td className="py-4 px-4 w-[90px]">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
                         {p.photo_profile ? (
                           <img
                             src={p.photo_profile}
@@ -195,26 +243,53 @@ const TableParticipants = ({
                         )}
                       </div>
                     </td>
-
+                    {/* === TIPE ACARA === */}
                     {showTypeColumn && (
                       <td className="py-4 px-4 text-gray-700 w-[100px]">
                         {p.type || "Offline"}
                       </td>
                     )}
 
-                    <td className="py-4 px-4 text-left w-[120px]">
-                      <span
-                        className={`px-3 py-1 rounded-xl font-bold text-xs ${
-                          p.status === "Hadir"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-yellow-100 text-yellow-700"
-                        }`}
-                      >
-                        {p.status || "Tidak Hadir"}
-                      </span>
+                    <td className="py-4 px-4 text-left w-[200px] relative">
+                      {p.status === "Hadir" ? (
+                        <span className="px-3 py-1 rounded-xl font-bold text-xs whitespace-nowrap bg-green-100 text-green-700">
+                          Hadir
+                        </span>
+                      ) : updatingId === p.id ? (
+                        <span className="text-sm text-gray-500 italic">
+                          Mengupdate...
+                        </span>
+                      ) : (
+                        <div className="relative">
+                          <select
+                            value={p.status || "Tidak Hadir"}
+                            onChange={(e) =>
+                              handleUpdateStatus(p, e.target.value)
+                            }
+                            className="px-3 py-1 rounded-xl font-bold text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 focus:outline-none appearance-none pr-6"
+                          >
+                            <option value="Tidak Hadir">Belum Hadir</option>
+                            <option value="Hadir">Hadir</option>
+                          </select>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-3 h-3 text-yellow-700 absolute right-0 top-1/2 transform -translate-y-1/2 pointer-events-none"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </td>
-
-                    <td className="py-4 px-4 text-left w-[150px]">
+                    {/* === SERTIFIKAT === */}
+                    <td className="py-4 px-4 text-left w-[120px]">
                       {bisaDownload ? (
                         <Button
                           variant="secondary"
@@ -235,7 +310,7 @@ const TableParticipants = ({
                         </Button>
                       )}
                     </td>
-
+                    {/* === DOORPRIZE === */}
                     {doorprizeActive && (
                       <td className="py-4 px-4 mr-1 text-center w-[100px]">
                         {isWinner ? (

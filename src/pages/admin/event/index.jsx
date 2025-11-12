@@ -61,33 +61,34 @@ const AdminEvent = () => {
 
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
-        const res = await axios.get(`${API_BASE_URL}/admin/events`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+  const fetchEvents = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/admin/events`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const events = res.data?.data?.data || res.data?.data || res.data || [];
+      const events = res.data?.data?.data || res.data?.data || res.data || [];
 
-        if (Array.isArray(events)) {
-          setEventData(events);
-        } else {
-          console.warn("Data bukan array:", events);
-          setEventData([]);
-        }
-      } catch (error) {
-        console.error("Gagal fetch event:", error);
-        setError("Gagal mengambil data event");
+      if (Array.isArray(events)) {
+        setEventData(events);
+      } else {
+        console.warn("Data bukan array:", events);
         setEventData([]);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Gagal fetch event:", error);
+      setError("Gagal mengambil data event");
+      setEventData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchEvents();
-  }, [token]);
+   useEffect(() => {
+    // --- PERUBAHAN 2: Panggil fungsinya di sini ---
+    fetchEvents();
+  }, [token]);
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -490,12 +491,9 @@ const AdminEvent = () => {
     {
       header: "Aksi",
       accessor: (row) => {
-        // Check if publication status is "active" (shown as "Publish")
-        const isPublished = row.mdl_status?.toLowerCase().includes("active");
-
         const status = (row.mdl_status || "").toLowerCase();
-        const disabledKeys = ["active", "closed", "archived"];
-        // const isPublished = disabledKeys.some((k) => status.includes(k));
+        const disabledKeys = status.includes("archive");
+        //const isPublished = disabledKeys.some((k) => status.includes(k));
 
         return (
           <div className="flex items-center gap-3">
@@ -519,11 +517,14 @@ const AdminEvent = () => {
               </button>
             ) : ( */}
               {/* // Normal edit button for non-published events */}
-              <Link to={`/admin/event/edit/${row.id}`}>
+              <Link to={`/admin/event/edit/${row.id}`}
+              className={disabledKeys ? "pointer-events-none" : ""}>
                 <button
-                  className="text-yellow-500 hover:text-yellow-700"
-                  title="Edit"
-                >
+                className="text-yellow-500 hover:text-yellow-700 
+                           disabled:text-gray-400 disabled:cursor-not-allowed" // 4. Tambah style disabled
+                title={disabledKeys ? "Tidak dapat mengedit acara yang diarsip" : "Edit"} // 5. Ubah title saat disabled
+                disabled={disabledKeys} // 6. Logika disabled
+              >
                   <FiEdit size={18} />
                 </button>
               </Link>
@@ -621,6 +622,8 @@ const AdminEvent = () => {
         <AddEvent
           isOpen={isAddEventOpen}
           onClose={() => setIsAddEventOpen(false)}
+          onSuccess={fetchEvents}
+          token={token}
         />
         <DeletePopup
           isOpen={isDeleteOpen}

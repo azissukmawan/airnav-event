@@ -18,58 +18,57 @@ export const EventProvider = ({ children }) => {
   });
 
   const fetchEvents = async (filterParams = {}, page = 1, perPage = 9) => {
-  setLoading(true);
-  try {
-    const token = localStorage.getItem("token");
-    
-    if (!token) {
-      window.location.href = "/login";
-      return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('per_page', perPage);
+      
+      if (filterParams.status && filterParams.status !== 'all') {
+        params.append('status', filterParams.status);
+      }
+      if (filterParams.tipe && filterParams.tipe !== 'all') {
+        params.append('tipe', filterParams.tipe);
+      }
+
+      const url = `${API_BASE_URL}/profile/dashboard?${params.toString()}`;
+      
+      const response = await axios.get(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+      });
+
+      const data = response.data.data;
+      setEvents(data.events);
+      setPagination({
+        currentPage: data.pagination.current_page || page,
+        totalPages: data.pagination.last_page || 1,
+        totalItems: data.pagination.total || 0,
+        perPage: data.pagination.per_page || perPage
+      });
+    } catch (error) {
+      console.error(error);
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+      }
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const params = new URLSearchParams();
-    params.append('page', page);
-    params.append('per_page', perPage);
-    
-    if (filterParams.status && filterParams.status !== 'all') {
-      params.append('status', filterParams.status);
-    }
-    if (filterParams.tipe && filterParams.tipe !== 'all') {
-      params.append('tipe', filterParams.tipe);
-    }
-
-    const url = `${API_BASE_URL}/profile/dashboard?${params.toString()}`;
-    
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-    });
-
-    const data = response.data.data;
-    setEvents(data.events);
-    setPagination({
-      currentPage: data.pagination.current_page || page,
-      totalPages: data.pagination.last_page || 1,
-      totalItems: data.pagination.total || 0,
-      perPage: data.pagination.per_page || perPage
-    });
-  } catch (error) {
-    console.error(error);
-
-    if (error.response?.status === 401) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      window.location.href = "/login";
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
-  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchEvents(filters, pagination.currentPage, pagination.perPage);
@@ -77,6 +76,32 @@ export const EventProvider = ({ children }) => {
     
     return () => clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchEvents(filters, pagination.currentPage, pagination.perPage);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [filters, pagination.currentPage, pagination.perPage]);
+
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchEvents(filters, pagination.currentPage, pagination.perPage);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [filters, pagination.currentPage, pagination.perPage]);
 
   const updateFilters = (newFilters) => {
     setFilters(newFilters);

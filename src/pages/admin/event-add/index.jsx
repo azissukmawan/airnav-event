@@ -4,11 +4,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import Dropdown from "../../../components/form/Dropdown";
 import AddValidate from "../../../components/validate";
 import { Calendar } from "lucide-react";
+import Spinner from "../../../components/spinner";
+
 import axios from "axios";
 
-export default function AddEvent({ isOpen, onClose, token }) {
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
+export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  // -------------------
+  const [errors, setErrors] = useState({});
 
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
@@ -84,7 +88,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (loading) return; // Prevent double submission
+    if (isPublishing || isSavingDraft) return; // Prevent double submission
 
     const payloadForValidation = {
       ...formData,
@@ -107,7 +111,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
         : "",
     };
 
-    const validationErrors = AddValidate(payloadForValidation);
+    const validationErrors = {};
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -120,7 +124,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
       return;
     }
 
-    setLoading(true);
+    setIsPublishing(true);
     setErrors({});
 
     try {
@@ -149,14 +153,8 @@ export default function AddEvent({ isOpen, onClose, token }) {
         if (val.includes("T")) return val.replace("T", " ") + ":00";
         return val;
       };
-      formDataToSend.append(
-        "mdl_acara_mulai",
-        toBackendDateTime(formData.mdl_acara_mulai)
-      );
-      formDataToSend.append(
-        "mdl_acara_selesai",
-        toBackendDateTime(formData.mdl_acara_selesai)
-      );
+      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
+      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa);
 
       if (formData.mdl_catatan) {
@@ -185,11 +183,14 @@ export default function AddEvent({ isOpen, onClose, token }) {
 
       console.log("✅ Response sukses:", res.data);
 
+      
       showPopup("success", "Berhasil!", "Acara berhasil ditambahkan");
 
+      
       setTimeout(() => {
+        setIsPublishing(false);
         onClose();
-        if (onSuccess) onSuccess();
+        if (onSuccess) {onSuccess();}
       }, 1500);
     } catch (err) {
       console.error("❌ Gagal menambahkan acara:", err);
@@ -212,12 +213,10 @@ export default function AddEvent({ isOpen, onClose, token }) {
       } else {
         showPopup("error", "Error", err.message || "Terjadi kesalahan");
       }
-    } finally {
-      setLoading(false);
-    }
+    } 
   };
 
-  const [isLoading, setIsLoading] = useState(false);
+  //const [isLoading, setIsLoading] = useState(false);
 
   // Helper function untuk generate slug dari nama
   // Fungsi pembuat slug dari nama acara
@@ -354,43 +353,32 @@ export default function AddEvent({ isOpen, onClose, token }) {
       <button
         type="button"
         onClick={handleSaveDraft}
-        disabled={isLoading}
-        className="px-4 py-2 rounded-lg text-blue-900 bg-blue-200 hover:bg-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={isSavingDraft || isPublishing}
+        // Tambahkan justify-center agar spinner-nya di tengah
+        className="px-4 py-2 rounded-lg text-blue-900 bg-blue-200 hover:bg-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 h-11"
       >
-        Simpan Draft
+        {/* --- PERUBAHAN --- */}
+        {/* Langsung gunakan logika ternary, hapus SVG sebelumnya */}
+        {isSavingDraft ? <Spinner /> : "Simpan Draft"}
       </button>
+
       <button
         type="button"
         onClick={handleSubmit}
-        disabled={isLoading}
-        className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        disabled={isSavingDraft || isPublishing}
+         // Tambahkan justify-center agar spinner-nya di tengah
+        className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 h-11"
       >
-        {isLoading && (
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-        )}
-        {isLoading ? "Menyimpan..." : "Publish"}
+        {/* --- PERUBAHAN --- */}
+        {/* Samakan logikanya dengan tombol draft */}
+        {isPublishing ? <Spinner /> : "Publish"}
       </button>
     </>
   );
 
   // Handle save as draft (kirim data dan set mdl_status = "draft")
   async function handleSaveDraft() {
-    if (isLoading) return;
+    if (isSavingDraft || isPublishing) return;
 
     // 1) jalankan validasi sama seperti publish
     const payloadForValidation = {
@@ -405,7 +393,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
       mdl_banner_acara_url: "blob:http://...",
     };
 
-    const validationErrors = AddValidate(payloadForValidation);
+    const validationErrors = {};
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       showPopup(
@@ -418,7 +406,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
     }
 
     // 2) lanjut kirim draft (set loading setelah validasi)
-    setIsLoading(true);
+    setIsSavingDraft(true);
     setErrors({});
 
     try {
@@ -433,38 +421,24 @@ export default function AddEvent({ isOpen, onClose, token }) {
       formDataToSend.append("mdl_tipe", formData.mdl_tipe || "");
       formDataToSend.append("mdl_kategori", formData.mdl_kategori || "");
       formDataToSend.append("mdl_lokasi", formData.mdl_lokasi || "");
-      formDataToSend.append(
-        "mdl_pendaftaran_mulai",
-        formData.mdl_pendaftaran_mulai || ""
-      );
-      formDataToSend.append(
-        "mdl_pendaftaran_selesai",
-        formData.mdl_pendaftaran_selesai || ""
-      );
+      formDataToSend.append("mdl_pendaftaran_mulai", formData.mdl_pendaftaran_mulai || "");
+      formDataToSend.append("mdl_pendaftaran_selesai", formData.mdl_pendaftaran_selesai || "");
 
       const toBackendDateTime = (val) => {
         if (!val) return "";
         return val.includes("T") ? val.replace("T", " ") + ":00" : val;
       };
-      formDataToSend.append(
-        "mdl_acara_mulai",
-        toBackendDateTime(formData.mdl_acara_mulai)
-      );
-      formDataToSend.append(
-        "mdl_acara_selesai",
-        toBackendDateTime(formData.mdl_acara_selesai)
-      );
+      formDataToSend.append("mdl_acara_mulai", toBackendDateTime(formData.mdl_acara_mulai));
+      formDataToSend.append("mdl_acara_selesai", toBackendDateTime(formData.mdl_acara_selesai));
       formDataToSend.append("mdl_link_wa", formData.mdl_link_wa || "");
       formDataToSend.append("mdl_status", "draft");
-      if (formData.mdl_catatan)
-        formDataToSend.append("mdl_catatan", formData.mdl_catatan);
+      if (formData.mdl_catatan) formDataToSend.append("mdl_catatan", formData.mdl_catatan);
 
       Object.entries(files).forEach(([key, file]) => {
         if (file && file instanceof File) formDataToSend.append(key, file);
       });
 
-      const currentToken =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+      const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       const res = await axios.post(
         "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
@@ -479,13 +453,12 @@ export default function AddEvent({ isOpen, onClose, token }) {
       );
 
       console.log("Draft tersimpan:", res.data);
-      showPopup(
-        "success",
-        "Draft Tersimpan",
-        "Data berhasil disimpan sebagai draft"
-      );
+      showPopup("success", "Draft Tersimpan", "Data berhasil disimpan sebagai draft");
       setTimeout(() => {
         onClose();
+        if (onSuccess) {
+          onSuccess();
+        }
       }, 1000);
     } catch (err) {
       console.error("Gagal simpan draft:", err);
@@ -493,14 +466,10 @@ export default function AddEvent({ isOpen, onClose, token }) {
         setErrors(err.response.data.errors);
         showPopup("error", "Validasi Gagal", "Periksa kembali form Anda");
       } else {
-        showPopup(
-          "error",
-          "Error",
-          err.response?.data?.message || err.message || "Gagal menyimpan draft"
-        );
+        showPopup("error", "Error", err.response?.data?.message || err.message || "Gagal menyimpan draft");
       }
     } finally {
-      setIsLoading(false);
+      setIsSavingDraft(false);
     }
   }
 
@@ -520,20 +489,23 @@ export default function AddEvent({ isOpen, onClose, token }) {
     }
   };
 
+  
   return (
+
     <>
-      <NotificationPopup key="add-event-notification" />
-      <AnimatePresence>
-        {isOpen && (
+    
+          <NotificationPopup key="add-event-notification" />
+    <AnimatePresence>
+      {isOpen && (
           <motion.div
-            key="modal-backdrop"
+          key="modal-backdrop"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.25 }}
           >
             <Modal
-              key="add-event-modal"
+             key="add-event-modal"
               isOpen={isOpen}
               onClose={onClose}
               title="Tambah Acara"
@@ -601,7 +573,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                       label="Pilih Tipe Acara"
                       options={tipeAcaraOptions}
                       variant="white"
-                      value={formData.mdl_tipe}
+                      value={formData.mdl_tipe} 
                       onSelect={(value) =>
                         setFormData({ ...formData, mdl_tipe: value })
                       }
@@ -777,9 +749,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_mulai
-                              ? "border-2 border-red-500"
-                              : "border-0"
+                            errors.mdl_acara_mulai ? "border-2 border-red-500" : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
@@ -808,9 +778,7 @@ export default function AddEvent({ isOpen, onClose, token }) {
                             })
                           }
                           className={`w-full rounded-lg bg-gray-100 pl-13 px-3 py-2 text-gray-800 placeholder-gray-500 focus:bg-gray-100 focus:ring-2 ${
-                            errors.mdl_acara_selesai
-                              ? "border-2 border-red-500"
-                              : "border-0"
+                            errors.mdl_acara_selesai ? "border-2 border-red-500" : "border-0"
                           } focus:outline-none`}
                         />
                       </div>
@@ -819,17 +787,13 @@ export default function AddEvent({ isOpen, onClose, token }) {
                     <div className="flex gap-3 mt-2">
                       <div className="flex-1">
                         {errors.mdl_acara_mulai && (
-                          <p className="text-red-500 text-sm">
-                            {errors.mdl_acara_mulai}
-                          </p>
+                          <p className="text-red-500 text-sm">{errors.mdl_acara_mulai}</p>
                         )}
                       </div>
                       <div className="w-4"></div>
                       <div className="flex-1">
                         {errors.mdl_acara_selesai && (
-                          <p className="text-red-500 text-sm">
-                            {errors.mdl_acara_selesai}
-                          </p>
+                          <p className="text-red-500 text-sm">{errors.mdl_acara_selesai}</p>
                         )}
                       </div>
                     </div>
@@ -982,9 +946,9 @@ export default function AddEvent({ isOpen, onClose, token }) {
               </form>
             </Modal>
           </motion.div>
-        )}
-        {/* Hide native right-side calendar icon and remove default appearance */}
-        <style>{`
+      )}
+{/* Hide native right-side calendar icon and remove default appearance */}
+      <style>{`
         /* Remove native calendar/picker icon on date and datetime-local inputs (Chrome/WebKit) */
         input[type="date"]::-webkit-calendar-picker-indicator,
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
@@ -1009,7 +973,8 @@ export default function AddEvent({ isOpen, onClose, token }) {
           display: none;
         }
       `}</style>
-      </AnimatePresence>
+      
+    </AnimatePresence>
     </>
   );
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import { Button } from "../../../components/button";
 import { Typography } from "../../../components/typography";
-import { Award, Download, ScanLine } from "lucide-react";
+import { Award, Download, ScanLine, Clock, MessageCircle, X, CalendarCheck } from "lucide-react";
 import SearchBar from "../../../components/form/SearchBar";
 import Scanner from "./scan";
 import Alert from "../../../components/alert";
@@ -16,6 +17,8 @@ const Activity = () => {
   const [userName, setUserName] = useState("User");
   const [profileImage, setProfileImage] = useState("");
   const [alert, setAlert] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedDayDetail, setSelectedDayDetail] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -93,19 +96,11 @@ const Activity = () => {
           const selesai = new Date(acara.mdl_acara_selesai);
           const sekarang = new Date();
 
-          // Hitung jumlah hari
-          const mulaiDate = new Date(
-            mulai.getFullYear(),
-            mulai.getMonth(),
-            mulai.getDate()
-          );
-          const selesaiDate = new Date(
-            selesai.getFullYear(),
-            selesai.getMonth(),
-            selesai.getDate()
-          );
+          // Hitung jumlah hari berdasarkan tanggal
+          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
+          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
           const diffTime = selesaiDate.getTime() - mulaiDate.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          const totalHari = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
           let status = "";
           if (sekarang < mulai) status = "Belum Dimulai";
@@ -113,20 +108,47 @@ const Activity = () => {
             status = "Berlangsung";
           else status = "Acara Selesai";
 
-          // Mapping presensi per hari
-          const presensiList = group.map((item, index) => ({
-            hari: index + 1,
-            tanggal: item.presensi?.tanggal_absen || null,
-            sudahPresensi: item.presensi !== null,
-            waktuAbsen: item.presensi?.waktu_absen || null,
-          }));
+          const presensiPerHari = acara.presensi_per_hari || {};
+
+          // Mapping presensi per hari dengan key yang benar
+          const presensiList = Array.from({length: totalHari}, (_, index) => {
+            const hariKe = index + 1;
+            const hariKey = `Hari-${hariKe}`;
+            const presensiHari = presensiPerHari[hariKey];
+
+            let sudahPresensi = false;
+            let tanggalSesi = null;
+            let detailSesi = [];
+
+            if (presensiHari) {
+              const sesiArray = Object.entries(presensiHari).map(([key, sesi]) => ({
+                nama: key,
+                ...sesi
+              }));
+              
+              // Cek apakah ada minimal 1 sesi hadir
+              sudahPresensi = sesiArray.some(sesi => sesi.status === "Hadir");
+
+              // Ambil tanggal_sesi
+              if (sesiArray.length > 0) {
+                tanggalSesi = sesiArray[0].tanggal_sesi;
+              }
+
+              detailSesi = sesiArray;
+            }
+
+            return {
+              hari: hariKe,
+              tanggal: tanggalSesi,
+              sudahPresensi: sudahPresensi,
+              presensiHari: presensiHari || null,
+              detailSesi: detailSesi,
+            };
+          });
 
           // Cek apakah semua hari sudah presensi
-          const totalHadir = presensiList.filter((p) => p.sudahPresensi).length;
-          const semuaHadirAtauSatuHari =
-            diffDays <= 1
-              ? presensiList[0]?.sudahPresensi
-              : totalHadir === diffDays;
+          const totalHadir = presensiList.filter(p => p.sudahPresensi).length;
+          const semuaHadirAtauSatuHari = totalHari <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === totalHari;
 
           const sudahLewat = sekarang > selesai;
           const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
@@ -135,9 +157,11 @@ const Activity = () => {
           return {
             id: acara.id,
             title: acara.mdl_nama,
-            date: acara.mdl_acara_mulai,
+            start_date: acara.mdl_acara_mulai,
+            end_date: acara.mdl_acara_selesai,
+            whatsapp: acara.mdl_link_wa,
             status,
-            jumlahHari: diffDays,
+            jumlahHari: totalHari,
             presensiList,
             totalHadir,
             sudahPresensi: semuaHadirAtauSatuHari,
@@ -177,6 +201,19 @@ const Activity = () => {
     setTimeout(() => {
       setScannerOpen(false);
     }, 2000);
+  };
+
+  // Handler untuk membuka detail sesi
+  const handleDayClick = (presensi, activityTitle) => {
+    if (presensi.detailSesi && presensi.detailSesi.length > 0) {
+      setSelectedDayDetail({
+        hari: presensi.hari,
+        tanggal: presensi.tanggal,
+        detailSesi: presensi.detailSesi,
+        activityTitle: activityTitle
+      });
+      setShowDetailModal(true);
+    }
   };
 
   if (loading) {
@@ -258,21 +295,76 @@ const Activity = () => {
                 key={activity.id}
                 className="w-full bg-white p-4 rounded-xl shadow-sm space-y-2"
               >
-                <div className="flex justify-between p-3 bg-blue-50 text-primary rounded-xl">
-                  <Typography type="body" weight="bold">
-                    {activity.title}
-                  </Typography>
-                  <Typography type="body" weight="bold">
-                    {new Date(activity.date).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </Typography>
+                <div className="md:flex justify-between p-2 bg-blue-50 text-primary rounded-xl items-center">
+                  <Link 
+                    to={`/user/event/${activity.id}`}
+                    className="hover:underline transition-all"
+                  >
+                    <Typography type="body" weight="bold">
+                      {activity.title}
+                    </Typography>
+                  </Link>
+                  <div className="flex gap-2 items-center">
+                    {/* Tanggal */}
+                    <Typography type="body" weight="bold">
+                      {(() => {
+                        const startDate = new Date(activity.start_date);
+                        const endDate = new Date(activity.end_date);
+
+                        const isSameDay = 
+                          startDate.getDate() === endDate.getDate() &&
+                          startDate.getMonth() === endDate.getMonth() &&
+                          startDate.getFullYear() === endDate.getFullYear();
+                        
+                        if (isSameDay) {
+                          return startDate.toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          });
+                        } else {
+                          const isSameMonth = 
+                            startDate.getMonth() === endDate.getMonth() &&
+                            startDate.getFullYear() === endDate.getFullYear();
+                          
+                          if (isSameMonth) {
+                            return `${startDate.getDate()}-${endDate.getDate()} ${startDate.toLocaleDateString("id-ID", {
+                              month: "long",
+                              year: "numeric",
+                            })}`;
+                          } else {
+                            return `${startDate.toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                            })} - ${endDate.toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            })}`;
+                          }
+                        }
+                      })()}
+                    </Typography>
+                    
+                    {/* Jam */}
+                    <div className="flex p-2 bg-white gap-2 items-center rounded-md">
+                      <Clock size={16}/>
+                      <Typography type="caption1" weight="bold">
+                        {new Date(activity.start_date).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}-{new Date(activity.end_date).toLocaleTimeString("id-ID", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Typography>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="md:flex items-center justify-between space-y-2">
-                  <div className="md:flex">
+                {/* Status */}
+                <div className="md:flex items-center justify-between space-y-2 md:space-y-0">
+                  <div>
                     <Typography type="caption1" className="text-gray-600">
                       Status:{" "}
                       <span
@@ -280,42 +372,86 @@ const Activity = () => {
                       >
                         {activity.status}
                       </span>
-                      {activity.jumlahHari <= 1
-                        ? // Acara 1 hari atau kurang
-                          activity.sudahPresensi && (
-                            <span className="inline-flex items-center gap-2 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10">
-                              Hadir
-                            </span>
-                          )
-                        : // Acara lebih dari 1 hari
-                          activity.presensiList.map(
-                            (presensi) =>
-                              presensi.sudahPresensi && (
-                                <span
-                                  key={presensi.hari}
-                                  className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-success-70 bg-success-10"
-                                >
-                                  Hadir Hari {presensi.hari}
-                                </span>
-                              )
-                          )}
-                      {/* Badge doorprize */}
-                      {activity.getDoorprize && (
-                        <span className="inline-flex items-center gap-1 ml-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10">
-                          <Award size={12} />
-                          Pemenang Doorprize
-                        </span>
-                      )}
                     </Typography>
                   </div>
+                  
+                  {/* Badge doorprize */}
+                  <div>
+                    {activity.getDoorprize && (
+                      <p className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-sm font-semibold text-warning-70 bg-warning-10">
+                        <Award size={12}/>Pemenang Doorprize
+                      </p>
+                    )}
+                  </div>
+                </div>
 
+                {/* Kehadiran */}
+                <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {activity.jumlahHari <= 1 ? (
+                    // Acara 1 hari atau kurang
+                    <div 
+                      className={`p-4 rounded-xl border-2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity ${
+                        activity.sudahPresensi 
+                          ? 'bg-success-10 border-success-70' 
+                          : 'bg-gray-50 border-gray-300'
+                      }`}
+                      onClick={() => handleDayClick(activity.presensiList[0], activity.title)}
+                    >
+                      <div className="flex items-center gap-2">
+                        {activity.sudahPresensi ? (
+                          <CalendarCheck size={20} className="text-success-70" />
+                        ) : (
+                          <Clock size={20} className="text-gray-400" />
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold">Hari 1</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Acara lebih dari 1 hari
+                    activity.presensiList.map((presensi) => (
+                      <div 
+                        key={presensi.hari}
+                        className={`p-4 rounded-xl border-2 flex items-center justify-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity ${
+                          presensi.sudahPresensi 
+                            ? 'bg-success-10 border-success-70' 
+                            : 'bg-gray-50 border-gray-300'
+                        }`}
+                        onClick={() => handleDayClick(presensi, activity.title)}
+                      >
+                        <div className="flex items-center">
+                          {presensi.sudahPresensi ? (
+                            <CalendarCheck size={20} className="text-success-70" />
+                          ) : (
+                            <Clock size={20} className="text-gray-500" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold">Hari {presensi.hari}</p>
+                          {
+                            presensi.tanggal && (
+                              <p className="text-xs text-gray-600">
+                                {new Date(presensi.tanggal).toLocaleDateString("id-ID", {
+                                  day: "numeric",
+                                  month: "long",
+                                })}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-2">
                   {/* Sertifikat */}
                   {activity.totalHadir > 0 &&
                     (activity.isDownloaded ? (
                       <Button
                         variant="secondary"
                         iconLeft={<Download size={18} />}
-                        className="w-30"
+                        className="w-full md:w-auto"
                         onClick={async () => {
                           try {
                             const token = localStorage.getItem("token");
@@ -372,12 +508,22 @@ const Activity = () => {
                       <Button
                         variant="third"
                         iconLeft={<Download size={18} />}
-                        className="w-30 opacity-60 cursor-not-allowed"
+                        className="w-full md:w-auto opacity-60 cursor-not-allowed"
                         disabled
                       >
                         Sertifikat
                       </Button>
-                    ))}
+                    )
+                  )}
+                  {/* Whatsapp Group */}
+                  <Button
+                    variant="green1"
+                    onClick={() => window.open(activity.whatsapp, '_blank')}
+                    iconLeft={<MessageCircle size={18} />}
+                    className="w-full md:w-auto whitespace-nowrap"
+                  >
+                    WhatsApp Group
+                  </Button>
                 </div>
               </div>
             );
@@ -388,6 +534,73 @@ const Activity = () => {
           </Typography>
         )}
       </div>
+
+      {/* Modal Detail Sesi */}
+      {showDetailModal && selectedDayDetail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-primary">Detail Presensi</h2>
+                <p className="text-sm text-gray-600">{selectedDayDetail.activityTitle}</p>
+                <p className="text-sm font-semibold text-gray-700 mt-1">
+                  Hari {selectedDayDetail.hari}
+                  {selectedDayDetail.tanggal && (
+                    <span className="text-gray-500 ml-2">
+                      ({new Date(selectedDayDetail.tanggal).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric"
+                      })})
+                    </span>
+                  )}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDetailModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {selectedDayDetail.detailSesi.map((sesi) => (
+                <div
+                  key={sesi.nama}
+                  className={`p-4 rounded-lg border-2 ${
+                    sesi.status === "Hadir"
+                      ? "bg-success-10 border-success-70"
+                      : "bg-gray-50 border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {sesi.status === "Hadir" ? (
+                        <div className="w-8 h-8 rounded-full bg-success-70 flex items-center justify-center">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      ) : (
+                        <Clock size={24} className="text-gray-400" />
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-800">{sesi.nama}</p>
+                        <p className={`text-sm font-bold ${
+                          sesi.status === "Hadir" ? "text-success-70" : "text-gray-500"
+                        }`}>
+                          {sesi.status}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Scanner
         isOpen={scannerOpen}

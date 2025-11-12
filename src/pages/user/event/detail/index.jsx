@@ -495,7 +495,7 @@ const DetailEvent = () => {
             {/* ✅ Badge untuk Event Private */}
             {event.is_public === 0 && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
-                <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <div>
@@ -608,314 +608,314 @@ const DetailEvent = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {showConfirmModal && (
+      {showConfirmModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-auto"
+          onClick={() => setShowConfirmModal(false)}
+        >
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 overflow-auto"
-            onClick={() => setShowConfirmModal(false)}
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Typography
-                type="heading5"
-                weight="bold"
-                className="text-gray-900 mb-4"
-              >
-                Konfirmasi Pendaftaran
-              </Typography>
-              <Typography type="body" className="text-gray-600 mb-6">
-                Apakah Anda yakin ingin mendaftar pada event "
-                {event.mdl_nama}"?
-              </Typography>
-
-              <div className="flex justify-center gap-3">
-                <Button variant="gray_outline" onClick={cancelRegis}>
-                  Batal
-                </Button>
-                <Button variant="primary" onClick={confirmRegis}>
-                  Ya, Daftar
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {isRegistered && (
-          <div className="grid md:grid-cols-2 gap-6">
-            {event.media_urls?.file_rundown && (
-              <a
-                href={event.media_urls.file_rundown}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col gap-3 bg-white hover:bg-primary-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-primary text-white p-4 rounded-full">
-                    <Download className="w-8 h-8" />
-                  </div>
-                  <div>
-                    <Typography
-                      type="body"
-                      weight="bold"
-                      className="text-primary mb-1"
-                    >
-                      Rundown
-                    </Typography>
-                    <Typography type="caption2" className="text-typo-secondary">
-                      File rundown acara
-                    </Typography>
-                  </div>
-                </div>
-              </a>
-            )}
-
-            {event.media_urls?.file_acara && (
-              <a
-                href={event.media_urls.file_acara}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col gap-3 bg-white hover:bg-success-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-success text-white p-4 rounded-full">
-                    <Download className="w-8 h-8" />
-                  </div>
-                  <div className="text-left">
-                    <Typography
-                      type="body"
-                      weight="bold"
-                      className="text-success mb-1"
-                    >
-                      Modul
-                    </Typography>
-                    <Typography type="caption2" className="text-typo-secondary">
-                      File modul acara
-                    </Typography>
-                  </div>
-                </div>
-              </a>
-            )}
-          </div>
-        )}
-
-        {event.mdl_catatan && event.mdl_catatan.trim() !== "" && (
-          <div className="bg-white p-8 rounded-xl shadow-sm mt-6">
             <Typography
               type="heading5"
-              weight="semibold"
-              className="mb-2 flex items-center gap-3"
+              weight="bold"
+              className="text-gray-900 mb-4"
             >
-              Informasi Tambahan
+              Konfirmasi Pendaftaran
             </Typography>
-            <Typography type="body" className="text-typo-secondary text-justify">
-              {event.mdl_catatan}
+            <Typography type="body" className="text-gray-600 mb-6">
+              Apakah Anda yakin ingin mendaftar pada event "
+              {event.mdl_nama}"?
             </Typography>
-          </div>
-        )}
 
-        {showCancelModal && (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setShowCancelModal(false)}
-          >
-            <div
-              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Typography
-                type="heading5"
-                weight="bold"
-                className="text-gray-900 mb-4"
-              >
-                Batalkan Pendaftaran
-              </Typography>
-              <Typography type="body" className="text-gray-600 mb-6">
-                Apakah Anda yakin ingin membatalkan pendaftaran pada event "
-                {event.mdl_nama}"?
-              </Typography>
-
-              <div className="flex justify-center gap-3">
-                <Button
-                  variant="gray_outline"
-                  onClick={() => setShowCancelModal(false)}
-                >
-                  Tidak
-                </Button>
-                <Button variant="red" onClick={cancelEventRegis}>
-                  Ya, Batalkan
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showWAModal && event.mdl_link_wa && (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowWAModal(false);
-              window.location.reload();
-            }}
-          >
-            <div
-              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => {
-                  setShowWAModal(false);
-                  window.location.reload();
-                }}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                title="Tutup"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
-                  <MessageCircle className="w-8 h-8 text-green-600" />
-                </div>
-                <Typography
-                  type="heading5"
-                  weight="bold"
-                  className="text-gray-900 mb-2"
-                >
-                  Pendaftaran Berhasil! 🎉
-                </Typography>
-                <Typography type="body" className="text-gray-600">
-                  Bergabunglah dengan grup WhatsApp untuk mendapatkan informasi
-                  terbaru tentang event ini.
-                </Typography>
-              </div>
-
-              <Button
-                variant="primary"
-                className="w-full bg-green-500 hover:bg-green-600"
-                onClick={() => {
-                  window.open(event.mdl_link_wa, "_blank");
-                  setShowWAModal(false);
-                  window.location.reload();
-                }}
-              >
-                Gabung Grup WhatsApp
+            <div className="flex justify-center gap-3">
+              <Button variant="gray_outline" onClick={cancelRegis}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={confirmRegis}>
+                Ya, Daftar
               </Button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {showHybridModal && (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setShowHybridModal(false)}
-          >
-            <div
-              className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
-              onClick={(e) => e.stopPropagation()}
+      {isRegistered && (
+        <div className="grid md:grid-cols-2 gap-6">
+          {event.media_urls?.file_rundown && (
+            <a
+              href={event.media_urls.file_rundown}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col gap-3 bg-white hover:bg-primary-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
             >
-              <button
-                onClick={() => setShowHybridModal(false)}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                title="Tutup"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
+              <div className="flex items-center gap-3">
+                <div className="bg-primary text-white p-4 rounded-full">
+                  <Download className="w-8 h-8" />
+                </div>
+                <div>
+                  <Typography
+                    type="body"
+                    weight="bold"
+                    className="text-primary mb-1"
+                  >
+                    Rundown
+                  </Typography>
+                  <Typography type="caption2" className="text-typo-secondary">
+                    File rundown acara
+                  </Typography>
+                </div>
+              </div>
+            </a>
+          )}
 
+          {event.media_urls?.file_acara && (
+            <a
+              href={event.media_urls.file_acara}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col gap-3 bg-white hover:bg-success-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-success text-white p-4 rounded-full">
+                  <Download className="w-8 h-8" />
+                </div>
+                <div className="text-left">
+                  <Typography
+                    type="body"
+                    weight="bold"
+                    className="text-success mb-1"
+                  >
+                    Modul
+                  </Typography>
+                  <Typography type="caption2" className="text-typo-secondary">
+                    File modul acara
+                  </Typography>
+                </div>
+              </div>
+            </a>
+          )}
+        </div>
+      )}
+
+      {event.mdl_catatan && event.mdl_catatan.trim() !== "" && (
+        <div className="bg-white p-8 rounded-xl shadow-sm mt-6">
+          <Typography
+            type="heading5"
+            weight="semibold"
+            className="mb-2 flex items-center gap-3"
+          >
+            Informasi Tambahan
+          </Typography>
+          <Typography type="body" className="text-typo-secondary text-justify">
+            {event.mdl_catatan}
+          </Typography>
+        </div>
+      )}
+
+      {showCancelModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowCancelModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Typography
+              type="heading5"
+              weight="bold"
+              className="text-gray-900 mb-4"
+            >
+              Batalkan Pendaftaran
+            </Typography>
+            <Typography type="body" className="text-gray-600 mb-6">
+              Apakah Anda yakin ingin membatalkan pendaftaran pada event "
+              {event.mdl_nama}"?
+            </Typography>
+
+            <div className="flex justify-center gap-3">
+              <Button
+                variant="gray_outline"
+                onClick={() => setShowCancelModal(false)}
+              >
+                Tidak
+              </Button>
+              <Button variant="red" onClick={cancelEventRegis}>
+                Ya, Batalkan
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showWAModal && event.mdl_link_wa && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => {
+            setShowWAModal(false);
+            window.location.reload();
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setShowWAModal(false);
+                window.location.reload();
+              }}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              title="Tutup"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                <MessageCircle className="w-8 h-8 text-green-600" />
+              </div>
               <Typography
                 type="heading5"
                 weight="bold"
                 className="text-gray-900 mb-2"
               >
-                Pilih Metode Kehadiran
+                Pendaftaran Berhasil! 🎉
               </Typography>
-              <Typography type="body" className="text-gray-600 mb-6">
-                Silakan pilih bagaimana Anda ingin mengikuti acara ini
+              <Typography type="body" className="text-gray-600">
+                Bergabunglah dengan grup WhatsApp untuk mendapatkan informasi
+                terbaru tentang event ini.
               </Typography>
+            </div>
 
-              <div className="space-y-3 mb-6">
-                <div
-                  onClick={() => setAttendanceType("online")}
-                  className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
-                    attendanceType === "online"
-                    ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
-                    : "border-gray-200 hover:border-blue-400/50"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      attendanceType === "online" ? "border-primary bg-primary" : "border-gray-400"
-                  }`}>
-                    {attendanceType === "online" && (
-                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-primary/10 rounded-full">
-                      <Monitor className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <Typography type="body" weight="semibold">
-                        Online
-                      </Typography>
-                      <Typography type="caption2" className="text-gray-500">
-                        Ikuti acara via Zoom/Google Meet
-                      </Typography>
-                    </div>
-                  </div>
+            <Button
+              variant="primary"
+              className="w-full bg-green-500 hover:bg-green-600"
+              onClick={() => {
+                window.open(event.mdl_link_wa, "_blank");
+                setShowWAModal(false);
+                window.location.reload();
+              }}
+            >
+              Gabung Grup WhatsApp
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {showHybridModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowHybridModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowHybridModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              title="Tutup"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+
+            <Typography
+              type="heading5"
+              weight="bold"
+              className="text-gray-900 mb-2"
+            >
+              Pilih Metode Kehadiran
+            </Typography>
+            <Typography type="body" className="text-gray-600 mb-6">
+              Silakan pilih bagaimana Anda ingin mengikuti acara ini
+            </Typography>
+
+            <div className="space-y-3 mb-6">
+              <div
+                onClick={() => setAttendanceType("online")}
+                className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
+                  attendanceType === "online"
+                  ? "border-blue-500 bg-blue-50 ring-2 ring-blue-200"
+                  : "border-gray-200 hover:border-blue-400/50"
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                    attendanceType === "online" ? "border-primary bg-primary" : "border-gray-400"
+                }`}>
+                  {attendanceType === "online" && (
+                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  )}
                 </div>
-
-                <div
-                  onClick={() => setAttendanceType("offline")}
-                  className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
-                    attendanceType === "offline"
-                      ? "border-green-500 bg-green-50 ring-2 ring-green-200"
-                      : "border-gray-200 hover:border-green-400/50"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
-                      attendanceType === "offline" ? "border-green-500 bg-green-500" : "border-gray-400"
-                  }`}>
-                    {attendanceType === "offline" && (
-                      <div className="w-2.5 h-2.5 bg-white rounded-full" />
-                    )}
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Monitor className="w-5 h-5 text-primary" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="p-3 bg-green-100 rounded-full">
-                      <MapPin className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <Typography type="body" weight="semibold">
-                        Offline
-                      </Typography>
-                      <Typography type="caption2" className="text-gray-500">
-                        Hadiri acara secara langsung di lokasi
-                      </Typography>
-                    </div>
+                  <div>
+                    <Typography type="body" weight="semibold">
+                      Online
+                    </Typography>
+                    <Typography type="caption2" className="text-gray-500">
+                      Ikuti acara via Zoom/Google Meet
+                    </Typography>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <Button variant="gray_outline" onClick={() => setShowHybridModal(false)}>
-                  Batal
-                </Button>
-                <Button
-                  variant="primary"
-                  disabled={!attendanceType}
-                  onClick={() => {
-                    if (!attendanceType) return;
-                    setShowHybridModal(false);
-                    confirmRegis();
-                  }}
-                >
-                  Konfirmasi Pendaftaran
-                </Button>
+              <div
+                onClick={() => setAttendanceType("offline")}
+                className={`flex items-center gap-4 border rounded-xl p-4 cursor-pointer transition-all ${
+                  attendanceType === "offline"
+                    ? "border-green-500 bg-green-50 ring-2 ring-green-200"
+                    : "border-gray-200 hover:border-green-400/50"
+                }`}
+              >
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${
+                    attendanceType === "offline" ? "border-green-500 bg-green-500" : "border-gray-400"
+                }`}>
+                  {attendanceType === "offline" && (
+                    <div className="w-2.5 h-2.5 bg-white rounded-full" />
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <MapPin className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <Typography type="body" weight="semibold">
+                      Offline
+                    </Typography>
+                    <Typography type="caption2" className="text-gray-500">
+                      Hadiri acara secara langsung di lokasi
+                    </Typography>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <div className="flex justify-end gap-3">
+              <Button variant="gray_outline" onClick={() => setShowHybridModal(false)}>
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                disabled={!attendanceType}
+                onClick={() => {
+                  if (!attendanceType) return;
+                  setShowHybridModal(false);
+                  confirmRegis();
+                }}
+              >
+                Konfirmasi Pendaftaran
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
