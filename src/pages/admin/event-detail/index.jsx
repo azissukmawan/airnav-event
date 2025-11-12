@@ -14,7 +14,6 @@ import FinishConfirmModal from "../../../components/pop-up/FinishConfirmModal";
 import ChangeSesiConfirmModal from "../../../components/pop-up/ChangeSesiConfirmModal";
 import { QRFullscreen } from "./fullscreen";
 import { QRCodeCanvas } from "qrcode.react";
-import { Typography } from "../../../components/typography";
 import { ChevronDown, Maximize2, Download } from "lucide-react";
 
 const API_BASE_URL =
