@@ -116,7 +116,7 @@ export default function EventWheel() {
 
         // Filter peserta yang hadir
         const hadirOnly = participantsList.filter((p) => {
-          return p.status === "Hadir" || p.status === "hadir";
+          return p.status === "Hadir" || p.status === "hadir" && p.doorprize !== true;
         });
 
         setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
@@ -303,7 +303,7 @@ export default function EventWheel() {
                         outerBorderWidth={[6]}
                         radiusLineColor={["#ffffff"]}
                         radiusLineWidth={[1]}
-                        fontSize={13}
+                        fontSize={9}
                         textColors={["#ffffff"]}
                         backgroundColors={[
                           "#F22B35",
@@ -415,7 +415,7 @@ export default function EventWheel() {
             </Typography>
             <div className="mt-4 px-6 py-3 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
               <Typography type="body" className="text-yellow-800 font-semibold">
-                🏆 Pemenang Doorprize 🏆
+                Pemenang Doorprize
               </Typography>
             </div>
           </div>
