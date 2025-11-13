@@ -170,7 +170,7 @@ export default function EventWheel() {
 
         setWinners(
           winnersData.map((w) => ({
-            id: w.user?.id || w.participant_id || w.id, // pastikan ambil ID peserta
+            id: w.user?.id || w.participant_id || w.id,
             name: w.user?.name || w.name || w.nama,
           }))
         );
