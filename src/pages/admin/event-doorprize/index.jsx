@@ -263,7 +263,7 @@ export default function EventWheel() {
           </div>
           <p className="text-gray-500 mt-2">{eventTitle}</p>
           
-          {/* ✅ KETERANGAN SESI DAN HARI */}
+          {/* KETERANGAN SESI DAN HARI */}
           {currentHari && currentSesi && (
             <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg w-fit">
               
