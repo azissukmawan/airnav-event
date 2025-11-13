@@ -110,12 +110,12 @@ const CardList = ({
           label="Jumlah Pendaftar"
           color="border-blue-500"
         />
-        <CardStatus
+        {/* <CardStatus
           icon={<UserCheck className="text-yellow-500" />}
           value={stats.jumlah_kehadiran}
           label="Jumlah Kehadiran"
           color="border-yellow-500"
-        />
+        /> */}
 
         {/* tampilkan online/offline hanya jika hybrid */}
         {eventType === "hybrid" && (
