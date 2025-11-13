@@ -144,30 +144,30 @@ const TableParticipants = ({
   const displayedParticipants = sortedParticipants.slice(startIndex, endIndex);
 
   return (
-    <div className="bg-white rounded-3xl shadow-md p-4 md:p-6 border border-gray-200 space-y-4">
+    <div className="bg-white rounded-lg shadow-md p-4 md:p-6 border border-gray-200 space-y-4">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse table-fixed">
           <thead>
-            <tr className="bg-blue-100 text-blue-900 text-[16px] font-semibold">
-              <th className="py-4 px-4 text-center rounded-tl-2xl w-[60px]">
+            <tr className="bg-blue-100 text-blue-900 text-[15px] font-semibold">
+              <th className="px-5 py-3 text-center rounded-tl-lg w-[40px]">
                 No
               </th>
               <th
-                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[180px]"
+                className="px-5 py-3 text-left cursor-pointer hover:text-blue-700 w-[200px]"
                 onClick={() => handleSort("nama")}
               >
                 <div className="flex items-center gap-2">
                   Nama Peserta <ArrowUpDown size={16} />
                 </div>
               </th>
-              <th className="py-4 px-4 text-left w-[140px]">No Whatsapp</th>
-              <th className="py-4 px-4 text-left w-[170px]">Email</th>
-              <th className="py-4 px-4 text-left w-[60px]">Foto</th>
+              <th className="px-5 py-3 text-left w-[120px]">No Whatsapp</th>
+              <th className="px-5 py-3 text-left w-[170px]">Email</th>
+              <th className="px-5 py-3 text-left w-[60px]">Foto</th>
               {showTypeColumn && (
-                <th className="py-4 px-4 text-left w-[60px]">Tipe</th>
+                <th className="px-5 py-3 text-left w-[60px]">Tipe</th>
               )}
               <th
-                className="py-4 px-4 text-left cursor-pointer hover:text-blue-700 w-[120px]"
+                className="px-5 py-3 text-left cursor-pointer hover:text-blue-700 w-[120px]"
                 onClick={() => handleSort("status")}
               >
                 <div className="flex items-center gap-1">
@@ -176,14 +176,14 @@ const TableParticipants = ({
               </th>
               <th
                 className={`py-3 px-3 text-left w-[90px] mr-5 ${
-                  !doorprizeActive ? "rounded-tr-2xl" : ""
+                  !doorprizeActive ? "rounded-tr-lg" : ""
                 }`}
               >
                 Sertifikat
               </th>
 
               {doorprizeActive && (
-                <th className="py-4 px-4 text-center rounded-tr-2xl w-[100px]">
+                <th className="px-5 py-3 text-center rounded-tr-lg w-[100px]">
                   Doorprize
                 </th>
               )}
@@ -203,33 +203,33 @@ const TableParticipants = ({
                 return (
                   <tr
                     key={p.id}
-                    className="hover:bg-blue-50 border-b border-gray-200 transition-colors"
+                    className="hover:bg-blue-50 border-b border-gray-200 transition-colors text-sm"
                   >
-                    <td className="py-4 px-4 text-center text-gray-700 font-medium w-[60px]">
+                    <td className="px-5 py-3 text-center text-gray-700 font-medium w-[60px]">
                       {startIndex + i + 1}
                     </td>
                     {/* === NAMA === */}
                     <td
                       onClick={() => onPreview(p)}
                       title={p.nama}
-                      className="py-4 px-4 cursor-pointer text-gray-800 truncate w-[180px]"
+                      className="px-5 py-3 cursor-pointer text-gray-800 truncate w-[180px]"
                     >
                       {p.nama}
                     </td>
                     {/* === NO WHATSAPP === */}
-                    <td className="py-4 px-4 text-gray-700 w-[150px] truncate">
+                    <td className="px-5 py-3 text-gray-700 w-[150px] truncate">
                       {p.no_whatsapp}
                     </td>
                     {/* === EMAIL === */}
                     <td
                       title={p.email}
-                      className="py-4 px-4 text-gray-700 w-[200px] truncate"
+                      className="px-5 py-3 text-gray-700 w-[200px] truncate"
                     >
                       {p.email}
                     </td>
                     {/* === FOTO PROFILE === */}
-                    <td className="py-4 px-4 w-[90px]">
-                      <div className="w-11 h-11 rounded-xl overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
+                    <td className="px-5 py-3 w-[90px]">
+                      <div className="w-11 h-11 rounded-lg overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
                         {p.photo_profile ? (
                           <img
                             src={p.photo_profile}
@@ -245,14 +245,14 @@ const TableParticipants = ({
                     </td>
                     {/* === TIPE ACARA === */}
                     {showTypeColumn && (
-                      <td className="py-4 px-4 text-gray-700 w-[100px]">
+                      <td className="px-5 py-3 text-gray-700 w-[100px]">
                         {p.type || "Offline"}
                       </td>
                     )}
 
-                    <td className="py-4 px-4 text-left w-[200px] relative">
+                    <td className="px-5 py-3 text-left w-[200px] relative">
                       {p.status === "Hadir" ? (
-                        <span className="px-3 py-1 rounded-xl font-bold text-xs whitespace-nowrap bg-green-100 text-green-700">
+                        <span className="px-3 py-1 rounded-lg font-bold text-xs whitespace-nowrap bg-green-100 text-green-700">
                           Hadir
                         </span>
                       ) : updatingId === p.id ? (
@@ -266,7 +266,7 @@ const TableParticipants = ({
                             onChange={(e) =>
                               handleUpdateStatus(p, e.target.value)
                             }
-                            className="px-3 py-1 rounded-xl font-bold text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 focus:outline-none appearance-none pr-6"
+                            className="px-3 py-1 rounded-lg font-bold text-xs bg-yellow-50 text-yellow-700 border border-yellow-200 focus:outline-none appearance-none pr-6"
                           >
                             <option value="Tidak Hadir">Belum Hadir</option>
                             <option value="Hadir">Hadir</option>
@@ -289,7 +289,7 @@ const TableParticipants = ({
                       )}
                     </td>
                     {/* === SERTIFIKAT === */}
-                    <td className="py-4 px-4 text-left w-[120px]">
+                    <td className="px-5 py-3 text-left w-[120px]">
                       {bisaDownload ? (
                         <Button
                           variant="secondary"
@@ -312,7 +312,7 @@ const TableParticipants = ({
                     </td>
                     {/* === DOORPRIZE === */}
                     {doorprizeActive && (
-                      <td className="py-4 px-4 mr-1 text-center w-[100px]">
+                      <td className="px-5 py-3 mr-1 text-center w-[100px]">
                         {isWinner ? (
                           <Award
                             size={20}
