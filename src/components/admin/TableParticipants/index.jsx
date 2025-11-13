@@ -245,7 +245,7 @@ const TableParticipants = ({
                     </td>
                     {/* === TIPE ACARA === */}
                     {showTypeColumn && (
-                      <td className="px-5 py-3 text-gray-700 w-[100px]">
+                      <td className="px-5 py-3 text-gray-700 w-[100px] capitalize">
                         {p.type || "Offline"}
                       </td>
                     )}
