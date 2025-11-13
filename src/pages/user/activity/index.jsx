@@ -68,119 +68,161 @@ const Activity = () => {
     fetchProfile();
   }, []);
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  const [isPolling, setIsPolling] = useState(false);
 
-        const rawData = response.data.data.data;
+  const fetchActivities = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const groupedData = rawData.reduce((acc, item) => {
-          const acaraId = item.modul_acara_id;
-          if (!acc[acaraId]) {
-            acc[acaraId] = [];
-          }
-          acc[acaraId].push(item);
-          return acc;
-        }, {});
+      const rawData = response.data.data.data;
+      
+      const groupedData = rawData.reduce((acc, item) => {
+        const acaraId = item.modul_acara_id;
+        if (!acc[acaraId]) {
+          acc[acaraId] = [];
+        }
+        acc[acaraId].push(item);
+        return acc;
+      }, {});
 
-        const fetchedData = Object.values(groupedData).map((group) => {
-          const acara = group[0].modul_acara;
+      const fetchedData = Object.values(groupedData).map((group) => {
+        const acara = group[0].modul_acara;
 
-          const mulai = new Date(acara.mdl_acara_mulai);
-          const selesai = new Date(acara.mdl_acara_selesai);
-          const sekarang = new Date();
+        const mulai = new Date(acara.mdl_acara_mulai);
+        const selesai = new Date(acara.mdl_acara_selesai);
+        const sekarang = new Date();
 
-          // Hitung jumlah hari berdasarkan tanggal
-          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
-          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
-          const diffTime = selesaiDate.getTime() - mulaiDate.getTime();
-          const totalHari = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const presensiPerHari = acara.presensi_per_hari || {};
+        const totalHari = Object.keys(presensiPerHari).filter(key => key.startsWith("Hari-")).length;
 
-          let status = "";
-          if (sekarang < mulai) status = "Belum Dimulai";
-          else if (sekarang >= mulai && sekarang <= selesai)
-            status = "Berlangsung";
-          else status = "Acara Selesai";
+        let status = "";
+        if (sekarang < mulai) status = "Belum Dimulai";
+        else if (sekarang >= mulai && sekarang <= selesai)
+          status = "Berlangsung";
+        else status = "Acara Selesai";
 
-          const presensiPerHari = acara.presensi_per_hari || {};
+        const presensiList = Array.from({length: totalHari}, (_, index) => {
+          const hariKe = index + 1;
+          const hariKey = `Hari-${hariKe}`;
+          const presensiHari = presensiPerHari[hariKey];
 
-          // Mapping presensi per hari dengan key yang benar
-          const presensiList = Array.from({length: totalHari}, (_, index) => {
-            const hariKe = index + 1;
-            const hariKey = `Hari-${hariKe}`;
-            const presensiHari = presensiPerHari[hariKey];
+          let sudahPresensi = false;
+          let tanggalSesi = null;
+          let detailSesi = [];
+          let totalSesi = 0;
+          let totalHadir = 0;
+          let statusPresensi = "belum";
 
-            let sudahPresensi = false;
-            let tanggalSesi = null;
-            let detailSesi = [];
+          if (presensiHari) {
+            const sesiArray = Object.entries(presensiHari).map(([key, sesi]) => ({
+              nama: key,
+              ...sesi
+            }));
 
-            if (presensiHari) {
-              const sesiArray = Object.entries(presensiHari).map(([key, sesi]) => ({
-                nama: key,
-                ...sesi
-              }));
-              
-              // Cek apakah ada minimal 1 sesi hadir
-              sudahPresensi = sesiArray.some(sesi => sesi.status === "Hadir");
+            totalSesi = sesiArray.length;
+            totalHadir = sesiArray.filter(sesi => sesi.status === "Hadir").length;
+            
+            sudahPresensi = totalHadir > 0;
 
-              // Ambil tanggal_sesi
-              if (sesiArray.length > 0) {
-                tanggalSesi = sesiArray[0].tanggal_sesi;
-              }
-
-              detailSesi = sesiArray;
+            if (sesiArray.length > 0) {
+              tanggalSesi = sesiArray[0].tanggal_sesi;
             }
 
-            return {
-              hari: hariKe,
-              tanggal: tanggalSesi,
-              sudahPresensi: sudahPresensi,
-              presensiHari: presensiHari || null,
-              detailSesi: detailSesi,
-            };
-          });
+            detailSesi = sesiArray;
 
-          // Cek apakah semua hari sudah presensi
-          const totalHadir = presensiList.filter(p => p.sudahPresensi).length;
-          const semuaHadirAtauSatuHari = totalHari <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === totalHari;
+            if (totalHadir === totalSesi) {
+              statusPresensi = "penuh";
+            } else if (totalHadir > 0) {
+              statusPresensi = "sebagian";
+            } else {
+              statusPresensi = "tidak-hadir";
+            }
+          }
 
-          const sudahLewat = sekarang > selesai;
-          const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
-          const getDoorprize = group[0].has_doorprize == 1;
+          const hariSudahLewat = tanggalSesi ? (new Date(tanggalSesi) < sekarang) : false;
 
           return {
-            id: acara.id,
-            title: acara.mdl_nama,
-            start_date: acara.mdl_acara_mulai,
-            end_date: acara.mdl_acara_selesai,
-            whatsapp: acara.mdl_link_wa,
-            status,
-            jumlahHari: totalHari,
-            presensiList,
-            totalHadir,
-            sudahPresensi: semuaHadirAtauSatuHari,
-            getDoorprize,
-            isDownloaded: bisaDownload,
+            hari: hariKe,
+            tanggal: tanggalSesi,
+            sudahPresensi: sudahPresensi,
+            presensiHari: presensiHari || null,
+            detailSesi: detailSesi,
+            totalSesi: totalSesi,
+            totalHadir: totalHadir,
+            statusPresensi: statusPresensi,
+            hariSudahLewat: hariSudahLewat,
           };
         });
 
-        setActivities(fetchedData);
-      } catch (error) {
-        console.error("Gagal memuat aktivitas:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+        const totalHadir = presensiList.filter(p => p.sudahPresensi).length;
+        const semuaHadirAtauSatuHari = totalHari <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === totalHari;
 
+        const sudahLewat = sekarang > selesai;
+        const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
+        const getDoorprize = group[0].has_doorprize == 1;
+
+        return {
+          id: acara.id,
+          title: acara.mdl_nama,
+          start_date: acara.mdl_acara_mulai,
+          end_date: acara.mdl_acara_selesai,
+          whatsapp: acara.mdl_link_wa,
+          status,
+          jumlahHari: totalHari,
+          presensiList,
+          totalHadir,
+          sudahPresensi: semuaHadirAtauSatuHari,
+          getDoorprize,
+          isDownloaded: bisaDownload,
+        };
+      });
+
+      setActivities(fetchedData);
+    } catch (error) {
+      console.error("Gagal fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchActivities();
-  }, []);
 
+    const pollInterval = setInterval(() => {
+      if (isPolling) {
+        fetchActivities();
+      }
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [isPolling]);
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedDayDetail(null);
+    setIsPolling(false);
+  };
+
+  const handleScanSuccess = async (qrData) => {
+    try {
+      await fetchActivities();
+      
+      setTimeout(() => {
+        setScannerOpen(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Gagal refresh data setelah scan:", error);
+      setTimeout(() => {
+        setScannerOpen(false);
+      }, 2000);
+    }
+  };
+  
   const filteredActivities = activities.filter((activity) =>
     activity.title.toLowerCase().includes(query.toLowerCase())
   );
@@ -189,22 +231,9 @@ const Activity = () => {
     setScannerOpen(true);
   };
 
-  const handleScanSuccess = (qrData) => {
-    const activityId = qrData;
-
-    setActivities((prev) =>
-      prev.map((item) =>
-        item.id === activityId ? { ...item, sudahPresensi: true } : item
-      )
-    );
-
-    setTimeout(() => {
-      setScannerOpen(false);
-    }, 2000);
-  };
-
-  // Handler untuk membuka detail sesi
   const handleDayClick = (presensi, activityTitle) => {
+    const hariSudahTiba = presensi.tanggal ? (new Date(presensi.tanggal) <= new Date()) : false;
+    if (!hariSudahTiba) return;
     if (presensi.detailSesi && presensi.detailSesi.length > 0) {
       setSelectedDayDetail({
         hari: presensi.hari,
@@ -213,6 +242,7 @@ const Activity = () => {
         activityTitle: activityTitle
       });
       setShowDetailModal(true);
+      setIsPolling(true);
     }
   };
 
@@ -389,58 +419,77 @@ const Activity = () => {
                 <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {activity.jumlahHari <= 1 ? (
                     // Acara 1 hari atau kurang
-                    <div 
-                      className={`p-4 rounded-xl border-2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity ${
-                        activity.sudahPresensi 
-                          ? 'bg-success-10 border-success-70' 
-                          : 'bg-gray-50 border-gray-300'
-                      }`}
-                      onClick={() => handleDayClick(activity.presensiList[0], activity.title)}
-                    >
-                      <div className="flex items-center gap-2">
-                        {activity.sudahPresensi ? (
-                          <CalendarCheck size={20} className="text-success-70" />
-                        ) : (
-                          <Clock size={20} className="text-gray-400" />
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold">Hari 1</p>
+                    (() => {
+                      const presensi = activity.presensiList[0];
+                      let bgClass = 'bg-gray-50 border-gray-300';
+                      let iconComponent = <Clock size={20} className="text-gray-400" />;
+
+                      if (presensi.statusPresensi === "penuh") {
+                        bgClass = 'bg-success-10 border-success-70';
+                        iconComponent = <CalendarCheck size={20} className="text-success-70" />;
+                      } else if (presensi.statusPresensi === "sebagian" && presensi.hariSudahLewat) {
+                        bgClass = 'bg-warning-10 border-warning-70';
+                        iconComponent = <CalendarCheck size={20} className="text-warning-70" />;
+                      } else if (presensi.statusPresensi === "tidak-hadir" && presensi.hariSudahLewat) {
+                        bgClass = 'bg-error-10 border-error-70';
+                        iconComponent = <X size={20} className="text-error-70" />;
+                      }
+
+                      return (
+                        <div 
+                          className={`p-4 rounded-xl border-2 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity ${bgClass}`}
+                          onClick={() => handleDayClick(presensi, activity.title)}
+                        >
+                          <div className="flex items-center gap-2">
+                            {iconComponent}
+                            <div>
+                              <p className="text-sm font-semibold">Hari 1</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })()
                   ) : (
                     // Acara lebih dari 1 hari
-                    activity.presensiList.map((presensi) => (
-                      <div 
-                        key={presensi.hari}
-                        className={`p-4 rounded-xl border-2 flex items-center justify-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity ${
-                          presensi.sudahPresensi 
-                            ? 'bg-success-10 border-success-70' 
-                            : 'bg-gray-50 border-gray-300'
-                        }`}
-                        onClick={() => handleDayClick(presensi, activity.title)}
-                      >
-                        <div className="flex items-center">
-                          {presensi.sudahPresensi ? (
-                            <CalendarCheck size={20} className="text-success-70" />
-                          ) : (
-                            <Clock size={20} className="text-gray-500" />
-                          )}
+                    activity.presensiList.map((presensi) => {
+                      let bgClass = 'bg-gray-50 border-gray-300';
+                      let iconComponent = <Clock size={20} className="text-gray-500" />;
+
+                      if (presensi.statusPresensi === "penuh") {
+                        bgClass = 'bg-success-10 border-success-70';
+                        iconComponent = <CalendarCheck size={20} className="text-success-70" />;
+                      } else if (presensi.statusPresensi === "sebagian" && presensi.hariSudahLewat) {
+                        bgClass = 'bg-warning-10 border-warning-70';
+                        iconComponent = <CalendarCheck size={20} className="text-warning-70" />;
+                      } else if (presensi.statusPresensi === "tidak-hadir" && presensi.hariSudahLewat) {
+                        bgClass = 'bg-error-10 border-error-70';
+                        iconComponent = <X size={20} className="text-error-70" />;
+                      }
+
+                      return (
+                        <div 
+                          key={presensi.hari}
+                          className={`p-4 rounded-xl border-2 flex items-center justify-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity ${bgClass}`}
+                          onClick={() => handleDayClick(presensi, activity.title)}
+                        >
+                          <div className="flex items-center">
+                            {iconComponent}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold">Hari {presensi.hari}</p>
+                            {
+                              presensi.tanggal && (
+                                <p className="text-xs text-gray-600">
+                                  {new Date(presensi.tanggal).toLocaleDateString("id-ID", {
+                                    day: "numeric",
+                                    month: "long",
+                                  })}
+                                </p>
+                              )}
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold">Hari {presensi.hari}</p>
-                          {
-                            presensi.tanggal && (
-                              <p className="text-xs text-gray-600">
-                                {new Date(presensi.tanggal).toLocaleDateString("id-ID", {
-                                  day: "numeric",
-                                  month: "long",
-                                })}
-                              </p>
-                            )}
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
@@ -466,24 +515,14 @@ const Activity = () => {
                               }
                             );
 
-                            // Ambil URL file dari response
                             const fileUrl = response.data?.data;
 
                             if (fileUrl) {
-                              // Langsung buka link di tab baru (atau bisa paksa download)
-                              const link = document.createElement("a");
-                              link.href = fileUrl;
-                              link.setAttribute(
-                                "download",
-                                `Sertifikat-${activity.title}.pdf`
-                              );
-                              document.body.appendChild(link);
-                              link.click();
-                              link.remove();
+                              window.open(fileUrl, "_blank");
 
                               setAlert({
                                 message:
-                                  "Sertifikat berhasil digenerate dan diunduh",
+                                  "Sertifikat berhasil digenerate dan dibuka di tab baru",
                                 type: "success",
                               });
                             } else {
@@ -492,11 +531,11 @@ const Activity = () => {
                               );
                             }
                           } catch (error) {
-                            console.error("Gagal download sertifikat:", error);
+                            console.error("Gagal membuka sertifikat:", error);
                             setAlert({
                               message:
                                 error.response?.data?.message ||
-                                "Terjadi kesalahan saat mengunduh sertifikat",
+                                "Terjadi kesalahan saat membuka sertifikat",
                               type: "error",
                             });
                           }
@@ -513,8 +552,7 @@ const Activity = () => {
                       >
                         Sertifikat
                       </Button>
-                    )
-                  )}
+                  ))}
                   {/* Whatsapp Group */}
                   <Button
                     variant="green1"
@@ -557,7 +595,7 @@ const Activity = () => {
                 </p>
               </div>
               <button
-                onClick={() => setShowDetailModal(false)}
+                onClick={handleCloseDetailModal}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X size={24} />

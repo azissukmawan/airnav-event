@@ -145,14 +145,22 @@ const AdminDetail = () => {
         setParticipantsData(data);
 
         // FIXED: Validasi data sebelum menggunakan Object.keys
-        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        if (data && typeof data === "object" && Object.keys(data).length > 0) {
           const firstHari = Object.keys(data)[0];
-          if (firstHari && data[firstHari] && typeof data[firstHari] === 'object') {
+          if (
+            firstHari &&
+            data[firstHari] &&
+            typeof data[firstHari] === "object"
+          ) {
             const firstSesi = Object.keys(data[firstHari])[0];
             if (firstSesi) {
               setFilterHari(firstHari);
               setFilterSesi(firstSesi);
-              setFilteredParticipants(Array.isArray(data[firstHari][firstSesi]) ? data[firstHari][firstSesi] : []);
+              setFilteredParticipants(
+                Array.isArray(data[firstHari][firstSesi])
+                  ? data[firstHari][firstSesi]
+                  : []
+              );
             }
           }
         } else {
@@ -281,18 +289,48 @@ const AdminDetail = () => {
           <div className="flex items-start gap-3">
             <div className={style.icon}>
               {notificationConfig.type === "success" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
               {notificationConfig.type === "error" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
               {notificationConfig.type === "warning" && (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               )}
             </div>
@@ -308,8 +346,18 @@ const AdminDetail = () => {
               onClick={() => setShowNotification(false)}
               className={`${style.text} hover:opacity-70`}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -318,10 +366,60 @@ const AdminDetail = () => {
     );
   };
 
-  const handleGenerateSertif = (data) => {
-    console.log("Data sertifikat dikirim:", data);
-    showPopup("success", "Berhasil", "Sertifikat berhasil digenerate");
-    setShowCreateSertif(false);
+  const handleGenerateSertif = async ({ noSkMulai, formatPenomoran, file }) => {
+    if (!id) return showPopup("error", "Gagal", "ID acara tidak ditemukan");
+
+    if (!file)
+      return showPopup(
+        "error",
+        "Gagal",
+        "File template sertifikat belum dipilih"
+      );
+
+    // ✅ Validasi ekstensi dan ukuran file
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      return showPopup(
+        "error",
+        "Gagal",
+        "Format file harus JPG, JPEG, atau PNG"
+      );
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      return showPopup("error", "Gagal", "Ukuran file maksimal 2MB");
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("nomor_sk", noSkMulai);
+      formData.append("format_nomor", formatPenomoran);
+      formData.append("template_sertifikat", file);
+      formData.append(
+        "tanggal_pengesahan",
+        new Date().toISOString().split("T")[0]
+      );
+
+      await axios.post(
+        `${API_BASE_URL}/admin/events/${id}/generate-nomor-sertifikat`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            Accept: "application/json",
+          },
+        }
+      );
+
+      showPopup("success", "Berhasil", "Nomor sertifikat berhasil digenerate");
+      setShowCreateSertif(false);
+    } catch (error) {
+      console.log("Response error:", error.response?.data);
+      const message =
+        error.response?.data?.message ||
+        "Gagal generate sertifikat. Silakan coba lagi.";
+      showPopup("error", "Gagal", message);
+    }
   };
 
   // Fetch event data
@@ -441,7 +539,7 @@ const AdminDetail = () => {
         }
       }
     };
-    
+
     if (id && token) {
       fetchWinners();
     }
@@ -450,17 +548,22 @@ const AdminDetail = () => {
   // FIXED: Sorted participants dengan validasi winners
   const sortedParticipants = useMemo(() => {
     if (!Array.isArray(filteredParticipants)) return [];
-    
+
     return [...filteredParticipants].sort((a, b) => {
       if (eventData?.doorprize_active !== 1) return 0;
 
-      const aWinner = Array.isArray(winners) && winners.some(
-        (w) => w.name?.trim().toLowerCase() === a.nama?.trim().toLowerCase()
-      );
-      const bWinner = Array.isArray(winners) && winners.some(
-        (w) => w.name?.trim().toLowerCase() === b.nama?.trim().toLowerCase()
-      );
-      
+      // FIXED: Validasi winners adalah array sebelum menggunakan some
+      const aWinner =
+        Array.isArray(winners) &&
+        winners.some(
+          (w) => w.name?.trim().toLowerCase() === a.nama?.trim().toLowerCase()
+        );
+      const bWinner =
+        Array.isArray(winners) &&
+        winners.some(
+          (w) => w.name?.trim().toLowerCase() === b.nama?.trim().toLowerCase()
+        );
+
       return (bWinner ? 1 : 0) - (aWinner ? 1 : 0);
     });
   }, [filteredParticipants, winners, eventData]);
@@ -552,7 +655,9 @@ const AdminDetail = () => {
                     <p>
                       <span className="font-medium">Tanggal:</span>{" "}
                       {eventData.mdl_acara_mulai
-                        ? new Date(eventData.mdl_acara_mulai).toLocaleDateString("id-ID")
+                        ? new Date(
+                            eventData.mdl_acara_mulai
+                          ).toLocaleDateString("id-ID")
                         : "-"}
                     </p>
                     <p>
@@ -576,7 +681,7 @@ const AdminDetail = () => {
                       })()}
                     </p>
                   </div>
-                  
+
                   <div className="flex items-center gap-3 mt-5">
                     <Link to={`/admin/event/detail/${id}`}>
                       <button className="w-45 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
@@ -597,7 +702,7 @@ const AdminDetail = () => {
                     </button>
                   </div>
                 </div>
-                
+
                 {/* Garis Pembatas */}
                 <div className="hidden lg:flex items-center justify-center px-6">
                   <div className="ml-10 w-[2px] h-[80%] bg-gray-300 rounded-full"></div>
@@ -700,7 +805,10 @@ const AdminDetail = () => {
                                 className="w-full border-2 border-primary rounded-lg px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 appearance-none bg-white text-gray-700"
                               >
                                 <option value="">Pilih Sesi</option>
-                                {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                                {Array.from(
+                                  { length: 10 },
+                                  (_, i) => i + 1
+                                ).map((num) => (
                                   <option key={num} value={num.toString()}>
                                     Sesi {num}
                                   </option>
@@ -795,6 +903,7 @@ const AdminDetail = () => {
           isOpen={showCreateSertif}
           onClose={() => setShowCreateSertif(false)}
           onGenerate={handleGenerateSertif}
+          eventStatus={eventData?.mdl_status}
         />
         <ArchiveConfirmModal
           isOpen={showArchiveConfirm}

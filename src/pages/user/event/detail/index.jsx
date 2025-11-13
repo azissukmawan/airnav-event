@@ -40,36 +40,154 @@ const DetailEvent = () => {
 
   const event = events.find((e) => e.id === parseInt(id));
 
+  // useEffect(() => {
+  //   const fetchRegisteredEvents = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+
+  //       if (!token) {
+  //         console.error("Token tidak ditemukan");
+  //         return;
+  //       }
+
+  //       const response = await fetch(`${API_BASE_URL}/me/pendaftaran`, {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //           Accept: "application/json",
+  //         },
+  //       });
+
+  //       const result = await response.json();
+
+  //       if (result.success) {
+  //         setRegisteredEvents(result.data.data || []);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching registered events:", error);
+  //     } finally {
+  //       setLoadingRegistered(false);
+  //     }
+  //   };
+
+  //   fetchRegisteredEvents();
+  // }, []);
+
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
         const token = localStorage.getItem("token");
-
-        if (!token) {
-          console.error("Token tidak ditemukan");
-          return;
-        }
-
-        const response = await fetch(`${API_BASE_URL}/me/pendaftaran`, {
+        const response = await axios.get(`${API_BASE_URL}/me/pendaftaran`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            Accept: "application/json",
           },
         });
 
-        const result = await response.json();
+        const rawData = response.data.data.data;
 
-        if (result.success) {
-          setRegisteredEvents(result.data.data || []);
-        }
+        const groupedData = rawData.reduce((acc, item) => {
+          const acaraId = item.modul_acara_id;
+          if (!acc[acaraId]) acc[acaraId] = [];
+          acc[acaraId].push(item);
+          return acc;
+        }, {});
+
+        const fetchedData = Object.values(groupedData).map((group) => {
+          const acara = group[0].modul_acara;
+
+          const mulai = new Date(acara.mdl_acara_mulai);
+          const selesai = new Date(acara.mdl_acara_selesai);
+          const sekarang = new Date();
+
+          const mulaiDate = new Date(mulai.getFullYear(), mulai.getMonth(), mulai.getDate());
+          const selesaiDate = new Date(selesai.getFullYear(), selesai.getMonth(), selesai.getDate());
+          const diffTime = selesaiDate.getTime() - mulaiDate.getTime();
+          const totalHari = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+          let status = "";
+          if (sekarang < mulai) status = "Belum Dimulai";
+          else if (sekarang >= mulai && sekarang <= selesai) status = "Berlangsung";
+          else status = "Acara Selesai";
+
+          const presensiPerHari = acara.presensi_per_hari || {};
+
+          const presensiList = Array.from({ length: totalHari }, (_, index) => {
+            const hariKe = index + 1;
+            const hariKey = `Hari-${hariKe}`;
+            const presensiHari = presensiPerHari[hariKey];
+
+            let sudahPresensi = false;
+            let tanggalSesi = null;
+            let detailSesi = [];
+
+            if (presensiHari) {
+              const sesiArray = Object.entries(presensiHari).map(([key, sesi]) => ({
+                nama: key,
+                ...sesi,
+              }));
+              sudahPresensi = sesiArray.some((sesi) => sesi.status === "Hadir");
+              if (sesiArray.length > 0) tanggalSesi = sesiArray[0].tanggal_sesi;
+              detailSesi = sesiArray;
+            }
+
+            return {
+              hari: hariKe,
+              tanggal: tanggalSesi,
+              sudahPresensi,
+              presensiHari: presensiHari || null,
+              detailSesi,
+            };
+          });
+
+          const totalHadir = presensiList.filter((p) => p.sudahPresensi).length;
+          const semuaHadirAtauSatuHari =
+            totalHari <= 1 ? presensiList[0]?.sudahPresensi : totalHadir === totalHari;
+
+          const sudahLewat = sekarang > selesai;
+          const bisaDownload = semuaHadirAtauSatuHari && sudahLewat;
+          const getDoorprize = group[0].has_doorprize == 1;
+
+          return {
+            id: acara.id,
+            title: acara.mdl_nama,
+            start_date: acara.mdl_acara_mulai,
+            end_date: acara.mdl_acara_selesai,
+            whatsapp: acara.mdl_link_wa,
+            status,
+            jumlahHari: totalHari,
+            presensiList,
+            totalHadir,
+            sudahPresensi: semuaHadirAtauSatuHari,
+            getDoorprize,
+            isDownloaded: bisaDownload,
+          };
+        });
+
+        setActivities(fetchedData);
       } catch (error) {
-        console.error("Error fetching registered events:", error);
+        console.error("Gagal memuat aktivitas:", error);
       } finally {
-        setLoadingRegistered(false);
+        setLoading(false);
       }
     };
 
     fetchRegisteredEvents();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchRegisteredEvents();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const handleFocus = () => {
+      fetchRegisteredEvents();
+    };
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
   }, []);
 
   if (loading || loadingRegistered) {
