@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     ongoing: 0,
     closed: 0,
   });
-
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
 
   const handleOpenAddEvent = () => setIsAddEventOpen(true);
@@ -39,6 +39,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setIsLoading(true);
       try {
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -63,6 +64,8 @@ export default function AdminDashboard() {
         }
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsLoading(false); // <-- 3. Set loading jadi false (baik sukses maupun error)
       }
     };
 
@@ -85,9 +88,7 @@ export default function AdminDashboard() {
               >
                 Selamat Datang Admin !
               </Typography>
-              <h4 className="text-sm text-gray-500">
-                System Administrator
-              </h4>
+              <h4 className="text-sm text-gray-500">System Administrator</h4>
             </div>
           </div>
         </header>
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<Calendar />}
-              value={stats.coming_soon}
+              value={isLoading ? "..." : stats.coming_soon}
               title="Acara Segera Hadir"
               iconBgColor="bg-blue-100"
               iconColor="text-blue-600"
@@ -117,7 +118,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<ChevronsRight />}
-              value={stats.ongoing}
+              value={isLoading ? "..." : stats.ongoing} // <-- 4. Tampilkan placeholder
               title="Acara Sedang Berlangsung"
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
@@ -126,7 +127,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<XCircle />}
-              value={stats.closed}
+              value={isLoading ? "..." : stats.closed} // <-- 4. Tampilkan placeholder
               title="Acara Berakhir"
               iconBgColor="bg-red-100"
               iconColor="text-red-600"

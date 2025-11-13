@@ -2,13 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 import { Typography } from "../../../components/typography";
+import { Button } from "../../../components/button";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
-import {
-  Pencil,
-  MapPin,
-  FilePlus,
-} from "lucide-react";
+import { FilePlus } from "lucide-react";
 
 const InfoAcara = () => {
   const { id } = useParams();
@@ -34,20 +31,20 @@ const InfoAcara = () => {
   });
 
   const [isEditable, setIsEditable] = useState({
-  all: false, // semua bisa diedit
-  onlyFiles: false, // hanya file
-  none: false, // tidak bisa edit
+    all: false, // semua bisa diedit
+    onlyFiles: false, // hanya file
+    none: false, // tidak bisa edit
   });
 
   useEffect(() => {
-  if (formData.mdl_status === "draft") {
-    setIsEditable({ all: true, onlyFiles: false, none: false });
-  } else if (formData.mdl_status === "active") {
-    setIsEditable({ all: false, onlyFiles: true, none: false });
-  } else {
-    setIsEditable({ all: false, onlyFiles: false, none: true });
-  }
-}, [formData.mdl_status]);
+    if (formData?.mdl_status === "draft") {
+      setIsEditable({ all: true, onlyFiles: false, none: false });
+    } else if (formData?.mdl_status === "active") {
+      setIsEditable({ all: false, onlyFiles: true, none: false });
+    } else {
+      setIsEditable({ all: false, onlyFiles: false, none: true });
+    }
+  }, [formData?.mdl_status]);
 
   const [fileNames, setFileNames] = useState({
     mdl_file_acara: "",
@@ -151,7 +148,7 @@ const InfoAcara = () => {
             <button
               onClick={() => handleSave("draft")}
               disabled={isLoading}
-              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-md font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? "Menyimpan..." : "Simpan Draft"}
             </button>
@@ -161,7 +158,7 @@ const InfoAcara = () => {
                 handleSave("active");
               }}
               disabled={isLoading}
-              className="px-5 py-2.5 rounded-xl font-semibold bg-blue-900 text-white hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 rounded-md font-semibold bg-blue-900 text-white hover:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {isLoading && (
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -400,53 +397,53 @@ const InfoAcara = () => {
     }
   };
 
-const handleTogglePresensi = async () => {
-  if (!id) {
-    showPopup("error", "Error", "ID acara tidak ditemukan");
-    return;
-  }
-
-  // Simpan status lama dulu
-  const oldStatus = presensiAktif;
-  const newStatus = !presensiAktif;
-
-  // Optimistic update (ubah UI langsung)
-  setPresensiAktif(newStatus);
-
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
-      { status_qr: newStatus },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000,
-      }
-    );
-
-    // Jika API berhasil tapi tidak mengembalikan status, tetap pakai local state
-    if (response.data && response.data.data) {
-      setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
+  const handleTogglePresensi = async () => {
+    if (!id) {
+      showPopup("error", "Error", "ID acara tidak ditemukan");
+      return;
     }
 
-    showPopup(
-      "success",
-      "Berhasil",
-      `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`
-    );
-  } catch (error) {
-    console.error(error.response?.data || error.message);
+    // Simpan status lama dulu
+    const oldStatus = presensiAktif;
+    const newStatus = !presensiAktif;
 
-    // Rollback ke status lama jika gagal
-    setPresensiAktif(oldStatus);
+    // Optimistic update (ubah UI langsung)
+    setPresensiAktif(newStatus);
 
-    const errorMsg =
-      error.response?.data?.message || "Gagal mengubah status presensi";
-    showPopup("error", "Error", errorMsg);
-  }
-};
+    try {
+      const response = await axios.put(
+        `${API_BASE_URL}/admin/event/${id}/presensi/toggle`,
+        { status_qr: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
+          timeout: 10000,
+        }
+      );
+
+      // Jika API berhasil tapi tidak mengembalikan status, tetap pakai local state
+      if (response.data && response.data.data) {
+        setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
+      }
+
+      showPopup(
+        "success",
+        "Berhasil",
+        `Presensi berhasil di${newStatus ? "aktifkan" : "nonaktifkan"}!`
+      );
+    } catch (error) {
+      console.error(error.response?.data || error.message);
+
+      // Rollback ke status lama jika gagal
+      setPresensiAktif(oldStatus);
+
+      const errorMsg =
+        error.response?.data?.message || "Gagal mengubah status presensi";
+      showPopup("error", "Error", errorMsg);
+    }
+  };
 
   // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
   const handleSave = async (targetStatus) => {
@@ -576,14 +573,8 @@ const handleTogglePresensi = async () => {
     },
     { label: "Tipe Acara", name: "mdl_tipe", type: "select" },
     { label: "Jenis Acara", name: "mdl_kategori", type: "select" },
-    { label: "Doorprize", name: "mdl_doorprize_aktif", type: "select" },
     { label: "Modul Acara", name: "mdl_file_acara", type: "file" },
     { label: "Susunan Acara", name: "mdl_file_rundown", type: "file" },
-    {
-      label: "Template Sertifikat",
-      name: "mdl_template_sertifikat",
-      type: "file",
-    },
   ];
 
   return (
@@ -625,17 +616,18 @@ const handleTogglePresensi = async () => {
 
             {/* ✅ TOMBOL SIMPAN DRAFT & PUBLISH */}
             <div className="flex items-start gap-3">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => handleSave("draft")}
                 disabled={isLoading}
-                className="px-6 py-3 cursor-pointer rounded-2xl font-semibold bg-blue-200 text-blue-900 hover:bg-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Menyimpan..." : "Simpan Draft"}
-              </button>
-              <button
+              </Button>
+              
+              {/* <button
                 onClick={() => setShowConfirmModal(true)}
                 disabled={isLoading}
-                className="px-6 py-3 cursor-pointer rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-8 py-2 cursor-pointer rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isLoading && (
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
@@ -656,7 +648,35 @@ const handleTogglePresensi = async () => {
                   </svg>
                 )}
                 {isLoading ? "Menyimpan..." : "Publish"}
-              </button>
+              </button> */}
+              <Button
+                variant="primary"
+                onClick={() => setShowConfirmModal(true)}
+                disabled={isLoading}
+              >
+                {isLoading && (
+                  <svg
+                    className="animate-spin h-4 w-4 mr-2"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                )}
+                {isLoading ? "Menyimpan..." : "Publish"}
+              </Button>
             </div>
           </div>
 
@@ -696,7 +716,6 @@ const handleTogglePresensi = async () => {
                     Nama Acara
                   </Typography>
                   <div className="relative">
-                    <Pencil className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Nama Acara"
@@ -704,7 +723,12 @@ const handleTogglePresensi = async () => {
                       value={formData.mdl_nama || ""}
                       onChange={handleChange}
                       disabled={!isEditable.all}
-                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
+                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${
+                        isEditable.all
+                          ? "bg-gray-100"
+                          : "bg-white cursor-not-allowed"
+                      }`}
+                    />
                   </div>
                 </div>
 
@@ -717,15 +741,19 @@ const handleTogglePresensi = async () => {
                     Lokasi Acara
                   </Typography>
                   <div className="relative">
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Lokasi Acara"
                       name="mdl_lokasi"
                       value={formData.mdl_lokasi || ""}
                       onChange={handleChange}
-                      disabled={!isEditable.all}                      
-                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
+                      disabled={!isEditable.all}
+                      className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${
+                        isEditable.all
+                          ? "bg-gray-100"
+                          : "bg-white cursor-not-allowed"
+                      }`}
+                    />
                   </div>
                 </div>
               </div>
@@ -746,7 +774,12 @@ const handleTogglePresensi = async () => {
                     placeholder="Deskripsi untuk acara..."
                     rows={5}
                     disabled={!isEditable.all}
-                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
+                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${
+                      isEditable.all
+                        ? "bg-gray-100"
+                        : "bg-white cursor-not-allowed"
+                    }`}
+                  />
                 </div>
 
                 <div className="flex-1">
@@ -764,7 +797,12 @@ const handleTogglePresensi = async () => {
                     placeholder="Informasi tambahan untuk acara..."
                     rows={5}
                     disabled={!isEditable.all}
-                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${isEditable.all ? "bg-gray-100" : "bg-white cursor-not-allowed"}`}/>
+                    className={`w-full rounded-lg px-3 py-2 pr-10 focus:ring-2 focus:ring-blue-400 ${
+                      isEditable.all
+                        ? "bg-gray-100"
+                        : "bg-white cursor-not-allowed"
+                    }`}
+                  />
                 </div>
               </div>
             </div>
@@ -773,53 +811,61 @@ const handleTogglePresensi = async () => {
           {/* Form Fields Grid */}
           <div className="flex flex-wrap mt-6 w-full gap-6">
             {statusField.map((field, index) => {
-              const isFileField = ["mdl_file_acara", "mdl_file_rundown", "mdl_template_sertifikat"].includes(field.name);
+              const isFileField = [
+                "mdl_file_acara",
+                "mdl_file_rundown",
+                "mdl_template_sertifikat",
+              ].includes(field.name);
               const canEdit =
-                isEditable.all ||
-                (isEditable.onlyFiles && isFileField);
+                isEditable.all || (isEditable.onlyFiles && isFileField);
 
               return (
                 <div key={index} className="w-72">
-                  <Typography type="caption1" weight="semibold" className="mb-2">
+                  <Typography
+                    type="caption1"
+                    weight="semibold"
+                    className="mb-2"
+                  >
                     {field.label}
                   </Typography>
 
-                    {!canEdit ? (
-                      <p className="text-gray-800 border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer">
-                        {field.name === "mdl_doorprize_aktif"
-                          ? formData.mdl_doorprize_aktif === 1
-                            ? "Ada"
-                            : formData.mdl_doorprize_aktif === 0
-                            ? "Tidak Ada"
-                            : "-"
-                          : ["mdl_file_acara", "mdl_file_rundown", "mdl_template_sertifikat"].includes(field.name)
-                          ? formData[field.name]
-                            ? getFileNameFromUrl(formData[field.name])
-                            : "Tidak ada file"
-                          : formData[field.name]
-                          ? field.type === "datetime-local"
-                            ? new Date(formData[field.name]).toLocaleString("id-ID")
-                            : formData[field.name].toString()
-                          : "-"}
-                      </p>
-                    ) : (
-
+                  {!canEdit ? (
+                    <p className="text-gray-800 border border-gray-200 rounded-lg px-3 py-2 bg-white cursor-pointer">
+                      {field.name === "mdl_doorprize_aktif"
+                        ? formData.mdl_doorprize_aktif === 1
+                          ? "Ada"
+                          : formData.mdl_doorprize_aktif === 0
+                          ? "Tidak Ada"
+                          : "-"
+                        : [
+                            "mdl_file_acara",
+                            "mdl_file_rundown",
+                            "mdl_template_sertifikat",
+                          ].includes(field.name)
+                        ? formData[field.name]
+                          ? getFileNameFromUrl(formData[field.name])
+                          : "Tidak ada file"
+                        : formData[field.name]
+                        ? field.type === "datetime-local"
+                          ? new Date(formData[field.name]).toLocaleString(
+                              "id-ID"
+                            )
+                          : formData[field.name].toString()
+                        : "-"}
+                    </p>
+                  ) : (
                     <div className="relative w-full ">
                       {field.type === "select" ? (
                         <select
                           name={field.name}
-                          value={
-                            field.name === "mdl_doorprize_aktif"
-                              ? formData.mdl_doorprize_aktif === 0
-                                ? "Tidak Ada"
-                                : formData.mdl_doorprize_aktif
-                                : formData[field.name] || ""
-                          }
                           onChange={handleChange}
                           disabled={!isEditable.all}
                           className={`w-full rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 border ${
-                            isEditable.all ? "bg-white cursor-pointer" : "bg-white cursor-not-allowed"
-                          }`}                        >
+                            isEditable.all
+                              ? "bg-white cursor-pointer"
+                              : "bg-white cursor-not-allowed"
+                          }`}
+                        >
                           {field.name === "mdl_tipe" && (
                             <>
                               <option value="">Pilih Tipe</option>
@@ -833,13 +879,6 @@ const handleTogglePresensi = async () => {
                               <option value="">Pilih Kategori</option>
                               <option value="public">Public</option>
                               <option value="private">Private</option>
-                            </>
-                          )}
-                          {field.name === "mdl_doorprize_aktif" && (
-                            <>
-                              <option value="">Pilih Status Doorprize</option>
-                              <option value={1}>Ada</option>
-                              <option value={0}>Tidak Ada</option>
                             </>
                           )}
                         </select>
@@ -859,16 +898,20 @@ const handleTogglePresensi = async () => {
                           />
                         </label>
                       ) : (
-                          <input
-                            type={field.type}
-                            name={field.name}
-                            value={formData[field.name] || ""}
-                            onChange={handleChange}
-                            placeholder={field.label}
-                            className={`w-full bg-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 border 
-                              ${field.type === "datetime-local" && canEdit ? "cursor-pointer" : ""}
+                        <input
+                          type={field.type}
+                          name={field.name}
+                          value={formData[field.name] || ""}
+                          onChange={handleChange}
+                          placeholder={field.label}
+                          className={`w-full bg-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-400 border 
+                              ${
+                                field.type === "datetime-local" && canEdit
+                                  ? "cursor-pointer"
+                                  : ""
+                              }
                               ${!canEdit ? "cursor-not-allowed" : ""}`}
-                          />
+                        />
                       )}
                     </div>
                   )}

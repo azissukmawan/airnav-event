@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
 import Table from "../../../components/table";
@@ -11,6 +11,17 @@ import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/pop-up/Delete";
 import { Button } from "../../../components/button";
+
+// === DETEKSI REFRESH DARI HALAMAN DETAIL ===
+
+// const shouldRefresh = location.state?.refreshOnFinish;
+
+// useEffect(() => {
+//   if (shouldRefresh) {
+//     fetchEvents(); // refresh ulang data event
+//     window.history.replaceState({}, document.title);
+//   }
+// }, [shouldRefresh]);
 
 // === KOMPONEN TABS BARU ===
 const EventTabs = ({ tabs, activeTab, onTabChange }) => {
@@ -57,7 +68,7 @@ const AdminEvent = () => {
   // === STATE BARU UNTUK TABS ===
   const [activeTab, setActiveTab] = useState("Semua");
   // Daftar tab sesuai desain
-  const tabItems = ["Semua", "Draft", "Publish", "Selesai", "Archive"];
+  const tabItems = ["Semua", "Draft", "Publish", "Selesai", "Arsip"];
 
   const token = localStorage.getItem("token");
 
@@ -85,10 +96,10 @@ const AdminEvent = () => {
     }
   };
 
-   useEffect(() => {
+  useEffect(() => {
     // --- PERUBAHAN 2: Panggil fungsinya di sini ---
-    fetchEvents();
-  }, [token]);
+    fetchEvents();
+  }, [token]);
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -138,23 +149,139 @@ const AdminEvent = () => {
     setEventData(sortedData);
   };
 
-  // === Fungsi Hitung Status Berdasarkan Tanggal ===
-  const getEventStatus = (start, end) => {
+  // STATUS ACARA
+  // const getEventStatus = (startDate, endDate, mdl_status) => {
+  //   const now = new Date();
+  //   const start = new Date(startDate);
+  //   const end = new Date(endDate);
+
+  //   // Jika status sudah "closed", tampilkan langsung "Selesai"
+  //   if (mdl_status === "closed") {
+  //     return {
+  //       label: "Selesai",
+  //       color: "bg-gray-300 text-gray-800",
+  //     };
+  //   }
+
+  //   // Kalau belum closed, baru cek berdasarkan tanggal
+  //   if (now < start) {
+  //     return {
+  //       label: "Belum Dimulai",
+  //       color: "bg-yellow-100 text-yellow-800",
+  //     };
+  //   }
+
+  //   if (now >= start && now <= end) {
+  //     return {
+  //       label: "Berlangsung",
+  //       color: "bg-green-100 text-green-800",
+  //     };
+  //   }
+
+  //   // Kalau sudah lewat tanggal selesai dan belum diubah jadi closed
+  //   return {
+  //     label: "Sudah Berakhir",
+  //     color: "bg-red-100 text-red-800",
+  //   };
+  // };
+  const getEventStatus = (startDate, endDate, mdl_status) => {
     const now = new Date();
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-    if (!start || !end)
-      return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-700" };
-
-    if (now >= startDate && now <= endDate) {
-      return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
-    } else if (now < startDate) {
-      return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
-    } else {
-      return { label: "Selesai", color: "bg-red-100 text-red-700" };
+    // 🌕 Draft → selalu "Segera Hadir"
+    if (mdl_status === "draft") {
+      return {
+        label: "Segera Hadir",
+        color: "bg-yellow-100 text-yellow-800",
+      };
     }
+
+    // 🟣 Closed → "Selesai"
+    if (mdl_status === "closed") {
+      return {
+        label: "Selesai",
+        color: "bg-red-100 text-red-800",
+      };
+    }
+
+    // ⚫ Archived → "Diarsipkan"
+    if (mdl_status === "archived") {
+      return {
+        label: "Selesai",
+        color: "bg-red-100 text-red-800",
+      };
+    }
+
+    // 🟢 Active → berdasarkan tanggal
+    if (mdl_status === "active") {
+      if (now < start) {
+        return {
+          label: "Segera Hadir",
+          color: "bg-yellow-100 text-yellow-800",
+        };
+      }
+
+      if (now >= start && now <= end) {
+        return {
+          label: "Berlangsung",
+          color: "bg-green-100 text-green-800",
+        };
+      }
+
+      // lewat tanggal tapi belum ditutup manual
+      if (now > end) {
+        return {
+          label: "Selesai",
+          color: "bg-red-100 text-red-800",
+        };
+      }
+    }
+
+    // Default fallback
+    return {
+      label: "Tidak Diketahui",
+      color: "bg-gray-100 text-gray-800",
+    };
   };
+
+  // const getEventStatus = (startDate, endDate, mdl_status) => {
+  //   const now = new Date();
+  //   const start = new Date(startDate);
+  //   const end = new Date(endDate);
+
+  //   if (mdl_status === "closed") {
+  //     return { label: "Selesai", color: "bg-gray-300 text-gray-800" };
+  //   }
+
+  //   if (now < start) {
+  //     return { label: "Belum Dimulai", color: "bg-yellow-100 text-yellow-800" };
+  //   }
+
+  //   if (now >= start && now <= end) {
+  //     return { label: "Berlangsung", color: "bg-green-100 text-green-800" };
+  //   }
+
+  //   return { label: "Selesai", color: "bg-red-100 text-red-800" };
+  // };
+
+  // === Fungsi Hitung Status Berdasarkan Tanggal ===
+  // const getEventStatus = (start, end) => {
+  //   const now = new Date();
+  //   const startDate = new Date(start);
+  //   const endDate = new Date(end);
+
+  //   if (!start || !end)
+  //     return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-700" };
+
+  //   if (now >= startDate && now <= endDate) {
+  //     return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
+  //   } else if (now < startDate) {
+  //     return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
+  //   } else {
+  //     return { label: "Selesai", color: "bg-red-100 text-red-700" };
+  //   }
+  // };
 
   // === FILTER (Tab + Search) + SORT ===
   const filteredData = eventData
@@ -193,11 +320,11 @@ const AdminEvent = () => {
         );
       }
 
-      if (tabKey === "archive") {
+      if (tabKey === "arsip") {
         // cocokkan semua variasi status arsip
         return (
           itemStatus.includes("archive") ||
-          itemStatus.includes("archived") ||
+          itemStatus.includes("archive") ||
           itemStatus.includes("arsip") ||
           itemStatus.includes("inactive") ||
           itemStatus === "nonaktif"
@@ -424,7 +551,8 @@ const AdminEvent = () => {
       accessor: (row) => {
         const status = getEventStatus(
           row.mdl_acara_mulai,
-          row.mdl_acara_selesai
+          row.mdl_acara_selesai,
+          row.mdl_status
         );
         return (
           <span
@@ -455,6 +583,8 @@ const AdminEvent = () => {
         let displayText = raw.toString();
         if (displayText.toLowerCase().includes("active")) {
           displayText = "Publish";
+        } else if (displayText.includes("archived")) {
+          displayText = "Diarsipkan";
         }
 
         const label = displayText
@@ -470,7 +600,7 @@ const AdminEvent = () => {
             ? "bg-green-600 text-xs  text-white"
             : key.includes("draft")
             ? "bg-white-100 text-gray-700 text-xs  outline-gray-700 outline"
-            : key.includes("archived") || key.includes("archive")
+            : key.includes("archived") || key.includes("arsip")
             ? "bg-gray-700 text-xs  text-white"
             : key.includes("closed")
             ? "bg-gray-400 text-xs  text-white"
@@ -492,7 +622,7 @@ const AdminEvent = () => {
       header: "Aksi",
       accessor: (row) => {
         const status = (row.mdl_status || "").toLowerCase();
-        const disabledKeys = status.includes("archive");
+        const disabledKeys = status.includes("arsip");
         //const isPublished = disabledKeys.some((k) => status.includes(k));
 
         return (
@@ -505,6 +635,29 @@ const AdminEvent = () => {
                 <FiEye size={18} />
               </button>
             </Link>
+            {/* <Link
+              to={`/admin/event/${row.id}`}
+              state={{ onSuccess: fetchEvents }} // ✅ kirim callback re-fetch
+            >
+              <button
+                className="text-blue-500 hover:text-blue-700"
+                title="Lihat"
+              >
+                <FiEye size={18} />
+              </button>
+            </Link> */}
+
+            {/* <Link
+              to={`/admin/event/${row.id}`}
+              state={{ onSuccess: fetchEvents }}
+            >
+              <button
+                className="text-blue-500 hover:text-blue-700"
+                title="Lihat"
+              >
+                <FiEye size={18} />
+              </button>
+            </Link> */}
 
             {/* {isPublished ? (
               // Disabled edit button for published events
@@ -516,18 +669,24 @@ const AdminEvent = () => {
                 <FiEdit size={18} />
               </button>
             ) : ( */}
-              {/* // Normal edit button for non-published events */}
-              <Link to={`/admin/event/edit/${row.id}`}
-              className={disabledKeys ? "pointer-events-none" : ""}>
-                <button
+            {/* // Normal edit button for non-published events */}
+            <Link
+              to={`/admin/event/edit/${row.id}`}
+              className={disabledKeys ? "pointer-events-none" : ""}
+            >
+              <button
                 className="text-yellow-500 hover:text-yellow-700 
                            disabled:text-gray-400 disabled:cursor-not-allowed" // 4. Tambah style disabled
-                title={disabledKeys ? "Tidak dapat mengedit acara yang diarsip" : "Edit"} // 5. Ubah title saat disabled
+                title={
+                  disabledKeys
+                    ? "Tidak dapat mengedit acara yang diarsip"
+                    : "Edit"
+                } // 5. Ubah title saat disabled
                 disabled={disabledKeys} // 6. Logika disabled
               >
-                  <FiEdit size={18} />
-                </button>
-              </Link>
+                <FiEdit size={18} />
+              </button>
+            </Link>
             {/* )} */}
 
             <button

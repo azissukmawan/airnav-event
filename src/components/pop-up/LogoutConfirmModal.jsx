@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { X, CheckCircle2, Flag } from "lucide-react";
+import { X, LogOut, CheckCircle2 } from "lucide-react";
 
-const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
-  const [isFinished, setIsFinished] = useState(false);
+const LogoutConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
+  const [isLoggedOut, setIsLoggedOut] = useState(false);
 
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
-    setIsFinished(true);
-    onConfirm?.(); // jalankan callback eksternal
+    setIsLoggedOut(true);
+    onConfirm?.(); // jalankan logout dari parent
     setTimeout(() => {
-      setIsFinished(false);
+      setIsLoggedOut(false);
       onClose();
     }, 1500);
   };
@@ -20,9 +20,8 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm 
                  animate-fade-in p-4 transition-all duration-300"
     >
-      {/* CARD POPUP */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative text-center animate-scale-in">
-        {!isFinished ? (
+        {!isLoggedOut ? (
           <>
             <button
               onClick={onClose}
@@ -32,18 +31,18 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
               <X size={22} />
             </button>
 
-            <Flag className="mx-auto text-red-500 mb-4" size={48} />
+            <LogOut className="mx-auto text-red-500 mb-4" size={48} />
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Selesaikan Acara?
+              Keluar dari Akun?
             </h3>
             <p className="text-gray-600 mb-6">
-              Apakah kamu yakin ingin menandai acara ini sebagai selesai?
+              Apakah kamu yakin ingin keluar dari akun ini?
             </p>
 
             <div className="flex justify-center gap-3">
               <button
                 onClick={onClose}
-                className="px-6 py-2 rounded-lg text-primary hover:bg-gray-200 transition"
+                className="px-6 py-2 rounded-lg text-primary-90 hover:bg-gray-200 transition"
                 disabled={isLoading}
               >
                 Batal
@@ -53,25 +52,21 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
                 className="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
                 disabled={isLoading}
               >
-                {isLoading ? "Memproses..." : "Selesaikan"}
+                {isLoading ? "Memproses..." : "Keluar"}
               </button>
             </div>
           </>
         ) : (
-          // ✅ Pesan sukses
           <div className="flex flex-col items-center justify-center py-6 animate-scale-in">
             <CheckCircle2 size={60} className="text-green-500 mb-3" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Acara Telah Selesai!
+              Berhasil Keluar
             </h3>
-            <p className="text-gray-600 text-sm">
-              Acara berhasil ditandai sebagai selesai.
-            </p>
+            <p className="text-gray-600 text-sm">Sampai jumpa kembali 👋</p>
           </div>
         )}
       </div>
 
-      {/* Animasi */}
       <style jsx>{`
         @keyframes fade-in {
           from {
@@ -102,4 +97,4 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
   );
 };
 
-export default FinishConfirmModal;
+export default LogoutConfirmModal;

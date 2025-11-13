@@ -2,13 +2,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
 import { Typography } from "../../../components/typography";
+import { Button } from "../../../components/button";
 import Breadcrumb from "../../../components/breadcrumb";
 import axios from "axios";
 import { QRCodeCanvas } from "qrcode.react";
-import { X } from "lucide-react"; 
-
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
+import { X, Pencil } from "lucide-react";
 
 const DetailEventId = () => {
   const { id } = useParams();
@@ -113,9 +111,12 @@ const DetailEventId = () => {
             </Typography>
           </div>
           <Link to={`/admin/event/edit/${id}`}>
-            <button className="bg-primary px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-primary-80 transition-colors">
+            {/* <button className="bg-primary px-8 py-2 rounded-2xl text-blue-50 font-semibold hover:bg-primary-80 transition-colors">
               Edit Data
-            </button>
+            </button> */}
+            <Button variant="primary" iconLeft={<Pencil />}>
+              Edit Data
+            </Button>
           </Link>
 
           {/* {event.mdl_status === "draft" && (
@@ -138,7 +139,7 @@ const DetailEventId = () => {
               <Typography weight="semibold">Deskripsi Acara</Typography>
               <div className="w-80 rounded-xl text-sm">
                 <p className="line-clamp-3">{event.mdl_deskripsi}</p>
-               <p
+                <p
                   onClick={() => {
                     setPopupContent({
                       title: "Deskripsi Acara",
@@ -150,24 +151,24 @@ const DetailEventId = () => {
                 >
                   Lihat Selengkapnya
                 </p>
-             </div>
+              </div>
             </div>
             <Typography weight="semibold">Informasi Tambahan</Typography>
-              <div className="w-80 rounded-xl text-sm">
-                <p className="line-clamp-3">{event.mdl_catatan}</p>
-                  <p
-                    onClick={() => {
-                      setPopupContent({
-                        title: "Informasi Tambahan",
-                        text: event.mdl_catatan || "Tidak ada catatan tambahan",
-                      });
-                      setShowPopup(true);
-                    }}
-                    className="text-blue-600 mt-1 cursor-pointer hover:underline"
-                  >
-                    Lihat Selengkapnya
-                  </p>
-             </div>
+            <div className="w-80 rounded-xl text-sm">
+              <p className="line-clamp-3">{event.mdl_catatan}</p>
+              <p
+                onClick={() => {
+                  setPopupContent({
+                    title: "Informasi Tambahan",
+                    text: event.mdl_catatan || "Tidak ada catatan tambahan",
+                  });
+                  setShowPopup(true);
+                }}
+                className="text-blue-600 mt-1 cursor-pointer hover:underline"
+              >
+                Lihat Selengkapnya
+              </p>
+            </div>
           </div>
 
           <div className="flex-1 min-w-[300px]">
@@ -188,12 +189,6 @@ const DetailEventId = () => {
             <div className="mb-5">
               <Typography weight="semibold">Tipe Acara</Typography>
               <Typography>{event.mdl_tipe}</Typography>
-            </div>
-            <div className="mb-5">
-              <Typography weight="semibold">Doorprize</Typography>
-              <Typography>
-                {event.mdl_doorprize_aktif === 1 ? "Ada" : "Tidak Ada"}
-              </Typography>
             </div>
             <div className="mb-5">
               <Typography weight="semibold">Modul Acara</Typography>
@@ -275,36 +270,37 @@ const DetailEventId = () => {
                   {event.mdl_presensi_aktif === 1 ? "Aktif" : "Tidak Aktif"}
                 </Typography>
               </div>
-              <button
-                onClick={handleDownloadQR}
-                className="bg-primary text-white px-5 py-2 rounded-xl hover:bg-primary-80 transition"
-              >
+              <Button variant="primary" onClick={handleDownloadQR}>
                 Download QR Code
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       </div>
-        {showPopup && (
-          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-[9999]">
-            <div className="relative bg-white w-[90%] max-w-xl rounded-2xl p-6 shadow-2xl animate-fadeIn">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
-              >
-                <X size={24} />
-              </button>
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-[9999]">
+          <div className="relative bg-white w-[90%] max-w-xl rounded-2xl p-6 shadow-2xl animate-fadeIn">
+            <button
+              onClick={() => setShowPopup(false)}
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+            >
+              <X size={24} />
+            </button>
 
-              <Typography type="heading5" weight="bold" className="mb-3 text-blue-900">
-                {popupContent.title}
-              </Typography>
+            <Typography
+              type="heading5"
+              weight="bold"
+              className="mb-3 text-blue-900"
+            >
+              {popupContent.title}
+            </Typography>
 
-              <div className="max-h-[400px] overflow-y-auto text-gray-700 leading-relaxed whitespace-pre-line">
-                {popupContent.text}
-              </div>
+            <div className="max-h-[400px] overflow-y-auto text-gray-700 leading-relaxed whitespace-pre-line">
+              {popupContent.text}
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 };

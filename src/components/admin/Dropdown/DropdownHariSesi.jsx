@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
+import { Button } from "../../button";
 
-const DropdownHariSesi = ({ participants, onFilter }) => {
+const DropdownHariSesi = ({ participants, onFilter, id }) => {
   const [selectedHari, setSelectedHari] = useState("");
   const [selectedSesi, setSelectedSesi] = useState("");
 
-  // daftar hari dari key object (Hari-1, Hari-2, dst)
   const hariList = Object.keys(participants || {}).sort((a, b) => {
     const numA = parseInt(a.replace("Hari-", ""));
     const numB = parseInt(b.replace("Hari-", ""));
     return numA - numB;
   });
 
-  // ambil sesi dari hari yang dipilih
   const sesiList = selectedHari
     ? Object.keys(participants[selectedHari] || {}).sort((a, b) => {
         const numA = parseInt(a.replace("Sesi-", ""));
@@ -21,7 +21,6 @@ const DropdownHariSesi = ({ participants, onFilter }) => {
       })
     : [];
 
-  // set default ke Hari pertama dan Sesi pertama yang tersedia (HANYA SEKALI)
   useEffect(() => {
     if (hariList.length > 0 && !selectedHari) {
       const defaultHari = hariList[0];
@@ -33,13 +32,11 @@ const DropdownHariSesi = ({ participants, onFilter }) => {
         }
       );
       const defaultSesi = defaultSesiList[0] || "";
-
       setSelectedHari(defaultHari);
       setSelectedSesi(defaultSesi);
     }
-  }, [hariList.length]); // Hanya trigger saat ada data pertama kali
+  }, [hariList.length]);
 
-  // kirim peserta yang difilter ke parent setiap perubahan
   useEffect(() => {
     if (selectedHari && selectedSesi && onFilter) {
       const dataFiltered = participants[selectedHari]?.[selectedSesi] || [];
@@ -51,7 +48,6 @@ const DropdownHariSesi = ({ participants, onFilter }) => {
     const newHari = e.target.value;
     setSelectedHari(newHari);
 
-    // reset sesi ke sesi pertama dari hari baru
     const newSesiList = Object.keys(participants[newHari] || {}).sort(
       (a, b) => {
         const numA = parseInt(a.replace("Sesi-", ""));
@@ -62,51 +58,67 @@ const DropdownHariSesi = ({ participants, onFilter }) => {
     setSelectedSesi(newSesiList[0] || "");
   };
 
-  const handleSesiChange = (e) => {
-    setSelectedSesi(e.target.value);
-  };
-
   return (
-    <div className="flex gap-3 w-80">
-      {/* Dropdown Hari */}
-      <div className="flex-1 relative">
-        <select
-          value={selectedHari}
-          onChange={handleHariChange}
-          className="border border-blue-900 rounded-xl p-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none"
-        >
-          <option value="">Pilih Hari</option>
-          {hariList.map((hari) => (
-            <option key={hari} value={hari}>
-              {hari.replace("Hari-", "Hari ")}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={18}
-          className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
-        />
+    <div className="flex justify-between items-center mb-4">
+      <div className="flex gap-3 w-80">
+        {/* Dropdown Hari */}
+        <div className="flex-1 relative">
+          <select
+            value={selectedHari}
+            onChange={handleHariChange}
+            className="border border-blue-900 rounded-xl p-2 pr-8 w-full 
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 
+                       appearance-none"
+          >
+            <option value="">Pilih Hari</option>
+            {hariList.map((hari) => (
+              <option key={hari} value={hari}>
+                {hari.replace("Hari-", "Hari ")}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={18}
+            className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
+          />
+        </div>
+
+        {/* Dropdown Sesi */}
+        <div className="flex-1 relative">
+          <select
+            value={selectedSesi}
+            onChange={(e) => setSelectedSesi(e.target.value)}
+            disabled={!selectedHari}
+            className="border border-blue-900 rounded-xl p-2 pr-8 w-full 
+                       focus:outline-none focus:ring-2 focus:ring-blue-400 
+                       appearance-none disabled:bg-gray-100 disabled:text-gray-500"
+          >
+            <option value="">Pilih Sesi</option>
+            {sesiList.map((sesi) => (
+              <option key={sesi} value={sesi}>
+                {sesi.replace("Sesi-", "Sesi ")}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={18}
+            className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
+          />
+        </div>
       </div>
 
-      {/* Dropdown Sesi */}
-      <div className="flex-1 relative">
-        <select
-          value={selectedSesi}
-          onChange={handleSesiChange}
-          disabled={!selectedHari}
-          className="border border-blue-900 rounded-xl p-2 pr-8 w-full focus:outline-none focus:ring-2 focus:ring-blue-400 appearance-none disabled:bg-gray-100 disabled:text-gray-500"
+      {/* Tombol kanan */}
+      <div>
+        <Link
+          to={`/admin/event/${id}/allparticipants`}
+          className="no-underline"
         >
-          <option value="">Pilih Sesi</option>
-          {sesiList.map((sesi) => (
-            <option key={sesi} value={sesi}>
-              {sesi.replace("Sesi-", "Sesi ")}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={18}
-          className="absolute right-3 top-[10px] text-gray-500 pointer-events-none"
-        />
+          <Button
+            variant="primary"
+          >
+            Lihat Daftar Peserta
+          </Button>
+        </Link>
       </div>
     </div>
   );

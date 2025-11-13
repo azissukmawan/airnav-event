@@ -23,6 +23,7 @@ import Dashboard from "./pages/admin/dashboard";
 import AdminEvent from "./pages/admin/event";
 import AdminUser from "./pages/admin/users";
 import DetailEventId from "./pages/admin/event-detail-id";
+import AllParticipants from "./pages/admin/event-detail/allParticipants";
 import Doorprize from "./pages/admin/event-doorprize";
 
 // User pages
@@ -102,6 +103,15 @@ function App() {
           element={
             <ProtectedRoute role="admin">
               <Doorprize />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/event/:id/allparticipants"
+          element={
+            <ProtectedRoute role="admin">
+              <AllParticipants />
             </ProtectedRoute>
           }
         />

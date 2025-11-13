@@ -5,6 +5,7 @@ import Dropdown from "../../../components/form/Dropdown";
 import AddValidate from "../../../components/validate";
 import { Calendar } from "lucide-react";
 import Spinner from "../../../components/spinner";
+import { Button } from "../../../components/button";
 
 import axios from "axios";
 
@@ -111,7 +112,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
         : "",
     };
 
-    const validationErrors = {};
+    const validationErrors = AddValidate(payloadForValidation);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -350,29 +351,20 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
 
   const footerButtons = (
     <>
-      <button
-        type="button"
+      <Button
+        variant="secondary"
         onClick={handleSaveDraft}
         disabled={isSavingDraft || isPublishing}
-        // Tambahkan justify-center agar spinner-nya di tengah
-        className="px-4 py-2 rounded-lg text-blue-900 bg-blue-200 hover:bg-blue-400 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 h-11"
       >
-        {/* --- PERUBAHAN --- */}
-        {/* Langsung gunakan logika ternary, hapus SVG sebelumnya */}
         {isSavingDraft ? <Spinner /> : "Simpan Draft"}
-      </button>
-
-      <button
-        type="button"
+      </Button>
+      <Button
+        variant="primary"
         onClick={handleSubmit}
         disabled={isSavingDraft || isPublishing}
-         // Tambahkan justify-center agar spinner-nya di tengah
-        className="px-4 py-2 rounded-lg bg-blue-700 text-white hover:bg-blue-900 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 h-11"
       >
-        {/* --- PERUBAHAN --- */}
-        {/* Samakan logikanya dengan tombol draft */}
         {isPublishing ? <Spinner /> : "Publish"}
-      </button>
+      </Button>
     </>
   );
 
@@ -393,7 +385,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
       mdl_banner_acara_url: "blob:http://...",
     };
 
-    const validationErrors = {};
+    const validationErrors = AddValidate(payloadForValidation);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       showPopup(
@@ -841,6 +833,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                       </p>
                     )}
                   </div>
+                  {/* FIELD SERTIFIKAT DIHAPUS SEMENTARA
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Template Sertifikat (JPG, JPEG, PNG)
@@ -872,7 +865,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                         {errors.mdl_template_sertifikat}
                       </p>
                     )}
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
