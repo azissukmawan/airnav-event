@@ -68,7 +68,7 @@ const AdminEvent = () => {
   // === STATE BARU UNTUK TABS ===
   const [activeTab, setActiveTab] = useState("Semua");
   // Daftar tab sesuai desain
-  const tabItems = ["Semua", "Draft", "Publish", "Selesai", "Arsip"];
+  const tabItems = ["Semua", "Draft", "Published", "Selesai", "Arsip"];
 
   const token = localStorage.getItem("token");
 
@@ -302,10 +302,10 @@ const AdminEvent = () => {
         return itemStatus.includes("draft");
       }
 
-      if (tabKey === "publish") {
+      if (tabKey === "published") {
         // cocokkan untuk event aktif / dipublish
         return (
-          itemStatus.includes("publish") ||
+          itemStatus.includes("published") ||
           itemStatus.includes("active") ||
           itemStatus.includes("aktif")
         );
@@ -582,7 +582,7 @@ const AdminEvent = () => {
         // Map status values to display text
         let displayText = raw.toString();
         if (displayText.toLowerCase().includes("active")) {
-          displayText = "Publish";
+          displayText = "Published";
         } else if (displayText.includes("archived")) {
           displayText = "Diarsipkan";
         }
