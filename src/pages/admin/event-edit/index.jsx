@@ -691,7 +691,7 @@ const InfoAcara = () => {
                   formData.mdl_banner_acara instanceof File
                     ? URL.createObjectURL(formData.mdl_banner_acara)
                     : formData.mdl_banner_acara ||
-                      "https://via.placeholder.com/300x150?text=No+Banner"
+                      "https://placehold.co/300x150?text=No+Banner"
                 }
                 alt="Banner Acara"
                 className="bg-gray-200 w-80 h-48 object-cover rounded-2xl mb-2"
