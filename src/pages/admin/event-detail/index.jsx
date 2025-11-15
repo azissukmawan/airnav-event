@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
@@ -11,11 +11,11 @@ import ArchiveConfirmModal from "../../../components/pop-up/ArchiveConfirmModal"
 import CreateSertif from "../../../components/pop-up/CreateSertif";
 import DropdownHariSesi from "../../../components/admin/Dropdown/DropdownHariSesi";
 import FinishConfirmModal from "../../../components/pop-up/FinishConfirmModal";
-import { Button } from "../../../components/button";
+import Alert from "../../../components/alert";
 import ChangeSesiConfirmModal from "../../../components/pop-up/ChangeSesiConfirmModal";
 import { QRFullscreen } from "./fullscreen";
 import { QRCodeCanvas } from "qrcode.react";
-import { ChevronDown, Maximize2, Download, Gift } from "lucide-react";
+import { ChevronDown, Maximize2, Download } from "lucide-react";
 
 const AdminDetail = () => {
   const { id } = useParams();
@@ -30,6 +30,7 @@ const AdminDetail = () => {
   const [error, setError] = useState(null);
   const [selectedOption, setSelectedOption] = useState("active");
   const [presensiAktif, setPresensiAktif] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const token = localStorage.getItem("token");
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +42,7 @@ const AdminDetail = () => {
   const [sesi, setSesi] = useState("");
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const { eventId } = useParams();
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [showChangeSesiConfirm, setShowChangeSesiConfirm] = useState(false);
   const [pendingSesi, setPendingSesi] = useState("");
@@ -48,6 +50,8 @@ const AdminDetail = () => {
   const [filterHari, setFilterHari] = useState("");
   const [filterSesi, setFilterSesi] = useState("");
   const location = useLocation();
+  const onSuccess = location.state?.onSuccess;
+  const navigate = useNavigate();
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -125,6 +129,8 @@ const AdminDetail = () => {
           `${API_BASE_URL}/admin/events/${id}/attendance`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+
+        console.log("RESPON PESERTA DARI BE:", res.data);
 
         let data = {};
         if (res.data?.data?.data) {
@@ -215,6 +221,7 @@ const AdminDetail = () => {
     }
   };
 
+  // Archive Event
   const handleArchiveEvent = async () => {
     try {
       const response = await axios.put(
@@ -224,6 +231,7 @@ const AdminDetail = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      console.log("Respon dari Backend:", response.data);
       showPopup("success", "Berhasil", "Acara berhasil diarsipkan");
       setEventData((prev) => ({
         ...prev,
@@ -402,6 +410,7 @@ const AdminDetail = () => {
       showPopup("success", "Berhasil", "Nomor sertifikat berhasil digenerate");
       setShowCreateSertif(false);
     } catch (error) {
+      console.log("Response error:", error.response?.data);
       const message =
         error.response?.data?.message ||
         "Gagal generate sertifikat. Silakan coba lagi.";
@@ -549,7 +558,11 @@ const AdminDetail = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
+        console.log("RESPON PESERTA DARI BE:", res.data);
+
         const data = res.data?.data?.data || res.data?.data || res.data || {};
+
+        console.log("HASIL DATA YANG DISIMPAN:", data);
 
         setParticipantsData(data);
 
@@ -571,6 +584,14 @@ const AdminDetail = () => {
 
     fetchParticipants();
   }, [id]);
+
+  const handleFilter = (hari, sesi) => {
+    if (hari && sesi && participantsData[hari]?.[sesi]) {
+      setFilteredParticipants(participantsData[hari][sesi]);
+    } else {
+      setFilteredParticipants([]);
+    }
+  };
 
   useEffect(() => {
     const fetchWinners = async () => {
@@ -645,7 +666,7 @@ const AdminDetail = () => {
     <>
       <NotificationPopup />
 
-      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0 bg-gray-50 min-h-screen">
+      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
         <Sidebar role="admin" />
         <div className="flex-1 p-6 mt-2 space-y-4">
           <Breadcrumb items={breadcrumbItems} />
@@ -664,7 +685,7 @@ const AdminDetail = () => {
             </p>
           </div>
 
-          <div className="flex flex-row md:flex-col md:space-x-4 mb-10 w-full">
+          <div className="flex flex-row md:flex-col md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
             <div className="flex-1 w-full">
               <Search
                 placeholder="Cari nama peserta..."
@@ -672,10 +693,11 @@ const AdminDetail = () => {
               />
             </div>
             {eventData?.mdl_doorprize_aktif === 1 && (
-              <Link to={`/admin/event/doorprize/${id}`}>
-                <Button variant="primary" iconLeft={<Gift />}>
-                  Doorprize
-                </Button>
+              <Link
+                to={`/admin/event/doorprize/${id}`}
+                className="px-7 py-2 rounded-xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors"
+              >
+                Doorprize
               </Link>
             )}
           </div>
@@ -737,11 +759,9 @@ const AdminDetail = () => {
                   {/* DETAIL BUTTON */}
                   <div className="flex items-center gap-3 mt-5">
                     <Link to={`/admin/event/detail/${id}`}>
-                      <Button
-                        variant="primary"
-                      >
+                      <button className="w-45 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
                         Lihat Detail Lengkap
-                      </Button>
+                      </button>
                     </Link>
 
                     {/* BUTTON SELESAIKAN ACARA */}
@@ -749,8 +769,9 @@ const AdminDetail = () => {
                     {eventData.mdl_status !== "archived" && (
                       <button
                         onClick={() => setShowFinishConfirm(true)}
-                        className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition 
+                        className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition 
                         disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        // Disable jika sedang loading ATAU acara sudah selesai
                         disabled={
                           isFinishing || eventData.mdl_status === "closed"
                         }
@@ -762,8 +783,9 @@ const AdminDetail = () => {
                     {eventData.mdl_status !== "archived" && (
                       <button
                         onClick={() => setShowArchiveConfirm(true)}
-                        className="px-4 py-2 rounded-md bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition
+                        className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition
                                    disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        // Tombol arsip aktif HANYA JIKA acara sudah selesai (closed)
                         disabled={
                           eventData.mdl_status !== "closed" || isFinishing
                         }
@@ -945,6 +967,7 @@ const AdminDetail = () => {
               />
               <div className="overflow-x-auto">
                 <TableParticipants
+                  // participants={currentTableData}
                   participants={sortedParticipants}
                   winners={winners}
                   onPreview={handleOpenPreview}
