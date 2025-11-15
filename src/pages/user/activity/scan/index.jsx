@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import axios from "axios";
 import { Button } from "../../../../components/button";
+import axios from "axios";
 
 const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
   const [scanning, setScanning] = useState(false);
@@ -9,7 +9,6 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
   const [scanResult, setScanResult] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-  const html5QrCodeRef = useRef(null);
 
   const submitPresensi = async (kode) => {
     setIsSubmitting(true);
@@ -27,28 +26,19 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
 
       const response = await axios.post(
         `${API_BASE_URL}/presensi`,
+        { kode: kode },
         {
-          method: 'POST',
           headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ kode: kode })
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
         }
       );
 
-      const data = await response.json();
-
-      if (
-        data.success === true ||
-        response.status === 200 ||
-        response.status === 201
-      ) {
+      if (response.data.success === true || response.status === 200 || response.status === 201) {
         setScanResult(kode);
-        setSuccessMessage(
-          data.message || "Presensi berhasil dicatat!"
-        );
+        setSuccessMessage(response.data.message || "Presensi berhasil dicatat!");
         setError("");
 
         setTimeout(() => {
@@ -56,22 +46,20 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
           setScanResult("");
           setSuccessMessage("");
           if (onScanSuccess) {
-            onScanSuccess(kode, data);
+            onScanSuccess(kode, response.data);
           }
           onClose();
         }, 1500);
       } else {
-        setError(data.message || "Gagal mencatat presensi.");
+        setError(response.data.message || "Gagal mencatat presensi.");
         setSuccessMessage("");
         setIsSubmitting(false);
       }
     } catch (err) {
-      const errorMessage = err.message || "";
+      const errorMessage = err.response?.data?.message || "";
 
-      if (
-        errorMessage.toLowerCase().includes("sudah melakukan presensi") ||
-        errorMessage.toLowerCase().includes("sudah presensi")
-      ) {
+      if (errorMessage.toLowerCase().includes("sudah melakukan presensi") || 
+          errorMessage.toLowerCase().includes("sudah presensi")) {
         setError("");
         setSuccessMessage("Anda sudah melakukan presensi sebelumnya.");
         setTimeout(() => {
@@ -79,41 +67,25 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
           setScanResult("");
           setSuccessMessage("");
           onClose();
+          window.location.reload();
         }, 1500);
       } else {
         setSuccessMessage("");
-        setError("Gagal mencatat presensi. Silakan coba lagi.");
+        if (errorMessage) {
+          setError(errorMessage);
+        } else if (err.response?.status === 401) {
+          setError("Sesi Anda telah berakhir. Silakan login kembali.");
+        } else {
+          setError("Gagal mencatat presensi. Silakan coba lagi.");
+        }
         setIsSubmitting(false);
       }
     }
   };
 
-  const stopCamera = async () => {
-    if (html5QrCodeRef.current && scanning) {
-      try {
-        await html5QrCodeRef.current.stop();
-        html5QrCodeRef.current.clear();
-      } catch (err) {
-        console.error("Error saat menghentikan kamera:", err);
-      } finally {
-        html5QrCodeRef.current = null;
-        setScanning(false);
-      }
-    }
-  };
-
-  const handleClose = async () => {
-    await stopCamera();
-    setError("");
-    setScanResult("");
-    setIsSubmitting(false);
-    setSuccessMessage("");
-    onClose();
-  };
-
   useEffect(() => {
     if (!isOpen) {
-      stopCamera();
+      setScanning(false);
       setError("");
       setScanResult("");
       setIsSubmitting(false);
@@ -121,35 +93,32 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
       return;
     }
 
+    let html5QrCode;
+    
     const startScanner = async () => {
       try {
-        const Html5QrcodeLib = await import(
-          "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/+esm"
-        );
+        const Html5QrcodeLib = await import('https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/+esm');
         const Html5Qrcode = Html5QrcodeLib.Html5Qrcode;
-
-        html5QrCodeRef.current = new Html5Qrcode("qr-reader");
-
-        await html5QrCodeRef.current.start(
+        
+        html5QrCode = new Html5Qrcode("qr-reader");
+        
+        await html5QrCode.start(
           { facingMode: "environment" },
           {
             fps: 10,
-            qrbox: { width: 250, height: 250 },
+            qrbox: { width: 250, height: 250 }
           },
-          async (decodedText) => {
-            await stopCamera();
-
-            const kode = decodedText.split("/").pop();
-            submitPresensi(kode);
-          }
+          (decodedText) => {
+            html5QrCode.stop().catch(console.error);
+            setScanning(false);
+            submitPresensi(decodedText);
+          },
         );
-
+        
         setScanning(true);
         setError("");
       } catch (err) {
-        setError(
-          "Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera."
-        );
+        setError("Gagal mengakses kamera. Pastikan Anda memberikan izin akses kamera.");
         console.error(err);
       }
     };
@@ -157,7 +126,9 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
     startScanner();
 
     return () => {
-      stopCamera();
+      if (html5QrCode && scanning) {
+        html5QrCode.stop().catch(console.error);
+      }
     };
   }, [isOpen]);
 
@@ -167,7 +138,7 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-md w-full p-4 relative shadow-2xl border border-gray-200">
         <button
-          onClick={handleClose}
+          onClick={onClose}
           className="absolute top-4 right-4 text-typo-icon hover:text-typo"
           disabled={isSubmitting}
         >
@@ -210,7 +181,7 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
 
         <Button
           variant="secondary"
-          onClick={handleClose}
+          onClick={onClose}
           className="w-full justify-center"
           disabled={isSubmitting}
         >
