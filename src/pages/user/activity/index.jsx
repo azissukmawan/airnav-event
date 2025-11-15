@@ -334,7 +334,7 @@ const Activity = () => {
                       {activity.title}
                     </Typography>
                   </Link>
-                  <div className="flex gap-2 items-center">
+                  <div className="md:flex gap-2 items-center mt-2 md:mt-0">
                     {/* Tanggal */}
                     <Typography type="body" weight="bold">
                       {(() => {
@@ -377,7 +377,7 @@ const Activity = () => {
                     </Typography>
                     
                     {/* Jam */}
-                    <div className="flex p-2 bg-white gap-2 items-center rounded-md">
+                    <div className="w-31 flex p-2 bg-white gap-2 items-center justify-center rounded-md">
                       <Clock size={16}/>
                       <Typography type="caption1" weight="bold">
                         {new Date(activity.start_date).toLocaleTimeString("id-ID", {
