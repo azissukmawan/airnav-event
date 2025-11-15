@@ -144,6 +144,13 @@ const DetailEvent = () => {
     (e) => e.modul_acara_id === event.id
   );
 
+  const registeredEvent = registeredEvents.find(
+    (e) => e.modul_acara_id === event.id
+  );
+
+  const fileRundown = registeredEvent?.modul_acara?.mdl_file_rundown_url || null;
+  const fileAcara = registeredEvent?.modul_acara?.mdl_file_acara_url || null;
+
   let buttonText = "";
   let buttonVariant = "primary";
   let canRegister = false;
@@ -444,7 +451,7 @@ const DetailEvent = () => {
         <div className="absolute inset-0 w-full h-full">
           <img
             src={
-              (event.media_urls && event.media_urls.length > 0 && event.media_urls.find(m => m.banner)?.banner) ||
+              event.media_urls?.banner ||
               "https://placehold.co/1200x600?text=Event+Banner"
             }
             alt={event.mdl_nama}
@@ -492,10 +499,10 @@ const DetailEvent = () => {
               <div className="h-48 lg:h-64 rounded-xl overflow-hidden shadow-2xl">
                 <img
                   src={
-                    (event.media_urls && event.media_urls.length > 0 && event.media_urls.find(m => m.banner)?.banner) ||
+                    event.media_urls?.banner ||
                     "https://placehold.co/400x300?text=Event"
                   }
-                  alt="Event thumbnail"
+                  alt={event.mdl_nama}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -665,11 +672,12 @@ const DetailEvent = () => {
           </div>
         )}
 
-        {isRegistered && event.media_urls && event.media_urls.length > 0 && (
+        {isRegistered && (fileRundown || fileAcara) && (
           <div className="grid md:grid-cols-2 gap-6">
-            {event.media_urls.find(m => m.file_rundown) && (
+
+            {fileRundown && (
               <a
-                href={event.media_urls.find(m => m.file_rundown)?.file_rundown}
+                href={fileRundown}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col gap-3 bg-white hover:bg-primary-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
@@ -678,12 +686,9 @@ const DetailEvent = () => {
                   <div className="bg-primary text-white p-4 rounded-full">
                     <Download className="w-8 h-8" />
                   </div>
+
                   <div>
-                    <Typography
-                      type="body"
-                      weight="bold"
-                      className="text-primary mb-1"
-                    >
+                    <Typography type="body" weight="bold" className="text-primary mb-1">
                       Rundown
                     </Typography>
                     <Typography type="caption2" className="text-typo-secondary">
@@ -694,9 +699,9 @@ const DetailEvent = () => {
               </a>
             )}
 
-            {event.media_urls.find(m => m.file_acara) && (
+            {fileAcara && (
               <a
-                href={event.media_urls.find(m => m.file_acara)?.file_acara}
+                href={fileAcara}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex flex-col gap-3 bg-white hover:bg-success-10 p-4 rounded-xl transition-colors cursor-pointer shadow-sm"
@@ -705,12 +710,9 @@ const DetailEvent = () => {
                   <div className="bg-success text-white p-4 rounded-full">
                     <Download className="w-8 h-8" />
                   </div>
+
                   <div className="text-left">
-                    <Typography
-                      type="body"
-                      weight="bold"
-                      className="text-success mb-1"
-                    >
+                    <Typography type="body" weight="bold" className="text-success mb-1">
                       Modul
                     </Typography>
                     <Typography type="caption2" className="text-typo-secondary">
@@ -720,6 +722,7 @@ const DetailEvent = () => {
                 </div>
               </a>
             )}
+
           </div>
         )}
 
