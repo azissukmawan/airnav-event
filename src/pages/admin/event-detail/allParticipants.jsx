@@ -7,9 +7,6 @@ import Search from "../../../components/form/SearchBar";
 import Pagination from "../../../components/pagination";
 import Breadcrumb from "../../../components/breadcrumb";
 
-const API_BASE_URL =
-  "https://mediumpurple-swallow-757782.hostingersite.com/api";
-
 const AllParticipants = () => {
   const { id } = useParams();
   const [userData, setUserData] = useState([]);
@@ -49,7 +46,6 @@ const AllParticipants = () => {
     setCurrentPage(1);
   };
 
-  // 🔹 Ambil inisial nama
   const getInitials = (name) => {
     if (!name) return "?";
     const parts = name.split(" ");

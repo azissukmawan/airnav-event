@@ -106,7 +106,6 @@ export default function VerifyCode() {
   const handleSubmit = async () => {
     const finalOtp = otp.join("");
 
-    // Validasi frontend
     if (!email) {
       setError("Email tidak ditemukan. Silakan daftar ulang.");
       return;
@@ -127,9 +126,6 @@ export default function VerifyCode() {
         otp: finalOtp,
       });
 
-      console.log("Response verify OTP:", response.data);
-
-      // Jika sukses
       if (response.data?.success || response.status === 200) {
         setShowSuccessModal(true);
       } else {
@@ -213,7 +209,6 @@ export default function VerifyCode() {
                     </div>
                   )}
 
-                  {/* Timer atau Tombol Resend */}
                   {canResend ? (
                     <div className="text-sm text-gray-500 mt-2">
                       <p className="mb-2">Tidak menerima code?</p>
@@ -258,7 +253,6 @@ export default function VerifyCode() {
         </div>
       </div>
 
-      {/* Modal Success */}
       <Modal
         isOpen={showSuccessModal}
         onClose={handleCloseModal}

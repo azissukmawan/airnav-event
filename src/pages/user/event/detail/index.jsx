@@ -38,7 +38,6 @@ const DetailEvent = () => {
   const [showHybridModal, setShowHybridModal] = useState(false);
   const [attendanceType, setAttendanceType] = useState(null);
 
-  // Fetch detail event
   useEffect(() => {
     const fetchEventDetail = async () => {
       try {
@@ -75,7 +74,6 @@ const DetailEvent = () => {
     fetchEventDetail();
   }, [id, navigate]);
 
-  // Fetch registered events
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
@@ -142,7 +140,6 @@ const DetailEvent = () => {
   const eventStart = new Date(event.mdl_acara_mulai);
   const eventEnd = new Date(event.mdl_acara_selesai);
 
-  // Check if user is registered from the API response or from registeredEvents list
   const isRegistered = eventRegistration !== null || registeredEvents.some(
     (e) => e.modul_acara_id === event.id
   );
@@ -215,7 +212,6 @@ const DetailEvent = () => {
   };
 
   const handleRegister = () => {
-    console.log("handleRegister clicked");
     if (isRegistered && now < eventStart) {
       setShowCancelModal(true);
     } else if (canRegister && !isRegistered) {

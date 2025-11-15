@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 export default function Modal({
@@ -7,7 +7,7 @@ export default function Modal({
   title = "",
   children,
   footer = null,
-  size = "md", // "sm" | "md" | "lg"
+  size = "md",
   closeOnOverlayClick = true,
   showCloseButton = true,
 }) {
@@ -16,7 +16,6 @@ export default function Modal({
   const closeBtnRef = useRef(null);
 
   useEffect(() => {
-    // disable page scroll when modal open
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
@@ -24,9 +23,7 @@ export default function Modal({
   }, [isOpen]);
 
   useEffect(() => {
-    // focus close button (or panel) when opened
     if (isOpen) {
-      // give small delay to ensure element exists in DOM
       setTimeout(() => {
         closeBtnRef.current?.focus();
         if (!closeBtnRef.current) panelRef.current?.focus();
@@ -60,10 +57,8 @@ export default function Modal({
       className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
       aria-hidden={false}
     >
-      {/* backdrop */}
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity" />
 
-      {/* panel */}
       <div
         ref={panelRef}
         role="dialog"
@@ -72,7 +67,6 @@ export default function Modal({
         tabIndex={-1}
         className={`relative z-10 w-full ${sizeClass} bg-white rounded-lg shadow-xl overflow-hidden transform transition-all duration-200 divide-y divide-gray-200`}
       >
-        {/* header (no extra border so divide-y provides single divider) */}
         <div className="flex items-center justify-between px-6 py-4">
           <h3 className="text-lg font-bold text-gray-800">{title}</h3>
           {showCloseButton && (
@@ -100,10 +94,8 @@ export default function Modal({
           )}
         </div>
 
-        {/* body */}
         <div className="px-6 py-5 text-sm text-gray-700">{children}</div>
 
-        {/* footer */}
         {footer && (
           <div className="px-6 py-4 flex items-center justify-end gap-3">
             {footer}

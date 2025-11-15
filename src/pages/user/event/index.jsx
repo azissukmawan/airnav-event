@@ -93,7 +93,6 @@ const Event = () => {
     status: "all",
   });
 
-  // Ambil data user
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -142,7 +141,6 @@ const Event = () => {
     fetchProfile();
   }, []);
 
-  // Fetch pendaftaran
   useEffect(() => {
     const fetchRegisteredEvents = async () => {
       try {
@@ -165,7 +163,6 @@ const Event = () => {
     fetchRegisteredEvents();
   }, []);
 
-  // Filter event
   const filteredEvents = events.filter((event) => {
     if (
       event.mdl_status?.toLowerCase() === 'draft' ||

@@ -42,7 +42,6 @@ const EventDetail = () => {
     { name: "Acara", href: "#acara" },
   ];
 
-  // ================= FETCH EVENT =================
   useEffect(() => {
     const stored = localStorage.getItem("registeredEvents");
     if (stored) setRegisteredEvents(JSON.parse(stored));
@@ -62,10 +61,9 @@ const EventDetail = () => {
     fetchEvent();
   }, [slug]);
 
-  // ================= FETCH REGISTERED EVENTS =================
   useEffect(() => {
     if (!token || isAdmin) {
-      setLoadingRegistered(false); // skip fetch untuk admin
+      setLoadingRegistered(false);
       return;
     }
 
@@ -110,7 +108,6 @@ const EventDetail = () => {
   if (loading || loadingRegistered) return <Loading />;
   if (!event) return <NotFound />;
 
-  // ================= LOGIKA TOMBOL =================
   const now = new Date();
   const registrationStart = new Date(event.pendaftaran?.mulai);
   const registrationEnd = new Date(event.pendaftaran?.selesai);
@@ -157,7 +154,6 @@ const EventDetail = () => {
     buttonVariant = "third";
   }
 
-  // ================= HANDLE REGISTER =================
   const handleRegister = () => {
     if (isRegistered && now < eventStart) setShowCancelModal(true);
     else if (canRegister && !isRegistered) setShowConfirmModal(true);
@@ -228,7 +224,6 @@ const EventDetail = () => {
 
   const cancelRegis = () => setShowConfirmModal(false);
 
-  // ================= SHARE =================
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);

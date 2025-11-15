@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { X, CheckCircle, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { X } from "lucide-react";
 import Spinner from "../spinner";
 
 const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
@@ -53,7 +53,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
 
-    // Tampilkan popup konfirmasi
     setShowConfirm(true);
   };
 
@@ -78,7 +77,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center">
       <div className="bg-white w-[90%] max-w-lg rounded-2xl shadow-lg p-6 relative">
-        {/* Tombol close */}
         <button
           onClick={onClose}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
@@ -91,7 +89,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nomor SK Mulai */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
               Nomor SK Mulai <span className="text-red-500">*</span>
@@ -108,7 +105,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
             )}
           </div>
 
-          {/* Format Penomoran */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
               Format Penomoran <span className="text-red-500">*</span>
@@ -127,7 +123,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
             )}
           </div>
 
-          {/* Upload Sertifikat */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
               Unggah Desain Sertifikat <span className="text-red-500">*</span>
@@ -163,7 +158,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
             </p>
           </div>
 
-          {/* Tanggal Pengesahan */}
           <div>
             <label className="block text-gray-700 font-medium mb-1">
               Tanggal Pengesahan <span className="text-red-500">*</span>
@@ -181,7 +175,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
             )}
           </div>
 
-          {/* Tombol Aksi */}
           <div className="flex justify-end gap-3 pt-3">
             <button
               type="button"
@@ -210,7 +203,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
         </form>
       </div>
 
-      {/* Popup konfirmasi */}
       {showConfirm && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-60">
           <div className="bg-white p-6 rounded-2xl shadow-lg w-[90%] max-w-sm text-center">
@@ -238,7 +230,6 @@ const CreateSertif = ({ isOpen, onClose, onGenerate, eventStatus }) => {
         </div>
       )}
 
-      {/* Popup sukses */}
       {loading && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[9999]">
           <Spinner />

@@ -31,9 +31,9 @@ const InfoAcara = () => {
   });
 
   const [isEditable, setIsEditable] = useState({
-    all: false, // semua bisa diedit
-    onlyFiles: false, // hanya file
-    none: false, // tidak bisa edit
+    all: false,
+    onlyFiles: false,
+    none: false,
   });
 
   useEffect(() => {
@@ -56,7 +56,6 @@ const InfoAcara = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Notification state
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
@@ -64,26 +63,22 @@ const InfoAcara = () => {
     message: "",
   });
 
-  // Show notification popup
   const showPopup = (type, title, message) => {
     setNotificationConfig({ type, title, message });
     setShowNotification(true);
     setTimeout(() => setShowNotification(false), 4000);
   };
 
-  // Modal Konfirmasi Publish
   const ConfirmPublishModal = () => {
     if (!showConfirmModal) return null;
 
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-        {/* backdrop blur */}
         <div
           className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
           onClick={() => setShowConfirmModal(false)}
         />
 
-        {/* Modal Content */}
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden relative z-10">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-4">
@@ -186,7 +181,6 @@ const InfoAcara = () => {
     );
   };
 
-  // Notification Component
   const NotificationPopup = () => {
     if (!showNotification) return null;
 
@@ -311,20 +305,6 @@ const InfoAcara = () => {
 
         const data = response.data.data;
 
-        // if (data.mdl_status === "active") {
-        //   showPopup(
-        //     "warning",
-        //     "Akses Ditolak",
-        //     "Acara ini sudah dipublikasikan dan tidak bisa diedit."
-        //   );
-
-        //   // Redirect ke halaman daftar acara
-        //   setTimeout(() => {
-        //     window.location.href = "/admin/events";
-        //   }, 1500);
-        //   // hentikan eksekusi lebih lanjut
-        // }
-
         setFormData({
           mdl_nama: data.mdl_nama || "",
           mdl_deskripsi: data.mdl_deskripsi || "",
@@ -403,11 +383,9 @@ const InfoAcara = () => {
       return;
     }
 
-    // Simpan status lama dulu
     const oldStatus = presensiAktif;
     const newStatus = !presensiAktif;
 
-    // Optimistic update (ubah UI langsung)
     setPresensiAktif(newStatus);
 
     try {
@@ -423,7 +401,6 @@ const InfoAcara = () => {
         }
       );
 
-      // Jika API berhasil tapi tidak mengembalikan status, tetap pakai local state
       if (response.data && response.data.data) {
         setPresensiAktif(response.data.data.mdl_presensi_aktif === 1);
       }
@@ -436,7 +413,6 @@ const InfoAcara = () => {
     } catch (error) {
       console.error(error.response?.data || error.message);
 
-      // Rollback ke status lama jika gagal
       setPresensiAktif(oldStatus);
 
       const errorMsg =
@@ -445,7 +421,6 @@ const InfoAcara = () => {
     }
   };
 
-  // ✅ UPDATE: Fungsi utama untuk menyimpan dengan status tertentu
   const handleSave = async (targetStatus) => {
     if (!id) {
       showPopup("error", "Error", "ID acara tidak ditemukan");
@@ -458,7 +433,7 @@ const InfoAcara = () => {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append("_method", "PUT");
-      formDataToSend.append("mdl_status", targetStatus); // draft atau active
+      formDataToSend.append("mdl_status", targetStatus);
 
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "mdl_kode_qr") return;
@@ -525,31 +500,6 @@ const InfoAcara = () => {
     }
   };
 
-  const handleDownloadQR = () => {
-    const canvas = document.querySelector("canvas");
-    if (!canvas) {
-      showPopup("warning", "Peringatan", "QR Code belum tersedia");
-      return;
-    }
-    const url = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `QR-${formData.mdl_kode_qr || "event"}.png`;
-    link.click();
-    showPopup("success", "Berhasil", "QR Code berhasil diunduh");
-  };
-
-  const breadcrumbItems = [
-    { label: "Dashboard", link: "/admin" },
-    { label: "Acara", link: "/admin/events" },
-    { label: "Informasi Acara", link: `/admin/event/${id}` },
-    {
-      label: formData.mdl_nama || "Detail Acara",
-      link: `/admin/events/detail/${id}`,
-    },
-    { label: "Edit Acara" },
-  ];
-
   const statusField = [
     {
       label: "Tanggal Mulai Pendaftaran",
@@ -613,8 +563,7 @@ const InfoAcara = () => {
                 Menampilkan halaman detail acara {formData.mdl_nama}
               </Typography>
             </div>
-
-            {/* ✅ TOMBOL SIMPAN DRAFT & PUBLISH */}
+            
             <div className="flex items-start gap-3">
               <Button
                 variant="secondary"
@@ -624,31 +573,6 @@ const InfoAcara = () => {
                 {isLoading ? "Menyimpan..." : "Simpan Draft"}
               </Button>
               
-              {/* <button
-                onClick={() => setShowConfirmModal(true)}
-                disabled={isLoading}
-                className="px-8 py-2 cursor-pointer rounded-2xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isLoading && (
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                )}
-                {isLoading ? "Menyimpan..." : "Publish"}
-              </button> */}
               <Button
                 variant="primary"
                 onClick={() => setShowConfirmModal(true)}

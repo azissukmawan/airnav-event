@@ -1,17 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../../components/button";
-import { Menu as MenuIcon, X, User } from "lucide-react";
+import { Menu as MenuIcon, X } from "lucide-react";
 
 export default function Header({ menuItems = [] }) {
-  // default ke array kosong
   const [menuOpen, setMenuOpen] = useState(false);
   const [show, setShow] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const role = localStorage.getItem("role");
 
-  // Cek Login
   const token = localStorage.getItem("token");
   const [loggedIn, setLoggedIn] = useState(!!token);
 
@@ -59,7 +57,6 @@ export default function Header({ menuItems = [] }) {
         </Link>
       </div>
 
-      {/* Menu desktop */}
       <nav className="hidden md:flex items-center gap-6 text-gray-600">
         {Array.isArray(menuItems) &&
           menuItems.map((item) => {
@@ -86,7 +83,6 @@ export default function Header({ menuItems = [] }) {
           })}
       </nav>
 
-      {/* Tombol desktop */}
       <div className="hidden md:flex items-center gap-3">
         {loggedIn ? (
           role === "admin" || role === "superadmin" ? (
@@ -110,7 +106,6 @@ export default function Header({ menuItems = [] }) {
         )}
       </div>
 
-      {/* Tombol mobile menu */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
         className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -122,7 +117,6 @@ export default function Header({ menuItems = [] }) {
         )}
       </button>
 
-      {/* Menu mobile */}
       {menuOpen && (
         <div className="absolute top-full left-0 w-full bg-white shadow-lg md:hidden z-50 border-t">
           <nav className="flex flex-col items-center gap-4 py-6">

@@ -1,19 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { ChevronDown, Maximize2, X } from "lucide-react";
-
-// ============================================
-// COMPONENT TERPISAH - QRFullscreen.jsx
-// ============================================
-// Copy component ini ke file baru: QRFullscreen.jsx
-// Import: import QRFullscreen from './QRFullscreen';
 
 export const QRFullscreen = ({ qrValue, eventTitle, sesi, onClose }) => {
   if (!qrValue) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4">
-      {/* Tombol Close */}
       <button
         onClick={onClose}
         className="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors z-10"
@@ -22,9 +15,7 @@ export const QRFullscreen = ({ qrValue, eventTitle, sesi, onClose }) => {
         <X size={36} strokeWidth={2} />
       </button>
 
-      {/* Konten Fullscreen */}
       <div className="flex flex-col items-center gap-8 animate-fadeIn">
-        {/* QR Code Container */}
         <div className="bg-white p-10 rounded-3xl shadow-2xl">
           <QRCodeCanvas
             value={qrValue}
@@ -35,8 +26,6 @@ export const QRFullscreen = ({ qrValue, eventTitle, sesi, onClose }) => {
             includeMargin={true}
           />
         </div>
-
-        {/* Info Text */}
         <div className="text-center text-white space-y-3">
           <h2 className="text-4xl font-bold tracking-tight">{eventTitle}</h2>
           {sesi && (
@@ -53,11 +42,6 @@ export const QRFullscreen = ({ qrValue, eventTitle, sesi, onClose }) => {
   );
 };
 
-// ============================================
-// COMPONENT UTAMA - Layout Event Detail (TIDAK DIUBAH)
-// ============================================
-
-// Component Typography (mock)
 const Typography = ({ type, weight, className, children }) => {
   const styles = {
     body: "text-base",
@@ -84,7 +68,6 @@ const ImprovedQRLayout = () => {
   const [hari, setHari] = useState("");
   const [loadingEvent] = useState(false);
 
-  // Mock data
   const eventData = {
     mdl_kode_qr: "https://example.com/event/123",
     mdl_nama: "Workshop ReactJS Advanced",
@@ -96,7 +79,6 @@ const ImprovedQRLayout = () => {
 
   const handleFilter = (currentHari, newSesi) => {
     setHari(newSesi);
-    console.log("Filter:", currentHari, newSesi);
   };
 
   const handleDownloadQR = () => {
@@ -112,7 +94,6 @@ const ImprovedQRLayout = () => {
 
   return (
     <div className="ml-25">
-      {/* LAYOUT ASLI - TIDAK DIUBAH */}
       <div className="flex-1">
         {!loadingEvent && eventData && (
           <div className="flex flex-wrap gap-3 w-fit rounded-2xl">
@@ -128,7 +109,6 @@ const ImprovedQRLayout = () => {
                       level="H"
                       includeMargin={true}
                     />
-                    {/* TOMBOL FULLSCREEN - TAMBAHAN */}
                     <button
                       onClick={() => setShowFullscreen(true)}
                       className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-lg p-2 shadow-lg hover:bg-blue-700 transition-all hover:scale-110"
@@ -180,7 +160,6 @@ const ImprovedQRLayout = () => {
                 </span>
               </div>
 
-              {/* === PILIH SESI === */}
               <div className="flex-1 flex flex-col mb-3 relative w-30">
                 <label className="font-semibold text-gray-700 mb-1"></label>
 
@@ -206,7 +185,6 @@ const ImprovedQRLayout = () => {
           </div>
         )}
 
-        {/* === SERTIFIKAT === */}
         <button
           onClick={() => setShowCreateSertif(true)}
           className="mt-8 ml-7 px-15 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-80"
@@ -215,7 +193,6 @@ const ImprovedQRLayout = () => {
         </button>
       </div>
 
-      {/* FULLSCREEN QR MODAL - COMPONENT TERPISAH */}
       {showFullscreen && (
         <QRFullscreen
           qrValue={eventData.mdl_kode_qr}
@@ -225,7 +202,6 @@ const ImprovedQRLayout = () => {
         />
       )}
 
-      {/* Mock Certificate Modal */}
       {showCreateSertif && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-md w-full">

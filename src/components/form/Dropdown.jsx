@@ -22,7 +22,7 @@ export const Dropdown = ({
   label = "Select option",
   options = [],
   variant = "primary",
-  type = "basic", // "basic" | "search"
+  type = "basic",
   className = "",
   onSelect,
   value,

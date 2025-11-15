@@ -93,7 +93,6 @@ const Scanner = ({ isOpen, onClose, onScanSuccess, activityTitle }) => {
       try {
         await html5QrCodeRef.current.stop();
         html5QrCodeRef.current.clear();
-        console.log("Kamera berhasil dimatikan");
       } catch (err) {
         console.error("Error saat menghentikan kamera:", err);
       } finally {

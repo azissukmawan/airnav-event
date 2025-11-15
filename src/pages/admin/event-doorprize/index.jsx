@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
 import { useWindowSize } from "react-use";
 import { Wheel } from "react-custom-roulette";
@@ -34,7 +34,6 @@ export default function EventWheel() {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [winnerToCancel, setWinnerToCancel] = useState(null);
 
-  // Hanya peserta yang hadir tapi belum menang
   const wheelData = data.filter(
     (p) =>
       !winners.some(
@@ -68,7 +67,6 @@ export default function EventWheel() {
 
       const removedId = response.data.data.removed_winner.id;
 
-      // pastikan filter pakai id peserta, bukan event id
       setWinners((prev) => prev.filter((w) => w.id !== removedId));
       setConfirmModalOpen(false);
       setWinnerToCancel(null);
@@ -118,21 +116,17 @@ export default function EventWheel() {
           }),
         ]);
 
-        // PARSE DATA BARU SESUAI STRUKTUR
         const participantsData = participantsRes.data?.data || {};
         const metaData = participantsRes.data?.meta || {};
 
-        // Ambil hari dan sesi terakhir dari meta
         const lastDate =
           metaData.unique_dates?.[metaData.unique_dates.length - 1];
         const lastSession =
           metaData.unique_sessions?.[metaData.unique_sessions.length - 1];
 
-        // Cari hari terakhir di data
         const hariKeys = Object.keys(participantsData);
         const lastHari = hariKeys[hariKeys.length - 1] || "";
 
-        // Cari sesi terakhir di hari terakhir
         let lastSesi = "";
         let participantsList = [];
 
@@ -148,7 +142,6 @@ export default function EventWheel() {
         setCurrentHari(lastHari);
         setCurrentSesi(lastSesi);
 
-        // Filter peserta yang hadir
         const hadirOnly = participantsList.filter((p) => {
           return (
             p.status === "Hadir" ||
@@ -158,7 +151,6 @@ export default function EventWheel() {
 
         setData(hadirOnly.map((p) => ({ option: p.nama, id: p.id })));
 
-        // Parse winners
         let winnersData = [];
         if (winnersRes.data?.data?.winners) {
           winnersData = winnersRes.data.data.winners;
@@ -204,7 +196,6 @@ export default function EventWheel() {
 
       const winnerFromAPI = response.data.data.winner || response.data.data;
 
-      // Cari index di wheelData
       const selectedIndex = wheelData.findIndex(
         (p) =>
           p.option.toLowerCase().trim() ===
@@ -250,7 +241,6 @@ export default function EventWheel() {
     setTimeout(() => setShowConfetti(false), 6000);
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
@@ -264,7 +254,6 @@ export default function EventWheel() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
@@ -313,7 +302,6 @@ export default function EventWheel() {
           </div>
           <p className="text-gray-500 mt-2">{eventTitle}</p>
 
-          {/* ✅ KETERANGAN SESI DAN HARI */}
           {currentHari && currentSesi && (
             <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg w-fit">
               <span className="text-sm font-medium text-blue-800">

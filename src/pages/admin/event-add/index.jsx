@@ -11,9 +11,8 @@ import axios from "axios";
 
 export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
-  // -------------------
-  const [errors, setErrors] = useState({});
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [errors, setErrors] = useState({});
 
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
@@ -58,7 +57,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // jika yang diubah adalah nama acara, buatkan slug otomatis
     if (name === "mdl_nama") {
       const newSlug = generateSlug(value);
       setFormData({
@@ -77,11 +75,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   const handleFileChange = (e) => {
     const { name, files: selected } = e.target;
     if (selected && selected[0]) {
-      console.log(
-        `📎 File dipilih untuk ${name}:`,
-        selected[0].name,
-        `(${selected[0].size} bytes)`
-      );
       setFiles((prev) => ({ ...prev, [name]: selected[0] }));
     }
   };
@@ -89,7 +82,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isPublishing || isSavingDraft) return; // Prevent double submission
+    if (isPublishing || isSavingDraft) return;
 
     const payloadForValidation = {
       ...formData,
@@ -148,7 +141,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
         "mdl_pendaftaran_selesai",
         formData.mdl_pendaftaran_selesai
       );
-      // convert datetime-local "YYYY-MM-DDTHH:MM" -> "YYYY-MM-DD HH:MM:00"
+
       const toBackendDateTime = (val) => {
         if (!val) return "";
         if (val.includes("T")) return val.replace("T", " ") + ":00";
@@ -171,7 +164,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
       const currentToken = localStorage.getItem("token");
 
       const res = await axios.post(
-        "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
+        `${API_BASE_URL}/admin/events`,
         formDataToSend,
         {
           headers: {
@@ -181,22 +174,17 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
           timeout: 30000,
         }
       );
-
-      console.log("✅ Response sukses:", res.data);
-
       
       showPopup("success", "Berhasil!", "Acara berhasil ditambahkan");
 
-      
       setTimeout(() => {
         setIsPublishing(false);
         onClose();
         if (onSuccess) {onSuccess();}
       }, 1500);
     } catch (err) {
-      console.error("❌ Gagal menambahkan acara:", err);
+      console.error("Gagal menambahkan acara:", err);
 
-      // ✅ GANTI semua alert dengan popup
       if (err.code === "ECONNABORTED") {
         showPopup("error", "Timeout", "Koneksi timeout. Coba lagi.");
       } else if (err.response) {
@@ -217,32 +205,20 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
     } 
   };
 
-  //const [isLoading, setIsLoading] = useState(false);
-
-  // Helper function untuk generate slug dari nama
-  // Fungsi pembuat slug dari nama acara
   const generateSlug = (text) => {
     return text
       .toString()
-      .normalize("NFD") // hapus aksen
-      .replace(/[\u0300-\u036f]/g, "") // hapus tanda aksen latin
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9\s-]/g, "") // hapus karakter selain huruf, angka, spasi, strip
-      .replace(/\s+/g, "-"); // ubah spasi jadi strip
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-");
   };
 
-  // Helper function untuk generate kode acara
   const generateKode = () => {
     const random = Math.floor(Math.random() * 10000);
     return `EVT${random.toString().padStart(4, "0")}`;
-  };
-
-  // Helper function untuk format datetime
-  const formatDateTime = (date, time) => {
-    if (!date) return null;
-    if (!time) time = "00:00";
-    return `${date} ${time}:00`;
   };
 
   const NotificationPopup = () => {
@@ -336,7 +312,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
     );
   };
 
-  // Data dropdown
   const tipeAcaraOptions = [
     { label: "Offline", value: "offline" },
     { label: "Online", value: "online" },
@@ -346,7 +321,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
   const jenisAcaraOptions = [
     { label: "Private", value: "private" },
     { label: "Public", value: "public" },
-    // { label: "Invite Only", value: "invite-only" },
   ];
 
   const footerButtons = (
@@ -368,11 +342,9 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
     </>
   );
 
-  // Handle save as draft (kirim data dan set mdl_status = "draft")
   async function handleSaveDraft() {
     if (isSavingDraft || isPublishing) return;
 
-    // 1) jalankan validasi sama seperti publish
     const payloadForValidation = {
       ...formData,
       mdl_file_acara: files.mdl_file_acara,
@@ -397,7 +369,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
       return;
     }
 
-    // 2) lanjut kirim draft (set loading setelah validasi)
     setIsSavingDraft(true);
     setErrors({});
 
@@ -433,7 +404,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
       const currentToken = localStorage.getItem("token") || sessionStorage.getItem("token");
 
       const res = await axios.post(
-        "https://mediumpurple-swallow-757782.hostingersite.com/api/admin/events",
+        `${API_BASE_URL}/api/admin/events`,
         formDataToSend,
         {
           headers: {
@@ -444,7 +415,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
         }
       );
 
-      console.log("Draft tersimpan:", res.data);
       showPopup("success", "Draft Tersimpan", "Data berhasil disimpan sebagai draft");
       setTimeout(() => {
         onClose();
@@ -453,7 +423,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
         }
       }, 1000);
     } catch (err) {
-      console.error("Gagal simpan draft:", err);
       if (err.response?.data?.errors) {
         setErrors(err.response.data.errors);
         showPopup("error", "Validasi Gagal", "Periksa kembali form Anda");
@@ -467,12 +436,12 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
 
   const openDatePicker = (ref) => {
     if (!ref?.current) return;
-    // modern browsers (Chrome) support showPicker()
+
     if (typeof ref.current.showPicker === "function") {
       ref.current.showPicker();
       return;
     }
-    // fallback: focus / click to open native picker
+
     try {
       ref.current.focus();
       ref.current.click();
@@ -483,10 +452,8 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
 
   
   return (
-
     <>
-    
-          <NotificationPopup key="add-event-notification" />
+    <NotificationPopup key="add-event-notification" />
     <AnimatePresence>
       {isOpen && (
           <motion.div
@@ -715,7 +682,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                     </div>
                   </div>
 
-                  {/* Tanggal & Waktu Acara (gabungan datetime-local) */}
+                  {/* Tanggal & Waktu Acara */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Periode Acara<span className="text-red-500">*</span>
@@ -833,39 +800,6 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
                       </p>
                     )}
                   </div>
-                  {/* FIELD SERTIFIKAT DIHAPUS SEMENTARA
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Template Sertifikat (JPG, JPEG, PNG)
-                    </label>
-                    <input
-                      name="mdl_template_sertifikat"
-                      type="file"
-                      accept=".jpg,.jpeg,.png"
-                      onChange={handleFileChange}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2
-      file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0
-      file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-600
-      hover:file:bg-blue-100 focus:outline-none"
-                    />
-
-                    <p className="text-gray-500 text-sm mt-1">
-                      <a
-                        href="/format-template-sertifikat.jpg"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline"
-                      >
-                        Lihat template sertifikat
-                      </a>
-                    </p>
-
-                    {errors.mdl_template_sertifikat && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.mdl_template_sertifikat}
-                      </p>
-                    )}
-                  </div> */}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -940,7 +874,7 @@ export default function AddEvent({ isOpen, onClose, token, onSuccess }) {
             </Modal>
           </motion.div>
       )}
-{/* Hide native right-side calendar icon and remove default appearance */}
+
       <style>{`
         /* Remove native calendar/picker icon on date and datetime-local inputs (Chrome/WebKit) */
         input[type="date"]::-webkit-calendar-picker-indicator,

@@ -23,7 +23,6 @@ export default function Register() {
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
 
-  // --- Fungsi validasi password ---
   const validatePassword = (password) => {
     const rules = [
       { test: /.{8,}/, message: "Minimal 8 karakter." },
@@ -40,7 +39,6 @@ export default function Register() {
     return "";
   };
 
-  // --- Validasi semua field ---
   const validateForm = () => {
     const newErrors = {};
 

@@ -65,7 +65,7 @@ export default function AdminDashboard() {
       } catch (error) {
         console.error(error);
       } finally {
-        setIsLoading(false); // <-- 3. Set loading jadi false (baik sukses maupun error)
+        setIsLoading(false);
       }
     };
 
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<ChevronsRight />}
-              value={isLoading ? "..." : stats.ongoing} // <-- 4. Tampilkan placeholder
+              value={isLoading ? "..." : stats.ongoing}
               title="Acara Sedang Berlangsung"
               iconBgColor="bg-yellow-100"
               iconColor="text-yellow-600"
@@ -127,7 +127,7 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-[250px]">
             <SummaryCard
               icon={<XCircle />}
-              value={isLoading ? "..." : stats.closed} // <-- 4. Tampilkan placeholder
+              value={isLoading ? "..." : stats.closed}
               title="Acara Berakhir"
               iconBgColor="bg-red-100"
               iconColor="text-red-600"

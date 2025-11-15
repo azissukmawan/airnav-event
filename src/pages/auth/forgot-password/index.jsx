@@ -16,14 +16,12 @@ export default function ForgotPassword() {
     setError("");
     setSuccess("");
 
-    // Validasi email kosong
     if (!email.trim()) {
       setError("Email wajib diisi!");
       setLoading(false);
       return;
     }
 
-    // Validasi format email
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Format email tidak valid!");
       setLoading(false);
@@ -37,7 +35,7 @@ export default function ForgotPassword() {
 
       if (response.data.success || response.status === 200) {
         setSuccess(`Instruksi reset password telah dikirim ke ${email}`);
-        setEmail(""); // Kosongkan input
+        setEmail("");
       } else {
         setError("Gagal mengirim email. Silakan coba lagi.");
       }
@@ -89,14 +87,12 @@ export default function ForgotPassword() {
                 reset kata sandi.
               </p>
 
-              {/* Pesan Error */}
               {error && (
                 <div className="w-full max-w-sm mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {/* Pesan Success */}
               {success && (
                 <div className="w-full max-w-sm mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-600">{success}</p>
@@ -141,7 +137,6 @@ export default function ForgotPassword() {
                 </Button>
               </form>
 
-              {/* Password Tips */}
               <div className="w-full max-w-sm border border-dashed border-red-300 bg-red-50 p-4 rounded-lg text-left mt-6">
                 <div className="flex items-start">
                   <AlertTriangle

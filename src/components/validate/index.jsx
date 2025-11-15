@@ -1,4 +1,3 @@
-// src/utils/validateEventForm.js
 export default function AddValidate(formData) {
   const errors = {};
 

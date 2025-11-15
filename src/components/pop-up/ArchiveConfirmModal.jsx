@@ -7,9 +7,8 @@ const ArchiveConfirmModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    setIsArchived(true); // tampilkan pesan sukses
-    onConfirm?.(); // jalankan callback jika ada
-    // otomatis tutup popup setelah 1.5 detik
+    setIsArchived(true);
+    onConfirm?.();
     setTimeout(() => {
       setIsArchived(false);
       onClose();
@@ -21,7 +20,6 @@ const ArchiveConfirmModal = ({ isOpen, onClose, onConfirm }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm 
                  animate-fade-in p-4 transition-all duration-300"
     >
-      {/* CARD POPUP */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative text-center animate-scale-in">
         {!isArchived ? (
           <>
@@ -57,7 +55,6 @@ const ArchiveConfirmModal = ({ isOpen, onClose, onConfirm }) => {
             </div>
           </>
         ) : (
-          // ✅ Pesan sukses
           <div className="flex flex-col items-center justify-center py-6 animate-scale-in">
             <CheckCircle2 size={60} className="text-green-500 mb-3" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -70,7 +67,6 @@ const ArchiveConfirmModal = ({ isOpen, onClose, onConfirm }) => {
         )}
       </div>
 
-      {/* Animasi */}
       <style jsx>{`
         @keyframes fade-in {
           from {

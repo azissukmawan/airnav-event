@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
 import Table from "../../../components/table";
@@ -12,18 +12,6 @@ import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/pop-up/Delete";
 import { Button } from "../../../components/button";
 
-// === DETEKSI REFRESH DARI HALAMAN DETAIL ===
-
-// const shouldRefresh = location.state?.refreshOnFinish;
-
-// useEffect(() => {
-//   if (shouldRefresh) {
-//     fetchEvents(); // refresh ulang data event
-//     window.history.replaceState({}, document.title);
-//   }
-// }, [shouldRefresh]);
-
-// === KOMPONEN TABS BARU ===
 const EventTabs = ({ tabs, activeTab, onTabChange }) => {
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -47,7 +35,6 @@ const EventTabs = ({ tabs, activeTab, onTabChange }) => {
     </div>
   );
 };
-// === END KOMPONEN TABS ===
 
 const AdminEvent = () => {
   const [eventData, setEventData] = useState([]);
@@ -61,13 +48,10 @@ const AdminEvent = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  // sorting state
   const [sortField, setSortField] = useState(null);
   const [sortOrder, setSortOrder] = useState("asc");
 
-  // === STATE BARU UNTUK TABS ===
   const [activeTab, setActiveTab] = useState("Semua");
-  // Daftar tab sesuai desain
   const tabItems = ["Semua", "Draft", "Published", "Selesai", "Arsip"];
 
   const token = localStorage.getItem("token");
@@ -97,7 +81,6 @@ const AdminEvent = () => {
   };
 
   useEffect(() => {
-    // --- PERUBAHAN 2: Panggil fungsinya di sini ---
     fetchEvents();
   }, [token]);
 
@@ -106,13 +89,11 @@ const AdminEvent = () => {
     { label: "Daftar Acara", link: "/admin/events" },
   ];
 
-  // === SEARCH ===
   const handleSearchChange = (value) => {
     setSearch(value);
     setCurrentPage(1);
   };
 
-  // === SORT (Nama Acara & Status) ===
   const handleSort = (field) => {
     let order = sortOrder;
     if (sortField === field) {
@@ -128,7 +109,6 @@ const AdminEvent = () => {
       const aValue = a[field];
       const bValue = b[field];
 
-      // jika field berupa tanggal
       if (
         aValue &&
         bValue &&
@@ -140,7 +120,6 @@ const AdminEvent = () => {
           : new Date(bValue) - new Date(aValue);
       }
 
-      // default (string/angka biasa)
       if (aValue < bValue) return order === "asc" ? -1 : 1;
       if (aValue > bValue) return order === "asc" ? 1 : -1;
       return 0;
@@ -149,47 +128,11 @@ const AdminEvent = () => {
     setEventData(sortedData);
   };
 
-  // STATUS ACARA
-  // const getEventStatus = (startDate, endDate, mdl_status) => {
-  //   const now = new Date();
-  //   const start = new Date(startDate);
-  //   const end = new Date(endDate);
-
-  //   // Jika status sudah "closed", tampilkan langsung "Selesai"
-  //   if (mdl_status === "closed") {
-  //     return {
-  //       label: "Selesai",
-  //       color: "bg-gray-300 text-gray-800",
-  //     };
-  //   }
-
-  //   // Kalau belum closed, baru cek berdasarkan tanggal
-  //   if (now < start) {
-  //     return {
-  //       label: "Belum Dimulai",
-  //       color: "bg-yellow-100 text-yellow-800",
-  //     };
-  //   }
-
-  //   if (now >= start && now <= end) {
-  //     return {
-  //       label: "Berlangsung",
-  //       color: "bg-green-100 text-green-800",
-  //     };
-  //   }
-
-  //   // Kalau sudah lewat tanggal selesai dan belum diubah jadi closed
-  //   return {
-  //     label: "Sudah Berakhir",
-  //     color: "bg-red-100 text-red-800",
-  //   };
-  // };
   const getEventStatus = (startDate, endDate, mdl_status) => {
     const now = new Date();
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // 🌕 Draft → selalu "Segera Hadir"
     if (mdl_status === "draft") {
       return {
         label: "Segera Hadir",
@@ -197,7 +140,6 @@ const AdminEvent = () => {
       };
     }
 
-    // 🟣 Closed → "Selesai"
     if (mdl_status === "closed") {
       return {
         label: "Selesai",
@@ -205,7 +147,6 @@ const AdminEvent = () => {
       };
     }
 
-    // ⚫ Archived → "Diarsipkan"
     if (mdl_status === "archived") {
       return {
         label: "Selesai",
@@ -213,7 +154,6 @@ const AdminEvent = () => {
       };
     }
 
-    // 🟢 Active → berdasarkan tanggal
     if (mdl_status === "active") {
       if (now < start) {
         return {
@@ -229,7 +169,6 @@ const AdminEvent = () => {
         };
       }
 
-      // lewat tanggal tapi belum ditutup manual
       if (now > end) {
         return {
           label: "Selesai",
@@ -238,72 +177,26 @@ const AdminEvent = () => {
       }
     }
 
-    // Default fallback
     return {
       label: "Tidak Diketahui",
       color: "bg-gray-100 text-gray-800",
     };
   };
 
-  // const getEventStatus = (startDate, endDate, mdl_status) => {
-  //   const now = new Date();
-  //   const start = new Date(startDate);
-  //   const end = new Date(endDate);
-
-  //   if (mdl_status === "closed") {
-  //     return { label: "Selesai", color: "bg-gray-300 text-gray-800" };
-  //   }
-
-  //   if (now < start) {
-  //     return { label: "Belum Dimulai", color: "bg-yellow-100 text-yellow-800" };
-  //   }
-
-  //   if (now >= start && now <= end) {
-  //     return { label: "Berlangsung", color: "bg-green-100 text-green-800" };
-  //   }
-
-  //   return { label: "Selesai", color: "bg-red-100 text-red-800" };
-  // };
-
-  // === Fungsi Hitung Status Berdasarkan Tanggal ===
-  // const getEventStatus = (start, end) => {
-  //   const now = new Date();
-  //   const startDate = new Date(start);
-  //   const endDate = new Date(end);
-
-  //   if (!start || !end)
-  //     return { label: "Tidak Diketahui", color: "bg-gray-100 text-gray-700" };
-
-  //   if (now >= startDate && now <= endDate) {
-  //     return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
-  //   } else if (now < startDate) {
-  //     return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
-  //   } else {
-  //     return { label: "Selesai", color: "bg-red-100 text-red-700" };
-  //   }
-  // };
-
-  // === FILTER (Tab + Search) + SORT ===
   const filteredData = eventData
-    // --- TAHAP 1: FILTER BERDASARKAN TAB ---
     .filter((item) => {
-      // Jika tab "Semua", tampilkan semua data
       if (activeTab === "Semua") {
         return true;
       }
 
-      // Ambil status publikasi dari item, ubah ke lowercase agar mudah dicocokkan
       const itemStatus = (item.mdl_status || "").toString().toLowerCase();
       const tabKey = activeTab.toLowerCase();
-
-      // === LOGIKA FILTER PER TAB ===
 
       if (tabKey === "draft") {
         return itemStatus.includes("draft");
       }
 
       if (tabKey === "published") {
-        // cocokkan untuk event aktif / dipublish
         return (
           itemStatus.includes("published") ||
           itemStatus.includes("active") ||
@@ -312,7 +205,6 @@ const AdminEvent = () => {
       }
 
       if (tabKey === "selesai") {
-        // cocokkan untuk event yang selesai / ditutup
         return (
           itemStatus.includes("closed") ||
           itemStatus.includes("done") ||
@@ -321,7 +213,6 @@ const AdminEvent = () => {
       }
 
       if (tabKey === "arsip") {
-        // cocokkan semua variasi status arsip
         return (
           itemStatus.includes("archive") ||
           itemStatus.includes("archive") ||
@@ -331,14 +222,11 @@ const AdminEvent = () => {
         );
       }
 
-      // default fallback
       return itemStatus.includes(tabKey);
     })
-    // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
     .filter((item) =>
       item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
     )
-    // --- TAHAP 3: SORTING ---
     .sort((a, b) => {
       if (!sortField) return 0;
 
@@ -364,78 +252,12 @@ const AdminEvent = () => {
       return 0;
     });
 
-  // const filteredData = eventData
-  //   // --- TAHAP 1: FILTER BERDASARKAN TAB ---
-  //   .filter((item) => {
-  //     // Jika tab "Semua", tampilkan semua data
-  //     if (activeTab === "Semua") {
-  //       return true;
-  //     }
-
-  //     // Ambil status publikasi dari item, ubah ke lowercase agar mudah dicocokkan
-  //     const itemStatus = (item.mdl_status || "").toString().toLowerCase();
-  //     const tabKey = activeTab.toLowerCase();
-
-  //     // Logika pencocokan (disesuaikan dengan logika di kolom "Publikasi" Anda)
-  //     if (tabKey === "publish") {
-  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-  //       return itemStatus.includes("active") || itemStatus.includes("active");
-  //     }
-  //     if (tabKey === "archive") {
-  //       // Tab "Archive" mungkin cocok dengan data "archive" atau "archived"
-  //       return (
-  //         itemStatus.includes("archive") || itemStatus.includes("archived")
-  //       );
-  //     }
-  //     if (tabKey === "selesai") {
-  //       // Asumsi: Tab "Selesai" cocok dengan data "closed"
-  //       return itemStatus.includes("closed");
-  //     }
-
-  //     // Untuk tab lain (Draft, Active, Publish), gunakan pencocokan langsung
-  //     // .includes() lebih aman daripada === (misal: "active" akan cocok dengan "active")
-  //     return itemStatus.includes(tabKey);
-  //   })
-  //   // --- TAHAP 2: FILTER BERDASARKAN SEARCH (NAMA ACARA) ---
-  //   .filter((item) =>
-  //     item.mdl_nama?.toLowerCase().includes(search.toLowerCase())
-  //   )
-  //   // --- TAHAP 3: SORTING ---
-  //   .sort((a, b) => {
-  //     if (!sortField) return 0;
-
-  //     const aVal = a[sortField] || "";
-  //     const bVal = b[sortField] || "";
-
-  //     // Pindahkan logika sorting tanggal Anda yang lebih baik dari handleSort ke sini
-  //     if (
-  //       aVal &&
-  //       bVal &&
-  //       !isNaN(Date.parse(aVal)) &&
-  //       !isNaN(Date.parse(bVal))
-  //     ) {
-  //       return sortOrder === "asc"
-  //         ? new Date(aVal) - new Date(bVal)
-  //         : new Date(bVal) - new Date(aVal);
-  //     }
-
-  //     // Fallback untuk string/angka
-  //     if (typeof aVal === "string" && typeof bVal === "string") {
-  //       return sortOrder === "asc"
-  //         ? aVal.localeCompare(bVal)
-  //         : bVal.localeCompare(aVal);
-  //     }
-  //     return 0;
-  //   });
-
-  // === PAGINATION ===
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = filteredData.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
-  // === DELETE ===
   const handleDelete = async () => {
     try {
       await axios.delete(`${API_BASE_URL}/admin/events/${selectedEventId}`, {
@@ -451,7 +273,6 @@ const AdminEvent = () => {
     }
   };
 
-  // === TABLE COLUMNS ===
   const columns = [
     {
       header: "No",
@@ -461,7 +282,6 @@ const AdminEvent = () => {
       },
       className: "w-[4%] text-center",
     },
-    // NAMA
     {
       header: (
         <div
@@ -478,7 +298,6 @@ const AdminEvent = () => {
       ),
       className: "w-[21%] text-left",
     },
-    // TANGGAL DAFTAR
     {
       header: (
         <div
@@ -495,22 +314,11 @@ const AdminEvent = () => {
 
       className: "w-[13%] text-left",
     },
-
-    // {
-    //   header: "Pendaftaran",
-    //   accessor: (row) =>
-    //     row.mdl_pendaftaran_mulai
-    //       ? new Date(row.mdl_pendaftaran_mulai).toLocaleDateString("id-ID")
-    //       : "-",
-    //   className: "w-[10%] whitespace-nowrap text-left",
-    // },
-    // JENIS ACARA
     {
       header: "Jenis Acara",
       accessor: (row) => {
         const val = row.mdl_kategori || "";
         if (!val) return "-";
-        // Capitalize first letter of each word
         return val
           .toString()
           .split(" ")
@@ -521,7 +329,6 @@ const AdminEvent = () => {
       },
       className: "w-[10%] whitespace-nowrap text-left",
     },
-    // TANGGAL ACARA
     {
       header: (
         <div
@@ -538,7 +345,6 @@ const AdminEvent = () => {
 
       className: "w-[14%] text-left",
     },
-    // STATUS
     {
       header: (
         <div
@@ -565,7 +371,6 @@ const AdminEvent = () => {
       },
       className: "w-[11%] text-left",
     },
-    // PUBLIKASI
     {
       header: (
         <div
@@ -579,7 +384,6 @@ const AdminEvent = () => {
         const raw = row.mdl_status ?? "";
         if (!raw) return "-";
 
-        // Map status values to display text
         let displayText = raw.toString();
         if (displayText.toLowerCase().includes("active")) {
           displayText = "Published";
@@ -617,13 +421,11 @@ const AdminEvent = () => {
       },
       className: "w-[11%] text-left",
     },
-    // AKSI
     {
       header: "Aksi",
       accessor: (row) => {
         const status = (row.mdl_status || "").toLowerCase();
         const disabledKeys = status.includes("arsip");
-        //const isPublished = disabledKeys.some((k) => status.includes(k));
 
         return (
           <div className="flex items-center gap-3">
@@ -635,54 +437,19 @@ const AdminEvent = () => {
                 <FiEye size={18} />
               </button>
             </Link>
-            {/* <Link
-              to={`/admin/event/${row.id}`}
-              state={{ onSuccess: fetchEvents }} // ✅ kirim callback re-fetch
-            >
-              <button
-                className="text-blue-500 hover:text-blue-700"
-                title="Lihat"
-              >
-                <FiEye size={18} />
-              </button>
-            </Link> */}
-
-            {/* <Link
-              to={`/admin/event/${row.id}`}
-              state={{ onSuccess: fetchEvents }}
-            >
-              <button
-                className="text-blue-500 hover:text-blue-700"
-                title="Lihat"
-              >
-                <FiEye size={18} />
-              </button>
-            </Link> */}
-
-            {/* {isPublished ? (
-              // Disabled edit button for published events
-              <button
-                className="text-gray-400 cursor-not-allowed mb-1"
-                title="Tidak dapat mengedit acara yang sudah dipublish"
-                disabled
-              >
-                <FiEdit size={18} />
-              </button>
-            ) : ( */}
-            {/* // Normal edit button for non-published events */}
             <Link
               to={`/admin/event/edit/${row.id}`}
               className={disabledKeys ? "pointer-events-none" : ""}
             >
               <button
                 className="text-yellow-500 hover:text-yellow-700 
-                           disabled:text-gray-400 disabled:cursor-not-allowed" // 4. Tambah style disabled
+                           disabled:text-gray-400 disabled:cursor-not-allowed"
                 title={
                   disabledKeys
                     ? "Tidak dapat mengedit acara yang diarsip"
                     : "Edit"
-                } // 5. Ubah title saat disabled
-                disabled={disabledKeys} // 6. Logika disabled
+                }
+                disabled={disabledKeys}
               >
                 <FiEdit size={18} />
               </button>
@@ -720,7 +487,6 @@ const AdminEvent = () => {
             </h4>
           </div>
 
-          {/* Search + Button */}
           <div className="flex items-center space-x-4">
             <div className="w-120">
               <Search
@@ -737,19 +503,18 @@ const AdminEvent = () => {
             </Button>
           </div>
         </div>
-        {/* === BAGIAN TABS BARU === */}
+
         <div className="mb-6 flex justify-between items-center">
           <EventTabs
             tabs={tabItems}
             activeTab={activeTab}
             onTabChange={(tab) => {
               setActiveTab(tab);
-              setCurrentPage(1); // Reset ke halaman 1 setiap ganti tab
+              setCurrentPage(1);
             }}
           />
         </div>
-        {/* === END BAGIAN TABS === */}
-        {/* Table */}
+
         <section className="bg-white rounded-lg shadow-md p-6">
           {loading ? (
             <p className="text-center text-gray-500">Memuat data...</p>

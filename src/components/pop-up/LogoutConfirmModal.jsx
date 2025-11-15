@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, LogOut, CheckCircle2 } from "lucide-react";
 
 const LogoutConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
@@ -8,7 +8,7 @@ const LogoutConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
 
   const handleConfirm = async () => {
     setIsLoggedOut(true);
-    onConfirm?.(); // jalankan logout dari parent
+    onConfirm?.();
     setTimeout(() => {
       setIsLoggedOut(false);
       onClose();

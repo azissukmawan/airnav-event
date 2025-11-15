@@ -31,7 +31,6 @@ export default function CardLanding({
     ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
     : "";
 
-  // Format tanggal seperti di Card lama
   const formatDateTime = (dateString) => {
     if (!dateString) return "-";
 
@@ -129,7 +128,6 @@ export default function CardLanding({
       onClick={handleClick}
       className="w-full min-w-0 bg-white rounded-2xl shadow border border-gray-200 overflow-hidden hover:shadow-lg hover:scale-[1.01] transition-all cursor-pointer flex flex-col h-full font-poppins"
     >
-      {/* Gambar & status */}
       <div className="relative">
         <img
           src={image || "/no-image.jpg"}
@@ -146,7 +144,6 @@ export default function CardLanding({
         </span>
       </div>
 
-      {/* Konten */}
       <div className="p-5 space-y-3 flex flex-col justify-between">
         <Typography
           type="heading6"
@@ -156,7 +153,6 @@ export default function CardLanding({
           {title}
         </Typography>
 
-        {/* Info acara */}
         <div className="flex flex-wrap gap-2 text-sm text-left font-poppins">
           {[
             {

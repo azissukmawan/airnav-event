@@ -24,8 +24,7 @@ const FileUpload = ({
       }
 
       setFile(selectedFile);
-      
-      // Preview
+
       if (selectedFile.type.startsWith('image/') && showPreview) {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -74,7 +73,6 @@ const FileUpload = ({
       ) : (
         <div className="bg-typo-white2 rounded-md p-4 border border-typo-outline">
           {preview ? (
-            // Preview
             <div className="relative">
               <img 
                 src={preview} 

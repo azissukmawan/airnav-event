@@ -10,7 +10,6 @@ import Breadcrumb from "../../../components/breadcrumb";
 import DeletePopup from "../../../components/pop-up/Delete";
 import { Button } from "../../../components/button";
 
-// Tabs
 const EventTabs = ({ tabs, activeTab, onTabChange }) => {
   return (
     <div className="flex items-center gap-2 flex-wrap">

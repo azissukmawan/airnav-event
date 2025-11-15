@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Award, ArrowUpDown, Download } from "lucide-react";
 import Pagination from "../../pagination";
 import { Button } from "../../button";
@@ -39,7 +39,6 @@ const TableParticipants = ({
       ),
     [winners]
   );
-  // === STATUS BY ADMIN ===
   const handleUpdateStatus = async (participant, newStatus) => {
     try {
       setUpdatingId(participant.id);
@@ -208,7 +207,6 @@ const TableParticipants = ({
                     <td className="px-5 py-3 text-center text-gray-700 font-medium w-[60px]">
                       {startIndex + i + 1}
                     </td>
-                    {/* === NAMA === */}
                     <td
                       onClick={() => onPreview(p)}
                       title={p.nama}
@@ -216,18 +214,15 @@ const TableParticipants = ({
                     >
                       {p.nama}
                     </td>
-                    {/* === NO WHATSAPP === */}
                     <td className="px-5 py-3 text-gray-700 w-[150px] truncate">
                       {p.no_whatsapp}
                     </td>
-                    {/* === EMAIL === */}
                     <td
                       title={p.email}
                       className="px-5 py-3 text-gray-700 w-[200px] truncate"
                     >
                       {p.email}
                     </td>
-                    {/* === FOTO PROFILE === */}
                     <td className="px-5 py-3 w-[90px]">
                       <div className="w-11 h-11 rounded-lg overflow-hidden border border-gray-200 bg-gray-200 flex items-center justify-center">
                         {p.photo_profile ? (
@@ -243,7 +238,6 @@ const TableParticipants = ({
                         )}
                       </div>
                     </td>
-                    {/* === TIPE ACARA === */}
                     {showTypeColumn && (
                       <td className="px-5 py-3 text-gray-700 w-[100px] capitalize">
                         {p.type || "Offline"}
@@ -288,7 +282,6 @@ const TableParticipants = ({
                         </div>
                       )}
                     </td>
-                    {/* === SERTIFIKAT === */}
                     <td className="px-5 py-3 text-left w-[120px]">
                       {bisaDownload ? (
                         <Button
@@ -310,7 +303,6 @@ const TableParticipants = ({
                         </Button>
                       )}
                     </td>
-                    {/* === DOORPRIZE === */}
                     {doorprizeActive && (
                       <td className="px-5 py-3 mr-1 text-center w-[100px]">
                         {isWinner ? (

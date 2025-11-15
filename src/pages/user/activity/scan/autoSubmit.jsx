@@ -14,15 +14,12 @@ export default function PresensiAutoSubmit() {
   const [kode, setKode] = useState("");
 
   useEffect(() => {
-    // Ambil kode dari URL
     const parts = window.location.pathname.split("/");
     const kodeFromUrl = parts[parts.length - 1];
 
     if (kodeFromUrl) {
-      // Simpan ke localStorage
       localStorage.setItem("pendingPresensiKode", kodeFromUrl);
       setKode(kodeFromUrl);
-      console.log("Kode presensi disimpan:", kodeFromUrl);
     } else {
       console.warn("Tidak ada kode presensi di URL.");
     }
@@ -33,19 +30,16 @@ export default function PresensiAutoSubmit() {
 
     const token = localStorage.getItem("token");
 
-    // Jika belum login
     if (!token) {
       setLoading(false);
       setModalTitle("Login Diperlukan");
       setErrorMsg("Silakan login terlebih dahulu untuk melakukan presensi.");
       setIsModalOpen(true);
 
-      // Simpan tujuan redirect setelah login
       localStorage.setItem("redirectAfterLogin", `/presensi/${kode}`);
       return;
     }
 
-    // Jika sudah login, kirim presensi otomatis
     const submitPresensi = async () => {
       try {
         const res = await axios.post(

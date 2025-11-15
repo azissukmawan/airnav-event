@@ -100,12 +100,10 @@ export default function CertificatePreview() {
 
         const bgBase64 = await loadWithFallback(templateUrl);
 
-        // Generate dokumen PDF
         const blob = await pdf(
           <Certificate name={name} number={number} background={bgBase64} />
         ).toBlob();
 
-        // Buat URL dan trigger download otomatis
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;

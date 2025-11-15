@@ -52,7 +52,6 @@ export default function Login() {
         localStorage.setItem("role", userData.role?.toLowerCase() || "user");
         if (rememberMe) localStorage.setItem("rememberMe", "true");
 
-        // 🔁 Redirect setelah login
         const pendingKode = localStorage.getItem("pendingPresensiKode");
         const redirectAfterLogin = localStorage.getItem("redirectAfterLogin");
 
@@ -60,7 +59,6 @@ export default function Login() {
           redirectAfterLogin ||
           (pendingKode ? `/presensi/${pendingKode}` : null);
 
-        // Hapus hanya redirectAfterLogin dulu
         if (redirectAfterLogin) localStorage.removeItem("redirectAfterLogin");
 
         if (redirectTo) {
@@ -95,7 +93,6 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-[#eff2f9] p-6">
       <div className="w-full max-w-md md:max-w-5xl bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="grid md:grid-cols-[4fr_5fr]">
-          {/* KIRI: Gambar */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
             style={{ backgroundImage: "url(/loginimage.png)" }}
@@ -115,7 +112,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* KANAN: Form Login */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
             <h2 className="text-2xl font-bold text-center mb-6">Masuk</h2>
             <p className="text-sm text-gray-500 text-center mb-6 -mt-4">

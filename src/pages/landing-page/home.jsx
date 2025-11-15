@@ -12,14 +12,12 @@ export default function Home() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [prevVisibleCount, setPrevVisibleCount] = useState(0);
 
-  // Fetch events
   useEffect(() => {
     setLoading(true);
     fetch(`${API_BASE_URL}/events/all`)
       .then((res) => res.json())
       .then((data) => {
         if (data?.success && Array.isArray(data.data?.events)) {
-          console.log(data.data.events);
           const mappedEvents = data.data.events.map((event) => ({
             id: event.id,
             slug: event.mdl_slug,
@@ -46,17 +44,15 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Load More Button
   const handleLoadMore = () => {
     setLoadingMore(true);
     setPrevVisibleCount(visibleCount);
     setTimeout(() => {
       setVisibleCount((prev) => Math.min(prev + 6, events.length));
       setLoadingMore(false);
-    }, 600); // simulasi loading
+    }, 600);
   };
 
-  // Fade-in animation
   const fadeUp = {
     hidden: { opacity: 0, y: 40 },
     visible: {
@@ -83,7 +79,6 @@ export default function Home() {
 
   return (
     <div>
-      {/* === HERO SECTION === */}
       <section
         className="relative h-[80vh] flex gap-10 items-center justify-between px-8 md:px-28 overflow-hidden mt-16"
         style={{
@@ -127,7 +122,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* === ABOUT SECTION === */}
       <section
         className="bg-blue-50 py-16 px-8 md:px-28 grid md:grid-cols-2 gap-12 items-center"
         id="tentang"
@@ -163,7 +157,6 @@ export default function Home() {
         </FadeInSection>
       </section>
 
-      {/* === EVENTS SECTION === */}
       <section
         className="py-20 px-8 md:px-28 bg-white text-center overflow-hidden gap-10"
         id="acara"
@@ -190,7 +183,6 @@ export default function Home() {
           })}
         </div>
 
-        {/* Load More Button */}
         {visibleCount < events.length && (
           <div className="mt-8 flex justify-center">
             <button
@@ -204,7 +196,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* === SUPPORTED BY SECTION === */}
       <section className="bg-blue-50 py-16 text-center px-4 sm:px-8">
         <FadeInSection delay={0.1}>
           <Typography

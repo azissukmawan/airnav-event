@@ -147,7 +147,6 @@ export default function Audience({ isOpen, onClose, participants = [] }) {
           <Button
             variant="primary"
             onClick={() => {
-              console.log("Peserta dipilih:", selectedIds);
               onClose();
             }}
           >

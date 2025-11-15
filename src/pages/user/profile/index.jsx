@@ -12,7 +12,6 @@ const Profile = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
-  // ✅ PERBAIKAN: Inisialisasi default avatar dulu
   const [profileImage, setProfileImage] = useState("");
 
   const [editFormData, setEditFormData] = useState({
@@ -85,11 +84,9 @@ const Profile = () => {
           profile_photo: null
         });
 
-        // ✅ PERBAIKAN: Set profile image setelah data ada
         if (data.profile_photo) {
           setProfileImage(data.profile_photo);
         } else {
-          // Generate avatar dari nama
           const avatarName = encodeURIComponent(data.name || "User");
           setProfileImage(`https://ui-avatars.com/api/?name=${avatarName}&size=200&background=3b82f6&color=fff&bold=true`);
         }
@@ -135,7 +132,6 @@ const Profile = () => {
         setSuccessMessage("Profile berhasil diperbarui!");
         setProfile(response.data.data);
 
-        // ✅ Update profile image
         if (response.data.data.profile_photo) {
           setProfileImage(response.data.data.profile_photo);
         } else {

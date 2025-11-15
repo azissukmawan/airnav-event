@@ -8,7 +8,7 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
 
   const handleConfirm = async () => {
     setIsFinished(true);
-    onConfirm?.(); // jalankan callback eksternal
+    onConfirm?.();
     setTimeout(() => {
       setIsFinished(false);
       onClose();
@@ -20,7 +20,6 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm 
                  animate-fade-in p-4 transition-all duration-300"
     >
-      {/* CARD POPUP */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative text-center animate-scale-in">
         {!isFinished ? (
           <>
@@ -58,7 +57,6 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
             </div>
           </>
         ) : (
-          // ✅ Pesan sukses
           <div className="flex flex-col items-center justify-center py-6 animate-scale-in">
             <CheckCircle2 size={60} className="text-green-500 mb-3" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -71,7 +69,6 @@ const FinishConfirmModal = ({ isOpen, onClose, onConfirm, isLoading }) => {
         )}
       </div>
 
-      {/* Animasi */}
       <style jsx>{`
         @keyframes fade-in {
           from {

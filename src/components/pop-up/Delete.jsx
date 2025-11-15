@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, CheckCircle } from "lucide-react";
 
 const Delete = ({ isOpen, onClose, onConfirm }) => {
@@ -7,17 +7,16 @@ const Delete = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen && !showSuccess) return null;
 
   const handleConfirm = () => {
-    onConfirm(); // Jalankan aksi hapus dari parent
-    setShowSuccess(true); // Tampilkan popup sukses
+    onConfirm();
+    setShowSuccess(true);
     setTimeout(() => {
-      setShowSuccess(false); // Hilangkan popup sukses setelah 2.5 detik
-      onClose(); // Tutup modal utama
+      setShowSuccess(false);
+      onClose();
     }, 2500);
   };
 
   return (
     <>
-      {/* Modal konfirmasi hapus */}
       {isOpen && !showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative text-center">
@@ -47,7 +46,6 @@ const Delete = ({ isOpen, onClose, onConfirm }) => {
         </div>
       )}
 
-      {/* Popup sukses */}
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px] p-4">
           <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col items-center gap-3 animate-fade-in-up">

@@ -1,7 +1,3 @@
-import React from "react";
-import { LucideMessageCircleWarning } from "lucide-react";
-
-// Ini warna-warna alert kita
 const alertStyles = {
   success: {
     wrapper: "bg-green-50 border-green-200 text-green-800",
@@ -21,26 +17,21 @@ const alertStyles = {
   },
 };
 
-// Ini komponen Alert kita
 const Alert = ({
-  message, // Pesan yang mau ditampilkan
-  type = "info", // Jenis alert (success/error/warning/info)
-  onClose, // Fungsi untuk menutup alert
+  message,
+  type = "info",
+  onClose,
 }) => {
-  // Ambil style sesuai tipe
   const style = alertStyles[type];
 
   return (
     <div
       className={`p-4 rounded-lg border ${style.wrapper} flex items-center gap-3`}
     >
-      {/* Bagian icon */}
       <span className="text-xl">{style.icon}</span>
 
-      {/* Bagian pesan */}
       <p className="flex-1">{message}</p>
 
-      {/* Tombol tutup */}
       {onClose && (
         <button
           onClick={onClose}

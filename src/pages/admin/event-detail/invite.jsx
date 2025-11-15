@@ -15,9 +15,7 @@ export default function InviteMultipleDropdown() {
   ];
 
   const handleSelect = (value) => {
-    // cari data lengkap dari options
     const selectedOption = userOptions.find((u) => u.value === value);
-    // tambahkan kalau belum ada
     if (selectedOption && !selectedUsers.some((u) => u.value === value)) {
       setSelectedUsers([...selectedUsers, selectedOption]);
     }
@@ -33,7 +31,6 @@ export default function InviteMultipleDropdown() {
         Pilih Peserta
       </Typography>
 
-      {/* Dropdown untuk memilih */}
       <Dropdown
         type="search"
         label="Cari dan pilih peserta"
@@ -42,7 +39,6 @@ export default function InviteMultipleDropdown() {
         onSelect={handleSelect}
       />
 
-      {/* List peserta terpilih */}
       {selectedUsers.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
           {selectedUsers.map((user) => (
@@ -62,7 +58,6 @@ export default function InviteMultipleDropdown() {
         </div>
       )}
 
-      {/* Contoh output JSON */}
       <pre className="bg-gray-50 border rounded-md p-2 text-xs text-gray-600 mt-2">
         {JSON.stringify(selectedUsers.map((u) => u.value))}
       </pre>

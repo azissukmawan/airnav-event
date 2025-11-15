@@ -23,21 +23,18 @@ export default function ResetPassword() {
     setError("");
     setMessage("");
 
-    // Validasi password kosong
     if (!password.trim()) {
       setError("Password wajib diisi!");
       setLoading(false);
       return;
     }
 
-    // Validasi panjang password
     if (password.length < 8) {
       setError("Password minimal harus 8 karakter.");
       setLoading(false);
       return;
     }
 
-    // Validasi token dan email
     if (!token || !email) {
       setError(
         "Token atau email tidak valid. Silakan ulangi proses reset password."
@@ -68,7 +65,6 @@ export default function ResetPassword() {
       setMessage(response.data.message || "Password berhasil diperbarui!");
       setLoading(false);
 
-      // Redirect ke login setelah 2 detik
       setTimeout(() => {
         navigate("/login");
       }, 2000);
@@ -93,7 +89,6 @@ export default function ResetPassword() {
     <div className="min-h-screen flex items-center justify-center bg-[#eff2f9] p-6">
       <div className="w-full max-w-md md:max-w-5xl bg-white rounded-2xl shadow-lg overflow-hidden">
         <div className="grid md:grid-cols-[4fr_5fr]">
-          {/* === SISI KIRI/ATAS: GAMBAR === */}
           <div
             className="relative flex md:h-auto h-72 flex-col justify-end p-10 bg-cover bg-center"
             style={{ backgroundImage: "url(/loginimage.png)" }}
@@ -113,7 +108,6 @@ export default function ResetPassword() {
             </div>
           </div>
 
-          {/* === SISI KANAN/BAWAH: FORMULIR === */}
           <div className="p-6 md:p-10 flex flex-col justify-center">
             <div className="flex flex-col items-center text-center">
               <Lock size={96} className="text-blue-700 mb-4" />
@@ -127,14 +121,12 @@ export default function ResetPassword() {
                 hindari penggunaan kata sandi lama
               </p>
 
-              {/* Pesan Error */}
               {error && (
                 <div className="w-full max-w-sm mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-600">{error}</p>
                 </div>
               )}
 
-              {/* Pesan Success */}
               {message && (
                 <div className="w-full max-w-sm mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-600">{message}</p>
@@ -145,7 +137,6 @@ export default function ResetPassword() {
                 onSubmit={handleSubmit}
                 className="w-full max-w-sm space-y-4"
               >
-                {/* Input: Kata Sandi Baru */}
                 <div className="text-left">
                   <label
                     htmlFor="password"
@@ -180,7 +171,6 @@ export default function ResetPassword() {
                   </p>
                 </div>
 
-                {/* Tombol Submit */}
                 <Button
                   type="submit"
                   variant="primary"
@@ -190,7 +180,6 @@ export default function ResetPassword() {
                   {loading ? <Spinner /> : "Perbarui Kata Sandi"}
                 </Button>
 
-                {/* Tombol Batal */}
                 <Button
                   type="button"
                   variant="secondary"
