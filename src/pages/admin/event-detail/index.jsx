@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../../components/sidebar";
@@ -11,10 +11,11 @@ import ArchiveConfirmModal from "../../../components/pop-up/ArchiveConfirmModal"
 import CreateSertif from "../../../components/pop-up/CreateSertif";
 import DropdownHariSesi from "../../../components/admin/Dropdown/DropdownHariSesi";
 import FinishConfirmModal from "../../../components/pop-up/FinishConfirmModal";
+import { Button } from "../../../components/button";
 import ChangeSesiConfirmModal from "../../../components/pop-up/ChangeSesiConfirmModal";
 import { QRFullscreen } from "./fullscreen";
 import { QRCodeCanvas } from "qrcode.react";
-import { ChevronDown, Maximize2, Download } from "lucide-react";
+import { ChevronDown, Maximize2, Download, Gift } from "lucide-react";
 
 const AdminDetail = () => {
   const { id } = useParams();
@@ -29,7 +30,6 @@ const AdminDetail = () => {
   const [error, setError] = useState(null);
   const [selectedOption, setSelectedOption] = useState("active");
   const [presensiAktif, setPresensiAktif] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const token = localStorage.getItem("token");
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,7 +41,6 @@ const AdminDetail = () => {
   const [sesi, setSesi] = useState("");
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
-  const { eventId } = useParams();
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [showChangeSesiConfirm, setShowChangeSesiConfirm] = useState(false);
   const [pendingSesi, setPendingSesi] = useState("");
@@ -49,9 +48,6 @@ const AdminDetail = () => {
   const [filterHari, setFilterHari] = useState("");
   const [filterSesi, setFilterSesi] = useState("");
   const location = useLocation();
-  const onSuccess = location.state?.onSuccess;
-  const navigate = useNavigate();
-  // const shouldRefresh = location.state?.refreshOnFinish;
 
   const breadcrumbItems = [
     { label: "Dashboard", link: "/admin" },
@@ -59,19 +55,10 @@ const AdminDetail = () => {
     { label: eventData?.mdl_nama || "Informasi Acara" },
   ];
 
-  // FIXED: Handle filter change dengan validasi
   const handleFilterChange = (filtered) => {
     setFilteredParticipants(Array.isArray(filtered) ? filtered : []);
     setCurrentPage(1);
   };
-  // GANTI STATUS
-
-  // useEffect(() => {
-  //   if (shouldRefresh) {
-  //     fetchEvents();
-  //     window.history.replaceState({}, document.title); // biar ga refresh terus
-  //   }
-  // }, [shouldRefresh]);
 
   useEffect(() => {
     if (eventData?.mdl_sesi_acara) {
@@ -129,8 +116,6 @@ const AdminDetail = () => {
     }
   };
 
-  // FIXED: Fetch participants dengan error handling yang lebih baik
-
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -141,9 +126,6 @@ const AdminDetail = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("RESPON PESERTA DARI BE:", res.data);
-
-        // FIXED: Handle berbagai kemungkinan struktur response
         let data = {};
         if (res.data?.data?.data) {
           data = res.data.data.data;
@@ -155,7 +137,6 @@ const AdminDetail = () => {
 
         setParticipantsData(data);
 
-        // FIXED: Validasi data sebelum menggunakan Object.keys
         if (data && typeof data === "object" && Object.keys(data).length > 0) {
           const firstHari = Object.keys(data)[0];
           if (
@@ -234,77 +215,15 @@ const AdminDetail = () => {
     }
   };
 
-  // const handleFinishEvent = async () => {
-  //   setIsFinishing(true);
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     await axios.put(
-  //       `${API_BASE_URL}/admin/events/${id}`,
-  //       {
-  //         mdl_status: "closed",
-  //       },
-  //       {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       }
-  //     );
-  //     setEventData((prev) => ({ ...prev, mdl_status: "closed" }));
-  //     showPopup("success", "Berhasil", "Acara telah ditandai sebagai selesai.");
-  //     onSuccess?.();
-  //     setShowFinishConfirm(false);
-  //   } catch (error) {
-  //     console.error("Gagal menandai acara selesai:", error);
-  //     showPopup("error", "Gagal", "Tidak dapat menandai acara selesai.");
-  //   } finally {
-  //     setIsFinishing(false);
-  //   }
-  // };
-
-  // const handleFinishEvent = async () => {
-  //   setIsFinishing(true);
-  //   try {
-  //     const now = new Date();
-  //     const year = now.getFullYear();
-  //     const month = String(now.getMonth() + 1).padStart(2, "0");
-  //     const day = String(now.getDate()).padStart(2, "0");
-  //     const hours = String(now.getHours()).padStart(2, "0");
-  //     const minutes = String(now.getMinutes()).padStart(2, "0");
-  //     const seconds = String(now.getSeconds()).padStart(2, "0");
-  //     const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-  //     const response = await axios.put(
-  //       `${API_BASE_URL}/admin/events/${id}`,
-  //       {
-  //         mdl_status: "active",
-  //       },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-  //     setEventData((prev) => ({ ...prev, mdl_status: "active" }));
-
-  //     showPopup("success", "Berhasil", "Acara telah diselesaikan.");
-
-  //     setPresensiAktif(false);
-  //     setShowFinishConfirm(false);
-  //   } catch (error) {
-  //     console.error("Gagal menyelesaikan acara:", error);
-  //     const errorMessage =
-  //       error.response?.data?.message || "Tidak dapat menyelesaikan acara.";
-  //     showPopup("error", "Gagal", errorMessage);
-  //   } finally {
-  //     setIsFinishing(false);
-  //   }
-  // };
-
-  // Archive Event
   const handleArchiveEvent = async () => {
     try {
       const response = await axios.put(
-        `${API_BASE_URL}/admin/events/${id}`, // BE
+        `${API_BASE_URL}/admin/events/${id}`,
         { mdl_status: "archived" },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("Respon dari Backend:", response.data);
       showPopup("success", "Berhasil", "Acara berhasil diarsipkan");
       setEventData((prev) => ({
         ...prev,
@@ -317,7 +236,6 @@ const AdminDetail = () => {
     }
   };
 
-  // Notification popup
   const [showNotification, setShowNotification] = useState(false);
   const [notificationConfig, setNotificationConfig] = useState({
     type: "success",
@@ -447,7 +365,6 @@ const AdminDetail = () => {
         "File template sertifikat belum dipilih"
       );
 
-    // ✅ Validasi ekstensi dan ukuran file
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!allowedTypes.includes(file.type)) {
       return showPopup(
@@ -485,7 +402,6 @@ const AdminDetail = () => {
       showPopup("success", "Berhasil", "Nomor sertifikat berhasil digenerate");
       setShowCreateSertif(false);
     } catch (error) {
-      console.log("Response error:", error.response?.data);
       const message =
         error.response?.data?.message ||
         "Gagal generate sertifikat. Silakan coba lagi.";
@@ -493,7 +409,6 @@ const AdminDetail = () => {
     }
   };
 
-  // Fetch event data
   useEffect(() => {
     const fetchEventData = async () => {
       try {
@@ -519,7 +434,6 @@ const AdminDetail = () => {
     }
   }, [id, token]);
 
-  // Toggle presensi
   const handleTogglePresensi = async () => {
     if (!id) return alert("ID acara tidak ditemukan");
 
@@ -572,28 +486,11 @@ const AdminDetail = () => {
     showPopup("success", "Berhasil", "QR Code berhasil diunduh");
   };
 
-  // const getEventStatus = (startDate, endDate) => {
-  //   if (!startDate) return { label: "-", color: "bg-gray-100 text-gray-700" };
-
-  //   const today = new Date();
-  //   const start = new Date(startDate);
-  //   const end = endDate ? new Date(endDate) : start;
-
-  //   if (today < start) {
-  //     return { label: "Segera Hadir", color: "bg-yellow-100 text-yellow-700" };
-  //   } else if (today >= start && today <= end) {
-  //     return { label: "Berlangsung", color: "bg-green-100 text-green-700" };
-  //   } else {
-  //     return { label: "Selesai", color: "bg-red-100 text-red-700" };
-  //   }
-  // };
-
   const getEventStatus = (startDate, endDate, mdl_status) => {
     const now = new Date();
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Jika admin sudah menandai acara selesai
     if (mdl_status === "closed") {
       return { label: "Selesai", color: "bg-red-100 text-red-700" };
     }
@@ -609,7 +506,6 @@ const AdminDetail = () => {
       };
     }
 
-    // Jika lewat dari tanggal selesai tapi belum ditandai closed
     return { label: "Selesai", color: "bg-red-100 text-red-800" };
   };
 
@@ -643,7 +539,6 @@ const AdminDetail = () => {
     fetchEventDetail();
   }, [id, token]);
 
-  // === NUNGGU BE ===
   useEffect(() => {
     const fetchParticipants = async () => {
       try {
@@ -654,11 +549,7 @@ const AdminDetail = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        console.log("RESPON PESERTA DARI BE:", res.data);
-
         const data = res.data?.data?.data || res.data?.data || res.data || {};
-
-        console.log("HASIL DATA YANG DISIMPAN:", data);
 
         setParticipantsData(data);
 
@@ -681,69 +572,6 @@ const AdminDetail = () => {
     fetchParticipants();
   }, [id]);
 
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const res = await axios.get(
-  //         `${API_BASE_URL}/admin/events/${id}/participants`,
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-
-  //       // ✅ Data dari BE langsung diambil dari res.data.data
-  //       console.log("RESPON PESERTA DARI BE:", res.data);
-  //       const data = res.data?.data?.data || res.data?.data || res.data || {};
-
-  //       console.log("HASIL DATA YANG DISIMPAN:", data);
-  //       // const data = res.data?.data || {};
-
-  //       // Simpan ke state
-  //       setParticipantsData(data);
-
-  //       // (Opsional) log untuk cek strukturnya
-  //       console.log("Participants data:", data);
-  //     } catch (error) {
-  //       console.error("Error fetching participants:", error);
-  //       setParticipantsData({});
-  //     }
-  //   };
-
-  //   fetchParticipants();
-  // }, [id]);
-
-  const handleFilter = (hari, sesi) => {
-    if (hari && sesi && participantsData[hari]?.[sesi]) {
-      setFilteredParticipants(participantsData[hari][sesi]);
-    } else {
-      setFilteredParticipants([]);
-    }
-  };
-
-  // useEffect(() => {
-  //   const fetchParticipants = async () => {
-  //     if (!id) {
-  //       setLoading(false);
-  //       return;
-  //     }
-  //     try {
-  //       setLoading(true);
-  //       const res = await axios.get(
-  //         `${API_BASE_URL}/admin/events/${id}/participants`,
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-  //       const participantsData =
-  //         res.data?.data?.data || res.data?.data || res.data || [];
-  //       setParticipants(participantsData);
-  //     } catch (err) {
-  //       console.error("Gagal mengambil data peserta:", err);
-  //       setError(err.response?.data?.message || err.message);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-  //   fetchParticipants();
-  // }, [id, token]);
-
   useEffect(() => {
     const fetchWinners = async () => {
       if (!id) return;
@@ -752,7 +580,6 @@ const AdminDetail = () => {
           `${API_BASE_URL}/admin/events/${id}/winners`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        // FIXED: Pastikan winners selalu array
         const winnersData = res.data?.data?.winners || [];
         setWinners(Array.isArray(winnersData) ? winnersData : []);
       } catch (err) {
@@ -771,14 +598,12 @@ const AdminDetail = () => {
     }
   }, [id, token]);
 
-  // FIXED: Sorted participants dengan validasi winners
   const sortedParticipants = useMemo(() => {
     if (!Array.isArray(filteredParticipants)) return [];
 
     return [...filteredParticipants].sort((a, b) => {
       if (eventData?.doorprize_active !== 1) return 0;
 
-      // FIXED: Validasi winners adalah array sebelum menggunakan some
       const aWinner =
         Array.isArray(winners) &&
         winners.some(
@@ -820,7 +645,7 @@ const AdminDetail = () => {
     <>
       <NotificationPopup />
 
-      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0">
+      <div className="flex-1 w-full lg:pl-52 pt-6 lg:pt-0 bg-gray-50 min-h-screen">
         <Sidebar role="admin" />
         <div className="flex-1 p-6 mt-2 space-y-4">
           <Breadcrumb items={breadcrumbItems} />
@@ -839,7 +664,7 @@ const AdminDetail = () => {
             </p>
           </div>
 
-          <div className="flex flex-row md:flex-col md:space-x-4 space-y-2 md:space-y-0 mb-10 w-full">
+          <div className="flex flex-row md:flex-col md:space-x-4 mb-10 w-full">
             <div className="flex-1 w-full">
               <Search
                 placeholder="Cari nama peserta..."
@@ -847,11 +672,10 @@ const AdminDetail = () => {
               />
             </div>
             {eventData?.mdl_doorprize_aktif === 1 && (
-              <Link
-                to={`/admin/event/doorprize/${id}`}
-                className="px-7 py-2 rounded-xl font-semibold bg-primary text-blue-50 hover:bg-primary-90 hover:text-white transition-colors"
-              >
-                Doorprize
+              <Link to={`/admin/event/doorprize/${id}`}>
+                <Button variant="primary" iconLeft={<Gift />}>
+                  Doorprize
+                </Button>
               </Link>
             )}
           </div>
@@ -913,9 +737,11 @@ const AdminDetail = () => {
                   {/* DETAIL BUTTON */}
                   <div className="flex items-center gap-3 mt-5">
                     <Link to={`/admin/event/detail/${id}`}>
-                      <button className="w-45 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-90 transition">
+                      <Button
+                        variant="primary"
+                      >
                         Lihat Detail Lengkap
-                      </button>
+                      </Button>
                     </Link>
 
                     {/* BUTTON SELESAIKAN ACARA */}
@@ -923,9 +749,8 @@ const AdminDetail = () => {
                     {eventData.mdl_status !== "archived" && (
                       <button
                         onClick={() => setShowFinishConfirm(true)}
-                        className="px-4 py-2 rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition 
+                        className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition 
                         disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        // Disable jika sedang loading ATAU acara sudah selesai
                         disabled={
                           isFinishing || eventData.mdl_status === "closed"
                         }
@@ -937,9 +762,8 @@ const AdminDetail = () => {
                     {eventData.mdl_status !== "archived" && (
                       <button
                         onClick={() => setShowArchiveConfirm(true)}
-                        className="px-4 py-2 rounded-xl bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition
-                                   disabled:bg-gray-300 disabled:cursor-not-allowed" // Style saat nonaktif
-                        // Tombol arsip aktif HANYA JIKA acara sudah selesai (closed)
+                        className="px-4 py-2 rounded-md bg-gray-500 text-white text-sm font-medium hover:bg-gray-800 transition
+                                   disabled:bg-gray-300 disabled:cursor-not-allowed"
                         disabled={
                           eventData.mdl_status !== "closed" || isFinishing
                         }
@@ -1121,7 +945,6 @@ const AdminDetail = () => {
               />
               <div className="overflow-x-auto">
                 <TableParticipants
-                  // participants={currentTableData}
                   participants={sortedParticipants}
                   winners={winners}
                   onPreview={handleOpenPreview}
