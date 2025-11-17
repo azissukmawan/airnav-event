@@ -9,7 +9,7 @@ export default defineConfig({
   define: {
     // API backend
     API_BASE_URL: JSON.stringify(
-      "https://project.prod.amawan.dev/api"
+      "https://mediumpurple-swallow-757782.hostingersite.com/api"
     ),
 
     // Domain frontend (sementara pakai lokal)
