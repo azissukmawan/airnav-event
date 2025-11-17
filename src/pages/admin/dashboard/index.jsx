@@ -48,7 +48,7 @@ export default function AdminDashboard() {
           : undefined;
 
         const response = await axios.get(
-          "https://mediumpurple-swallow-757782.hostingersite.com/api/dashboard-admin/stats",
+          `${API_BASE_URL}/dashboard-admin/stats`,
           { headers }
         );
 
