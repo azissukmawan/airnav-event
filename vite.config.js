@@ -9,11 +9,11 @@ export default defineConfig({
   define: {
     // API backend
     API_BASE_URL: JSON.stringify(
-      "https://mediumpurple-swallow-757782.hostingersite.com/api"
+      "https://project.prod.amawan.dev/api"
     ),
 
     // Domain frontend (sementara pakai lokal)
-    FRONTEND_URL: JSON.stringify("http://localhost:5173/"),
-    // FRONTEND_URL: JSON.stringify("https://airnav-event.vercel.app/"),
+    // FRONTEND_URL: JSON.stringify("http://localhost:5173/"),
+    FRONTEND_URL: JSON.stringify("https://airnav-event.vercel.app/"),
   },
 });
