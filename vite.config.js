@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,11 +9,23 @@ export default defineConfig({
   define: {
     // API backend
     API_BASE_URL: JSON.stringify(
-      "https://mediumpurple-swallow-757782.hostingersite.com/api"
+      "http://b0sc04gws8s4008kksks8gcc.172.20.16.115.sslip.io/api"
     ),
 
     // Domain frontend (sementara pakai lokal)
-    // FRONTEND_URL: JSON.stringify("http://localhost:5173/"),
-    FRONTEND_URL: JSON.stringify("https://airnav-event.vercel.app/"),
+    FRONTEND_URL: JSON.stringify("http://localhost:5173/"),
+    // FRONTEND_URL: JSON.stringify("https://airnav-event.vercel.app/"),
+  },
+
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            return id.toString().split("node_modules/")[1].split("/")[0].toString();
+          }
+        },
+      },
+    },
   },
 });
