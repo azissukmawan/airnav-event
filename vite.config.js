@@ -9,7 +9,7 @@ export default defineConfig({
   define: {
     // API backend
     API_BASE_URL: JSON.stringify(
-      "http://b0sc04gws8s4008kksks8gcc.172.20.16.115.sslip.io/api"
+      "https://be-em.amawan.app/api"
     ),
 
     // Domain frontend (sementara pakai lokal)
